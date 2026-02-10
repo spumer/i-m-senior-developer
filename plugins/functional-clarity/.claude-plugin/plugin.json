@@ -1,0 +1,10 @@
+{
+  "name": "functional-clarity",
+  "version": "0.1.0",
+  "description": "Принципы Функциональной ясности — философия разработки надежного, простого и понятного кода",
+  "author": {
+    "name": "Svyatoslav Posokhin"
+  },
+  "hooks": "./hooks/hooks.json",
+  "keywords": ["principles", "functional-clarity", "code-quality", "python", "senior"]
+}

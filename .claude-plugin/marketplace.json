@@ -1,0 +1,27 @@
+{
+  "name": "i-m-senior-developer",
+  "description": "Local development plugins",
+  "owner": {
+    "name": "Svyatoslav Posokhin"
+  },
+  "plugins": [
+    {
+      "name": "tdd-master",
+      "description": "TDD plugin with Red-Green-Refactor workflow, testing patterns, and TDD-focused agent for Python/Django projects.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/tdd-master",
+      "category": "development"
+    },
+    {
+      "name": "functional-clarity",
+      "description": "Functional Clarity principles — philosophy for building reliable, simple, and understandable code. 22 principles, Python style guide, fail-fast architecture.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/functional-clarity",
+      "category": "development"
+    }
+  ]
+}
