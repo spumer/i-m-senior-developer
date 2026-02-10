@@ -1,0 +1,10 @@
+{
+  "name": "tdd-master",
+  "version": "0.1.0",
+  "description": "TDD (Test-Driven Development) methodology plugin. Provides Red-Green-Refactor workflow, testing patterns, and TDD-focused agent for Python/Django projects.",
+  "author": {
+    "name": "Svyatoslav Posokhin"
+  },
+  "hooks": "./hooks/hooks.json",
+  "keywords": ["tdd", "testing", "pytest", "django", "red-green-refactor"]
+}
