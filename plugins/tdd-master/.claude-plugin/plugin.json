@@ -5,6 +5,5 @@
   "author": {
     "name": "Svyatoslav Posokhin"
   },
-  "hooks": "./hooks/hooks.json",
   "keywords": ["tdd", "testing", "pytest", "django", "red-green-refactor"]
 }

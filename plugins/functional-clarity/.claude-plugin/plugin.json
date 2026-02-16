@@ -5,6 +5,5 @@
   "author": {
     "name": "Svyatoslav Posokhin"
   },
-  "hooks": "./hooks/hooks.json",
   "keywords": ["principles", "functional-clarity", "code-quality", "python", "senior"]
 }
