@@ -22,6 +22,15 @@
       },
       "source": "./plugins/functional-clarity",
       "category": "development"
+    },
+    {
+      "name": "llms-keeper",
+      "description": "Maintain llms.txt + llms-full.txt for any project following llmstxt.org standard. AI-optimized project context that works with any AI tool.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/llms-keeper",
+      "category": "documentation"
     }
   ]
 }
