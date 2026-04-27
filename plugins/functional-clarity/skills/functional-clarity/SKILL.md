@@ -126,6 +126,7 @@ except Exception:
 
 - **`references/00-principles.md`** — Complete 22 principles with detailed explanations and code examples
 - **`references/01-style-guide.md`** — Full style guide with details on each point
+- **`references/02-code-change-discipline.md`** — 7-step algorithm for working with existing code, reinforced by FPF principles (A.7 Strict Distinction, A.10 Evidence Graph, A.11 Ontological Parsimony, A.1.1 BoundedContext)
 - **`references/03-developer-levels.md`** — Developer level definitions (Junior → Senior+)
 - **`references/04-bash-instructions.md`** — Bash script guidelines
 - **`references/frameworks/python.md`** — Python-specific: modern syntax, pathlib, type annotations, pytest patterns
@@ -135,9 +136,10 @@ except Exception:
 1. **SKILL.md** provides the working summary for applying principles during coding
 2. IF user asks for detailed explanation of a specific principle → read `references/00-principles.md`
 3. IF writing or reviewing code and need detailed style guidance → read `references/01-style-guide.md`
-4. IF discussing developer levels, requirements, expectations, or code review standards → read `references/03-developer-levels.md`
-5. IF writing bash scripts → read `references/04-bash-instructions.md`
-6. IF writing Python code → read `references/frameworks/python.md`
+4. IF modifying existing code (refactoring, bug fix, extending unfamiliar code) → read `references/02-code-change-discipline.md` BEFORE making changes
+5. IF discussing developer levels, requirements, expectations, or code review standards → read `references/03-developer-levels.md`
+6. IF writing bash scripts → read `references/04-bash-instructions.md`
+7. IF writing Python code → read `references/frameworks/python.md`
 
 ## Integration
 

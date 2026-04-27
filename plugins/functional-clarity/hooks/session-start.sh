@@ -20,4 +20,8 @@ Key principles for this session:
 
 Use the `functional-clarity` skill for the full set of 22 principles and style guide.
 Do NOT silently swallow exceptions or return defaults on errors.
+
+When modifying existing code, follow the 7-step **Code-Change Discipline**:
+idea → assumptions → evidence → ask human → no contract changes → no information loss.
+Read `references/02-code-change-discipline.md` for the full algorithm with FPF guards (A.7, A.10, A.11, A.1.1) before making non-trivial changes to unfamiliar code.
 EOF
