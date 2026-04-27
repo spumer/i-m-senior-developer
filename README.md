@@ -54,6 +54,10 @@ TDD по Кенту Беку и дяде Бобу. Red-Green-Refactor, FIRST, п
 
 Мета-диспетчер: анализирует задачу, строит план исполнения (architecture / execution mode), детектирует пробелы в каталоге агентов проекта, учится на прошлых сессиях через `/plan-reflect`. Заменяет legacy `~/.claude/agents/planner.md`.
 
+### [sdlc](plugins/sdlc/)
+
+SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-reviewer`) покрывают design → implement → review для backend (Python: Django/FastAPI) и frontend (React). Stack-aware через on-demand references. Ссылается на `tdd-master` и `functional-clarity` вместо дублирования. Заменяет legacy `~/.claude/agents/python-implementer.md`, `django-architect.md`, `code-reviewer.md`.
+
 ## Установка
 
 ```
@@ -62,12 +66,13 @@ TDD по Кенту Беку и дяде Бобу. Red-Green-Refactor, FIRST, п
 /plugin install tdd-master@i-m-senior-developer
 /plugin install llms-keeper@i-m-senior-developer
 /plugin install planner@i-m-senior-developer
+/plugin install sdlc@i-m-senior-developer
 ```
 
 Локально:
 
 ```bash
-claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner
+claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc
 ```
 
 ## Автор

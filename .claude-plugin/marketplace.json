@@ -40,6 +40,15 @@
       },
       "source": "./plugins/planner",
       "category": "development"
+    },
+    {
+      "name": "sdlc",
+      "description": "SDLC pipeline plugin: 3 agents (architect, code-implementer, code-reviewer) covering design → implement → review across Python backend and React frontend. Stack-aware via on-demand references. References tdd-master and functional-clarity instead of duplicating.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/sdlc",
+      "category": "development"
     }
   ]
 }
