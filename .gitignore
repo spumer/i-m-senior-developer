@@ -1,2 +1,5 @@
 # Claude Code local settings
 .claude/
+
+# Local planning artifacts (per-developer, not shipped with marketplace)
+features/
