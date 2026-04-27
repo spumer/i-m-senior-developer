@@ -31,6 +31,15 @@
       },
       "source": "./plugins/llms-keeper",
       "category": "documentation"
+    },
+    {
+      "name": "planner",
+      "description": "End-to-end feature pipeline: requirements (/plan-feat, /plan-jira), planning (/plan), implementation orchestration (/plan-do), post-task reflection (/plan-reflect). Detects agent-catalog gaps and learns from past sessions.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/planner",
+      "category": "development"
     }
   ]
 }

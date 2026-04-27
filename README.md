@@ -50,6 +50,10 @@ TDD по Кенту Беку и дяде Бобу. Red-Green-Refactor, FIRST, п
 
 Поддержка `llms.txt` и `llms-full.txt` по стандарту [llmstxt.org](https://llmstxt.org). Агент анализирует кодовую базу и генерирует контекст проекта для AI-инструментов.
 
+### [planner](plugins/planner/)
+
+Мета-диспетчер: анализирует задачу, строит план исполнения (architecture / execution mode), детектирует пробелы в каталоге агентов проекта, учится на прошлых сессиях через `/plan-reflect`. Заменяет legacy `~/.claude/agents/planner.md`.
+
 ## Установка
 
 ```
@@ -57,12 +61,13 @@ TDD по Кенту Беку и дяде Бобу. Red-Green-Refactor, FIRST, п
 /plugin install functional-clarity@i-m-senior-developer
 /plugin install tdd-master@i-m-senior-developer
 /plugin install llms-keeper@i-m-senior-developer
+/plugin install planner@i-m-senior-developer
 ```
 
 Локально:
 
 ```bash
-claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper
+claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner
 ```
 
 ## Автор
