@@ -1,160 +1,367 @@
-# FPF — Полная карта секций
+# FPF — Карта секций (индекс навигации по FPF-Spec.md)
 
-> Для навигации по FPF-Spec.md. Используй номера строк с Read(offset=N, limit=200)
+> **Сгенерировано из встроенного реестра FPF-Spec.md.**
+> Источник: ailev/FPF @ `646b0b9b164f` (2026-06-17). Полный SHA: `646b0b9b164f7c13258633a33b92d2d0a569da28`.
+> Спека: 85274 строк, 279 паттернов (242 Stable, 37 Planned).
+>
+> **Номера строк (`Line`) — для свежескачанной спеки этого SHA.** Спека в статусе
+> "eternal alpha": при обновлении сначала Grep по ID/термину, потом Read вокруг матча —
+> не доверять offset вслепую. Planned-паттерны тела ещё не имеют (`Line` = —).
 
-| Уровень | Строка | ID секции | Название | Ключевые термины | Краткое описание |
-|---------|--------|-----------|----------|-------------------|------------------|
-| # | 1 | - | First Principles Framework (FPF) — Core Conceptual Specification | framework, specification, conceptual, normative, patterns | Основная спецификация FPF как фреймворка для мышления на основе первых принципов с паттернами и архитектурой. |
-| # | 4 | - | Table of Content | content, preface, parts, clusters, patterns | Содержание спецификации с разделами от префаза до частей A-K. |
-| # | 6 | Preface | Preface (non-normative) | preface, non-normative, orientation, creativity, uncertainty | Введение в FPF как в архитектуру мышления, интегрирующую креативность и assurance в эволюционном контексте. |
-| # | 24 | Preface-1 | What this specification is (and how to use it) | specification, artefacts, patterns, parts, reader roles | Практическая ориентация на спецификацию FPF: что это, артефакты, паттерны и как начинать для разных ролей. |
-| # | 25 | Preface-2 | Creativity in Open-Ended Evolution and Assurance | creativity, assurance, audits, evidence, abduction | FPF объединяет assurance и креативность как двигатели ответственной инновации от абдукции к операции. |
-| # | 26 | Preface-3 | Navigating Uncertainty: Building Closed Worlds within an Open World | uncertainty, closed-world, bounded contexts, engineering | FPF примиряет открытые и закрытые миры через bounded contexts для надежных инженерных решений. |
-| # | 27 | Preface-4 | FPF as an Evolutionary Architecture for Thought | evolutionary, architecture, auditability, evolvability, falsifiability | FPF как архитектура процесса мышления, поддерживающая ключевые характеристики через динамику рассуждений. |
-| # | 28 | Preface-5 | Architectural Characteristic of Thought | characteristics, auditability, evolvability, composability, mechanisms | Ключевые характеристики строгого мышления и механизмы FPF для их сохранения. |
-| # | 29 | Preface-6 | Beyond Cognitive Biases: FPF as a Generative Architecture for Thought | cognitive biases, generative, structural, scaffold, errors | FPF как генеративная структура для избежания ошибок, делая их труднее совершить. |
-| # | 30 | Preface-7 | Thinking Through Writing: The FPF Discipline of Conceptual Work | writing, conceptual forms, cards, tables, records, tool-agnostic | FPF использует дисциплину мышления через письмо с формами для осязаемого, делимого мышления. |
-| # | 31 | Preface-8 | Descriptive Ontologies vs. A Thinking-Oriented Architecture | ontologies, reasoning, objectives, trust, dynamics | FPF фокусируется на оркестрации рассуждений, а не на каталогизации существования. |
-| # | 32 | Preface-9 | The "Bitter Lesson" trajectory — compute, data, and freedom over hand-tuned rules (FPF stance) | bitter lesson, compute, data, autonomy, adaptation | FPF следует тренду предпочтения общих моделей с данными и минимальными ограничениями. |
-| # | 33 | Preface-10 | From Flat Documents to High-Dimensional Truth: The Multi-View Architecture | documents, multi-view, epistemes, projections, MVPK | FPF заменяет плоские документы на мульти-вью архитектуру с эпистемами и проекциями. |
-| # | 34 | Preface-11 | Boundary Statements: Where Language Becomes a System Boundary | boundary, statements, routing, laws, gates, duties | Введение в кластер A.6: предложения как контракты с маршрутизацией для эволюционности. |
-| # | 35 | Preface-12 | Raising Semantic Precision: From Triggers to Math-Backed Ontics | precision, triggers, ontology, mathematical, lexemes | Рабочий процесс повышения точности через распаковку онтологии и математическую основу. |
-| # | 36 | Preface-13 | The "big storylines" unique to FPF (load-bearing commitments) | storylines, commitments, holonic, creativity, assurance | Девять ключевых обязательств, определяющих уникальную архитектуру FPF. |
-| # | 37 | Preface-14 | Transdisciplinarity as a Meta-Theory of Thinking | transdisciplinarity, meta-theory, scaffolds, physical reality | FPF как мета-теория для моста между дисциплинами через паттерны, основанные на реальности. |
-| # | 38 | Preface-15 | FPF as a Culinary Architecture for Collective Thought: Why We Formalize "Obvious" Ideas | culinary, architecture, synthesis, generative, problems | FPF синтезирует очевидные идеи в robust фреймворк для сложных проблем. |
-| # | 39 | Preface-16 | Intellect Stack (informative Overview) | intellect stack, layers, structure, knowledge, action | Пятиуровневый стек когнитивных навыков, связанный с паттернами FPF. |
-| # | 40 | Preface-17 | Purpose, Scope, and Explicit Non-Goals | purpose, scope, non-goals, scaffold, tool-agnostic | Миссия FPF как генеративного скаффолда для мышления без доменного энциклопедизма. |
-| # | 42 | Part-A | Part A - Kernel Architecture Cluster | kernel, architecture, ontology, transformation, evolution | Ядро архитектуры FPF с фундаментальной онтологией и механизмами. |
-| # | 62 | A.I | Cluster A.I - Foundational Ontology | foundational, ontology, holon, entity, bounded context | Базовая онтология с холонами, ролями и контекстами. |
-| # | 64 | A.1 | Holonic Foundation: Entity → Holon | holon, entity, part-whole, system boundary, U.System | Моделирование систем и частей через холоны. |
-| # | 65 | A.1.1 | U.BoundedContext: The Semantic Frame | bounded context, semantic frame, vocabulary, invariants, glossary | Локальный контекст с семантическими границами и словарями. |
-| # | 66 | A.2 | Role Taxonomy | role, assignment, holder, function, responsibility, U.RoleAssignment | Таксономия ролей с разделением идентичности и функций. |
-| # | 67 | A.2.1 | U.RoleAssignment: Contextual Role Assignment | role assignment, holder, context, RCS/RSG, enactment | Формальное присвоение роли в контексте. |
-| # | 68 | A.2.2 | U.Capability: System Ability (dispositional property) | capability, ability, performance, action, measures | Способность системы как диспозиционная свойство. |
-| # | 69 | A.2.3 | U.PromiseContent: Consumer-facing Promise Clause | promise content, SLO, SLA, accessSpec, acceptanceSpec | Обещание провайдера с спецификациями доступа и принятия. |
-| # | 70 | A.2.4 | U.EvidenceRole: The Evidential Stance | evidence, claim, support, justification, episteme | Роль эпистемы как доказательства. |
-| # | 71 | A.2.5 | U.RoleStateGraph: The Named State Space of a Role | state machine, RSG, lifecycle, enactability | Граф состояний роли для моделирования lifecycle. |
-| # | 72 | A.2.6 | Unified Scope Mechanism (USM): Context Slices & Scopes | scope, USM, ClaimScope, WorkScope, set-valued | Механизм для определения областей применимости. |
-| # | 73 | A.2.7 | U.RoleAlgebra: In-Context Role Relations (≤, ⊥, ⊗) | role algebra, specialization, incompatibility, bundles | Алгебра ролей для отношений специализации и несовместимости. |
-| # | 74 | A.2.8 | U.Commitment: Deontic Commitment Object | commitment, deontics, obligation, BCP-14, evidenceRefs | Деонтические обязательства с хуками для аудита. |
-| # | 75 | A.2.9 | U.SpeechAct: Communicative Work Object | speech act, approval, provenance, institutes | Коммуникативные акты как работа с provenance. |
-| # | 76 | A.II | Cluster A.II - Transformation Engine | transformation, engine, action, causality, quartet | Двигатель трансформаций с квартетом элементов. |
-| # | 78 | A.3 | Transformer Constitution (Quartet) | transformer, quartet, System-in-Role, Method, Work | Конституция трансформера с ролью, методом и работой. |
-| # | 79 | A.3.1 | U.Method: The Abstract Way of Doing | method, recipe, procedure, abstract process | Абстрактный способ действия как рецепт. |
-| # | 80 | A.3.2 | U.MethodDescription: The Recipe for Action | method description, SOP, code, epistemic artifact | Описание метода как спецификация процедуры. |
-| # | 81 | A.3.3 | U.Dynamics: The Law of Change | dynamics, state evolution, simulation, state space | Закон изменения для моделирования переходов состояний. |
-| # | 82 | A.III | Cluster A.III - Time & Evolution | time, evolution, design-time, run-time, versioning | Кластер времени и эволюции систем. |
-| # | 84 | A.4 | Temporal Duality & Open-Ended Evolution Principle | temporal duality, evolution, lifecycle, improvement | Двойственность дизайна и runtime для непрерывной эволюции. |
-| # | 85 | A.IV | Cluster A.IV - Kernel Modularity | kernel, modularity, extensibility, specialization, dependency | Модульность ядра с расширяемостью. |
-| # | 87 | A.5 | Open-Ended Kernel & Extension Layering | open-ended, kernel, extension, modularity, domains | Открытое ядро с слоями расширений для доменов. |
-| # | 88 | A.IV.A | Cluster A.IV.A - Signature Stack & Boundary Discipline (A.6.*) | signature stack, boundary, discipline, laws, admissibility | Стек сигнатур и дисциплина границ. |
-| # | 90 | A.6 | Signature Stack & Boundary Discipline | signature, routing, laws, deontics, evidence, MVPK | Стек сигнатур с маршрутизацией граничных утверждений. |
-| # | 91 | A.6.B | Boundary Norm Square (Laws / Admissibility / Deontics / Work-Effects) | boundary norm square, laws, admissibility, deontics, evidence | Квадрат норм границ для декомпозиции предложений. |
-| # | 92 | A.6.C | Contract Unpacking for Boundaries | contract, unpacking, promise content, utterance, commitment | Распаковка контрактов в promise content и commitments. |
-| # | 93 | A.6.0 | U.Signature — Universal, law-governed declaration | signature, laws, applicability, bounded context | Универсальная сигнатура под управлением законов. |
-| # | 94 | A.6.1 | U.Mechanism - Law-governed application to a SubjectKind over a BaseType | mechanism, operation algebra, law set, admissibility, transport | Механизм как управляемое применение к субъектам. |
-| # | 95 | A.6.2 | U.EffectFreeEpistemicMorphing — Effect-Free Morphisms of Epistemes | epistemic morphing, morphism, lenses, reproducibility | Безэффектные морфизмы эпистем для трансформаций. |
-| # | 96 | A.6.3 | U.EpistemicViewing — describedEntity-Preserving Morphism | epistemic viewing, view, viewpoint, representation, correspondence | Сохранение описываемой сущности в просмотрах. |
-| # | 97 | A.6.4 | U.EpistemicRetargeting — describedEntity-Retargeting Morphism | retargeting, kind bridge, structural reinterpretation | Перенаправление описываемой сущности через мосты. |
-| # | 98 | A.6.P | U.RelationalPrecisionRestorationSuite — Relational Precision Restoration (RPR) | precision restoration, relation kind, qualified relation, lexical | Восстановление точности отношений через квалификацию. |
-| # | 99 | A.6.Q | U.QualityTermPrecisionRestoration — Quality Term Precision Restoration (Q-TERM) | quality term, evaluative ascription, endpoint routing, bridge | Восстановление точности качественных терминов. |
-| # | 100 | A.6.A | U.ActionInvitationPrecisionRestoration — Affordance / Action-Invitation Precision Restoration (ACT-INV) | affordance, action invitation, post-threshold routing, docking | Восстановление точности приглашений к действию. |
-| # | 101 | A.6.5 | U.RelationSlotDiscipline - SlotKind / ValueKind / RefKind discipline for n-ary relations | slot discipline, value, reference, signature, substitution | Дисциплина слотов для n-арных отношений. |
-| # | 102 | A.6.6 | U.BaseDeclarationDiscipline - Kind-explicit, scoped, witnessed base declaration discipline | base declaration, basedness, witnesses, anchoring, rebase | Дисциплина деклараций баз с явными свидетелями. |
-| # | 103 | A.6.7 | MechSuiteDescription — Description of a set of distinct mechanisms | mechanism suite, obligations, contract pins, CN-Spec, CG-Spec | Описание набора механизмов с обязательствами. |
-| # | 104 | A.6.8 | Service Polysemy Unpacking (RPR-SERV) | service polysemy, facet unpacking, promise content, provider | Распаковка полисемии сервисов в facets. |
-| # | 105 | A.6.9 | U.CrossContextSamenessDisambiguation — Repairing cross-context "same / equivalent / align" | cross-context, sameness, bridge, alignment, substitution | Разрешение самотождественности через мосты. |
-| # | 106 | A.6.S | U.SignatureEngineeringPair — Constructive signature engineering | signature engineering, target, constructor, editioning, retargeting | Пара сигнатур для конструктивной инженерии. |
-| # | 107 | A.6.H | Wholeness Language Unpacking (RPR-WHOLE) | wholeness, integrity, mereology, part-of, completeness | Распаковка языка целостности в mereology. |
-| # | 108 | A.V | Cluster A.V - Constitutional Principles of the Kernel | constitutional, principles, clarity, universality, consistency | Конституционные принципы ядра FPF. |
-| # | 110 | A.7 | Strict Distinction (Clarity Lattice) | strict distinction, category error, object, description, role | Строгие различия для избежания категорийных ошибок. |
-| # | 111 | A.8 | Universal Core (C-1) | universal, transdisciplinary, domain-agnostic, generalization | Универсальное ядро для трансдисциплинарности. |
-| # | 112 | A.9 | Cross-Scale Consistency (C-3) | cross-scale, consistency, composition, invariants, roll-up | Последовательность через масштабы в композиции. |
-| # | 113 | A.10 | Evidence Graph Referring (C-4) | evidence graph, traceability, audit, provenance, SCR | Ссылки на граф доказательств для traceability. |
-| # | 114 | A.11 | Ontological Parsimony (C-5) | parsimony, minimalism, Occam, essential concepts | Онтологическая экономность для минимализма. |
-| # | 115 | A.12 | External Transformer & Reflexive Split (C-2) | external transformer, agency, self-modification, control loop | Внешний трансформер для саморегуляции. |
-| # | 116 | A.13 | The Agential Role & Agency Spectrum | agential role, agency, spectrum, decision-making, autonomy | Спектр агентивности ролей. |
-| # | 117 | A.14 | Advanced Mereology: Components, Portions, Aspects & Phases | mereology, part-of, component, portion, phase | Продвинутая mereology для видов 'part-of'. |
-| # | 118 | A.15 | Role-Method-Work Alignment (Contextual Enactment) | role-method-work, alignment, enactment, MIC, WorkPlan | Выравнивание роли, метода и работы в контексте. |
-| # | 119 | A.15.1 | U.Work: The Record of Occurrence | work, execution, event, log, occurrence | Запись фактического происшествия как работа. |
-| # | 120 | A.15.2 | U.WorkPlan: The Schedule of Intent | work plan, schedule, intent, forecast | План работы как расписание намерений. |
-| # | 121 | A.15.3 | SlotFillingsPlanItem — Planned Slot-Fillings Baseline | slot fillings, baseline, edition pins, variance trail | Планируемый baseline для заполнения слотов. |
-| # | 122 | A.16 | Language-State Transduction Coordination | language-state, transduction, reopen, respecify, handoff | Координация трансдукции языка-состояния. |
-| # | 123 | A.16.0 | U.LanguageStateTransductionTrajectory — Optional trajectory-account normal form | trajectory, lineage, fork, merge, supersedes | Траектория трансдукции как учет lineage. |
-| # | 124 | A.16.1 | U.PreArticulationCuePack | cue pack, pre-articulation, nucleus, witness | Пакет подсказок перед артикуляцией. |
-| # | 125 | A.16.2 | Reopen / SketchBackoff / Respecify | reopen, backoff, respecify, retire, branch | Законные операции отступления и пересмотра. |
-| # | 126 | A.17 | A.CHR-NORM — Canonical "Characteristic" & rename (Dimension/Axis → Characteristic) | characteristic, measurement, property, dimension, axis | Канонический термин для измеримого свойства. |
-| # | 127 | A.18 | A.CSLC-KERNEL — Minimal CSLC in Kernel (Characteristic/Scale/Level/Coordinate) | CSLC, scale, level, coordinate, measurement | Минимальный CSLC в ядре для измерений. |
-| # | 128 | A.19 | A.CHR-SPACE — CharacteristicSpace & Dynamics hook | characteristic space, state space, dynamics, RSG | Пространство характеристик с хуком динамики. |
-| # | 129 | A.19.CN | CN-frame (comparability & normalization) | CN-frame, comparability, normalization, bridges, CL | Фрейм для сравнимости и нормализации. |
-| # | 130 | A.19.CHR | CHRMechanismSuite — CHR mechanism-suite anchor | CHR suite, characterization, CN-Spec, CG-Spec, legality | Анкер свиты механизмов CHR. |
-| # | 131 | A.19.UNM | Unified Normalization Mechanism (UNM) | normalization, CV-NCV, invariant, fix spec, tri-state | Унифицированный механизм нормализации. |
-| # | 132 | A.19.UINDM | Unified Indicatorization Mechanism (UINDM) | indicatorization, policy, admissibility, evidence-gated | Механизм индикаторизации с политикой. |
-| # | 133 | A.19.USCM | Unified Scoring Mechanism (USCM) | scoring, profile, SCP, minimal evidence, tri-state | Механизм скоринга с профилем compliance. |
-| # | 134 | A.19.ULSAM | Unified Lawful Scale Aggregation Mechanism (ULSAM) | aggregation, fold, Gamma fold, contributor set | Законная агрегация шкал через fold. |
-| # | 135 | A.19.CPM | Unified Comparison Mechanism (CPM) | comparison, comparator, partial order, tri-state | Механизм сравнения с сетовыми исходами. |
-| # | 136 | A.19.SelectorMechanism | Unified Selection Kernel (SelectorMechanism) | selection, portfolio, eligibility, criteria slot | Ядро селекции с сетовыми возвратами. |
-| # | 137 | A.20 | U.Flow.ConstraintValidity — Eulerian | flow, constraint validity, Eulerian, transduction flow | Валидность ограничений в потоках как Eulerian. |
-| # | 138 | A.21 | GateProfilization: OperationalGate(profile) (GateFit core) | gate profilization, operational gate, gate fit, decision log | Профилизация гейтов для фита. |
-| # | 140 | Part-B | Part B — Trans-disciplinary Reasoning Cluster | trans-disciplinary, reasoning, aggregation, emergence, trust | Кластер трансдисциплинарного рассуждения. |
-| # | 159 | B.1 | Universal Algebra of Aggregation (Γ) | aggregation, Gamma, invariants, IDEM, COMM, WLNK | Универсальная алгебра агрегации через Γ. |
-| # | 160 | B.1.1 | Dependency Graph & Proofs | dependency graph, proofs, structural aggregators, sum | Граф зависимостей и доказательства для Γ. |
-| # | 161 | B.1.2 | System-specific Aggregation Γ_sys | system aggregation, physical, conservation, Sys-CAL | Агрегация физических систем с законами сохранения. |
-| # | 162 | B.1.3 | Γ_epist — Knowledge-Specific Aggregation | knowledge aggregation, epistemic, trust, KD-CAL | Агрегация знаний с propagацией доверия. |
-| # | 163 | B.1.4 | Contextual & Temporal Aggregation (Γ_ctx & Γ_time) | temporal aggregation, time-series, order-sensitive | Агрегация с учетом контекста и времени. |
-| # | 164 | B.1.5 | Γ_method — Order-Sensitive Method Composition & Work Enactment | method composition, workflow, sequential, concurrent | Композиция методов с учетом порядка. |
-| # | 165 | B.1.6 | Γ_work — Work as Spent Resource | work aggregation, resource, cost, Resrc-CAL | Агрегация работы как потребленных ресурсов. |
-| # | 166 | B.2 | Meta-Holon Transition (MHT): Recognizing Emergence and Re-identifying Wholes | meta-holon, emergence, synergy, system of systems | Транзиция для распознавания эмерджентности. |
-| # | 167 | B.2.1 | BOSC Triggers | BOSC, triggers, boundary, objective, supervisor | Триггеры эмерджентности по BOSC критериям. |
-| # | 168 | B.2.2 | MST (Sys) — Meta-System Transition | meta-system, physical emergence, super-system | Транзиция мета-системы для физических систем. |
-| # | 169 | B.2.3 | MET (KD) — Meta-Epistemic Transition | meta-epistemic, paradigm shift, scientific revolution | Транзиция мета-эпистемическая для знаний. |
-| # | 170 | B.2.4 | MFT (Meta-Functional Transition) | meta-functional, capability emergence, adaptive workflow | Транзиция мета-функциональная для способностей. |
-| # | 171 | B.2.5 | Supervisor-Subholon Feedback Loop | supervisor, feedback loop, stability, layered control | Петля обратной связи супервизор-субхолон. |
-| # | 172 | B.3 | Trust & Assurance Calculus (F-G-R with Congruence) | trust, assurance, F-G-R, formality, reliability | Калькулюс доверия и assurance через F-G-R. |
-| # | 173 | B.3.1 | Components & Epistemic Spaces | F-G-R components, measurement, epistemic space | Компоненты и пространства для F-G-R. |
-| # | 174 | B.3.2 | Evidence & Validation Logic (LOG-use) | verification, validation, logic, proof | Логика валидации на основе доказательств. |
-| # | 175 | B.3.3 | Assurance Subtypes & Levels | assurance levels, TA, VA, LA, L0-L2 | Подтипы и уровни assurance. |
-| # | 176 | B.3.4 | Evidence Decay & Epistemic Debt | evidence decay, freshness, epistemic debt | Устаревание доказательств и эпистемический долг. |
-| # | 177 | B.3.5 | CT2R-LOG — Working-Model Relations & Grounding | grounding, CT2R, compose-CAL, assurance layer | Отношения рабочих моделей и grounding. |
-| # | 178 | B.4 | Canonical Evolution Loop | evolution loop, observe-refine-deploy, temporal duality | Канонический цикл эволюции систем. |
-| # | 179 | B.4.1 | Observe -> Notice -> Stabilize -> Route | observe, notice, stabilize, route, cue set | От наблюдения к маршрутизации cues. |
-| # | 180 | B.4.2 | Knowledge Instantiation | knowledge evolution, theory refinement, scientific | Инстанциация знаний для refining теорий. |
-| # | 181 | B.4.3 | Method Instantiation | method evolution, adaptive workflow, operational | Инстанциация методов для улучшения процессов. |
-| # | 182 | B.5 | Canonical Reasoning Cycle | reasoning cycle, abduction-deduction-induction, scientific | Канонический цикл рассуждений по абдукции. |
-| # | 183 | B.5.1 | Explore → Shape → Evidence → Operate | development cycle, lifecycle, state machine | Цикл разработки артефактов в FPF. |
-| # | 184 | B.5.2 | Abductive Loop | abductive loop, hypotheses, plausibility, origin trace | Петля абдукции для генерации гипотез. |
-| # | 185 | B.5.2.0 | U.AbductivePrompt | abductive prompt, anomaly, rival-set, probe | Промпт для абдукции на основе cues. |
-| # | 186 | B.5.2.1 | Creative Abduction with NQD | creative abduction, NQD, novelty, quality, diversity | Креативная абдукция с новизной и разнообразием. |
-| # | 187 | B.5.3 | Role-Projection Bridge | role-projection, domain vocabulary, concept bridge | Мост проекции ролей для доменного языка. |
-| # | 188 | B.6 | Characterisation Families (CHR-use) | characterisation, templates, CHR patterns, measurement | Семейства характеристик для использования CHR. |
-| # | 189 | B.7 | Common Logic Suite (LOG-use) | logic suite, inference, trust propagation, LOG-CAL | Сюита логики для propagации доверия. |
-| # | 191 | Part-C | Part C — Kernel Extension Specifications | kernel extension, CALs, LOGs, CHRs, Sys-CAL | Спецификации расширений ядра с CAL/LOG/CHR. |
-| # | 193 | C.I | Cluster C.I – Core CALs / LOGs / CHRs | core CALs, LOGs, CHRs, Sys-CAL, KD-CAL | Основные CAL/LOG/CHR для расширений. |
-| # | 195 | C.1 | Sys-CAL | physical system, composition, conservation, U.System | CAL для физических систем с композицией. |
-| # | 196 | C.2 | KD-CAL | knowledge, epistemic, evidence, trust, F-G-R | CAL для знаний с F-G-R и assurance. |
-| # | 197 | C.2.1 | U.Episteme — Epistemes and their slot graph | episteme, slot graph, described entity, grounding holon | Эпистемы как граф слотов с grounding. |
-| # | 198 | C.2.2 | Reliability R in the F-G-R triad | reliability R, warrant, congruence level, CL, bridge-only | Надежность R в триаде F-G-R с CL. |
-| # | 199 | C.2.2a | U.LanguageStateSpace — Language-state chart over U.CharacteristicSpace | language-state space, position claim, thresholds, publication | Пространство языка-состояния над характеристиками. |
-| # | 200 | C.2.3 | Unified Formality Characteristic F | formality F, F-scale, rigor, proof, specification | Унифицированная формальность F как шкала. |
-| # | 201 | - | ...(truncated)... | - | Обрезанная часть спецификации (неполный текст). |
-| # | 202 | Part-H | Part H – Glossary & Definitional Pattern Index | glossary, definitional, index, alphabetic, catalogue | Глоссарий и индекс паттернов. |
-| # | 204 | H.1 | Alphabetic Glossary | alphabetic, glossary, U.Type, relation, operator | Алфавитный глоссарий терминов и типов. |
-| # | 205 | H.2 | Definitional Pattern Catalogue | definitional, catalogue, micro-stubs, lookup | Каталог паттернов с микро-стабами. |
-| # | 206 | H.3 | Cross-Reference Maps | cross-reference, maps, Part A, Part C, Part B | Карты ссылок между частями. |
-| # | 208 | Part-I | Part I – Annexes & Extended Tutorials | annexes, tutorials, deprecated, walk-throughs, change-log | Приложения с туториалами и историей изменений. |
-| # | 210 | I.1 | Deprecated Aliases | deprecated, aliases, backward compatibility | Устаревшие алиасы для совместимости. |
-| # | 211 | I.2 | Detailed Walk-throughs | walk-throughs, pump, proof, dev-ops pipeline | Детальные walkthrough моделирования. |
-| # | 212 | I.3 | Change-Log (auto-generated) | change-log, auto-generated, DRR ids, history | Автогенерируемый лог изменений. |
-| # | 213 | I.4 | External Standards Mappings | external standards, mappings, ISO 15926, BORO, CCO | Сопоставления с внешними стандартами. |
-| # | 215 | Part-J | Part J – Indexes & Navigation Aids | indexes, navigation, concept-pattern, example, principle-trace | Индексы и пособия по навигации. |
-| # | 217 | J.1 | Concept-to-Pattern Index | concept-pattern, index, jump, boundary | Индекс от концепта к паттерну. |
-| # | 218 | J.2 | Pattern-to-Example Index | pattern-example, index, archetypal, vignette | Индекс примеров по паттернам. |
-| # | 219 | J.3 | Principle-Trace Index | principle-trace, index, pillar, C-rule, P-rule | Трассировка принципов к клаузам. |
-| # | 221 | Part-K | Part K – Lexical debt | lexical debt, replacement, measurement terms, migration | Лексический долг с картой замен. |
-| ## | 223 | K.1 | Mandatory replacement map for measurement terms | replacement map, deprecated, axis, dimension, characteristic | Обязательная карта замен для терминов измерений. |
-| ## | 232 | K.2 | Migration debt from A.2.6 (Scope, ClaimScope, WorkScope) | migration debt, deprecations, affected locations, playbook | Долг миграции от A.2.6 с заменами. |
-| ## | 233 | K.2.1 | Deprecations (normative) | deprecations, applicability, envelope, generality, validity | Нормативные устаревшие термины для scope. |
-| ## | 240 | K.2.2 | Affected locations and required edits (normative) | affected locations, edits, Part C.2.2, Part A.2.2 | Требуемые правки в затронутых частях. |
-| ## | 251 | K.2.3 | Migration playbook (informative) | migration playbook, inventory, classify, rewrite | План миграции для scope-терминов. |
-| ## | 257 | K.2.4 | Backwards compatibility (informative) | backwards compatibility, legacy artifacts, guards | Совместимость с legacy для прозы. |
-| ## | 260 | K.2.5 | Change Log (normative migration record) | change log, normative, A.2.6 introduced, edits | Лог изменений миграции. |
+## Cluster A.I - Foundational Ontology
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.1 | 1320 |  | U.Holon, U.System, and U.Episteme | Holonic root ontology for entity, holon, acting system, and claim-bearing non-agentive episteme; keeps part-whole, boundary, acting-system eligibility, episteme non-agentivity, and architecture grounding distinct. |
+| A.1.1 | 1601 |  | U.BoundedContext Semantic Frame | Semantic-frame ontology for local meaning, local vocabulary, invariant set, local role taxonomy, bridge relations, and non-container context boundary. |
+| A.2 | 1882 |  | Role Taxonomy | kw: role, assignment, holder, context, function vs identity, responsibility, U.RoleAssignment. \| q: "How to model responsibilities?", "What is the difference between what a thing *is* and what it *does*?" |
+| A.2.1 | 2207 |  | `U.RoleAssignment`: Contextual Role Assignment | kw: Standard, holder, role, context, RoleEnactment, RCS/RSG. \| q: "How to formally assign a role in FPF?", "What is the Holder#Role:Context Standard?" |
+| A.2.2 | 2551 |  | `U.Capability`: System Ability (dispositional property) | kw: ability, skill, performance, action, work scope, measures. \| q: "How to separate ability from permission?", "What is a capability in FPF?" |
+| A.2.3 | 2852 |  | `U.PromiseContent`: Consumer‑facing Promise Clause | kw: promise content, promise content, accessSpec, acceptanceSpec, SLO, SLA, claim scope (G), Work evidence, provider/consumer roles. \| q: "What is a promise content in FPF?", "Promise content vs Work vs MethodDescription", "How do access… |
+| A.2.4 | 3274 |  | `U.EvidenceRole`: The Evidential Stance | kw: evidence, claim, support, justification, episteme. \| q: "How does an episteme serve as evidence?", "Modeling evidence roles." |
+| A.2.5 | 3587 |  | `U.RoleStateGraph`: The Named State Space of a Role | kw: state machine, RSG, role state, enactability, role-state evolution. \| q: "How to model the state of a role?", "What is a Role State Graph?" |
+| A.2.6 | 3917 |  | Unified Scope Mechanism (USM): Context Slices & Scopes | kw: scope, applicability, ClaimScope (G), WorkScope, set-valued. \| q: "How to define the scope of a claim or capability?", "What is G in F-G-R?" |
+| A.2.7 | 4782 |  | `U.RoleAlgebra`: In-Context Role Relations (`≤`, `⊥`, `⊗`) | kw: role algebra, specialization (`≤`), incompatibility (`⊥`), bundles (`⊗`), separation of duties (SoD), requiredRoles substitution. \| q: "What does `RoleS ≤ RoleG` mean in FPF?", "How do I encode Separation of Duties with `⊥`?", "How d… |
+| A.2.8 | 5095 |  | `U.Commitment`: Deontic Commitment Object | kw: commitment, deontics, obligation, permission, prohibition, modality normalization, scope+validity window, adjudication hooks, evidenceRefs, BCP‑14 (RFC 2119/8174). \| q: "How to represent MUST/SHALL as a lintable object?", "How to kee… |
+| A.2.9 | 5413 |  | `U.SpeechAct`: Communicative Work Object | kw: speech act, communicative work, approval/authorization/publication/revocation, provenance, act≠utterance≠carrier, judgement context, window/freshness, institutes.*. \| q: "How to model approvals/authorizations as Work?", "How to separ… |
+
+## Cluster A.II - Transformation Engine
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.3 | 5705 |  | Transformer Constitution (Quartet) | kw: action, causality, change, System-in-Role, MethodDescription, Method, Work. \| q: "How does FPF model an action or a change?", "What is the transformer quartet?" |
+| A.3.1 | 5915 |  | `U.Method`: The Abstract Way of Doing | kw: recipe, how-to, procedure, abstract process. \| q: "What is a Method in FPF?", "Difference between Method and Work." |
+| A.3.2 | 6277 |  | `U.MethodDescription`: The Recipe for Action | kw: specification, recipe, SOP, code, model, `U.Episteme`. \| q: "How to document a method?", "What is a MethodDescription?" |
+| A.3.3 | 6582 |  | `U.Dynamics`: State-Space and Transition-Law Episteme | kw: dynamics, state space, transition law, observation relation, prediction, simulation, calibration. \| q: "How do I model a reusable law of state change?", "When is a process label a dynamics episteme rather than method, work, or transf… |
+| A.3.4 | 6888 |  | `U.Transformation`: Bounded Change Under Conditions | kw: transformation, bounded change, transformed entity, transformer, input/output conditions, functioning, transformation-flow structure. \| q: "What exactly is changing?", "Who or what is the transformer?", "How do method, mechanism, wor… |
+| A.3.4.P | 7353 |  | Transformation Ontic Precision Restoration | Repairs change-situation wording such as transformation, flow, process, workflow, pipeline, dataflow, network, circuit, path, functioning, method, mechanism, work, or evidence by recovering the `U.Transformation` slot relation and curren… |
+
+## Cluster A.III - Time & Evolution
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.4 | 7596 |  | Temporal Duality & Open-Ended Evolution Principle | kw: design-time, run-time, evolution, versioning, open-ended state change, continuous improvement. \| q: "How does FPF handle plan vs. reality?", "How are systems updated?" |
+
+## Cluster A.IV - Kernel Modularity
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.5 | 7723 |  | Open-Ended Kernel & Extension Layering | kw: FPF architecture, specialization vs dependancy hierarhies, modularity, extensibility. \| q: "What is the architecture of FPF?", "How are new domains added?" |
+
+## Cluster A.IV.A - Signature Stack & Boundary Discipline (A.6.)
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.6 | 7774 |  | Signature Stack & Boundary Discipline | kw: boundary, signature stack, boundary claim-classification fields, A.6.B L/A/D/E claims, authority-wording split, register-backed status boundary, promise/commitment/API/policy wording, probe/order/frame/export/state-reading claims. \| … |
+| A.6.RSIG | 8309 |  | Recognition Signatures for Descriptions | description-recognition signature; encountered carrier vs defining `U.Episteme`; API/access description not promise; method applicability note; false neighboring description |
+| A.6.B | 8733 |  | Boundary Norm Square (Laws / Admissibility / Deontics / Work-Effects) | kw: boundary norm square, atomic claims, L/A/D/E claim classification, laws vs gates vs commitments vs evidence, admissible use, non-admissible use, claim IDs, triangle decomposition. \| q: "What is the Boundary Norm Square in FPF?", "How… |
+| A.6.C | 9410 |  | Contract Unpacking for Boundaries | kw: contract bundle unpacking, SLA/guarantee claim classification, promise content (promise content) ≠ work, promise-act/utterance/commitment separation, Boundary Norm Square (L/A/D/E), MVPK faces “no new semantics”. \| q: "How to unpack … |
+| A.6.0 | 9730 |  | U.Signature — Universal, law‑governed declaration | kw: signature, vocabulary, laws, applicability, bounded context. \| q: "What is the universal signature block?", "Where do laws vs. implementations live?" |
+| A.6.1 | 10080 |  | U.Mechanism - Law‑governed application to a SubjectKind over a BaseType | Keywords: Mechanism, OperationAlgebra, LawSet, AdmissibilityConditions, Transport, Bridge‑only. Queries: "How to define a mechanism like USM/UNM?", "Where do operational guards live?", "How to handle cross‑context transport?" |
+| A.6.2 | 10412 |  | U.EffectFreeEpistemicMorphing - Effect-Free Morphisms of Epistemes | Effect-free, law-constrained episteme-to-episteme morphisms over ClaimGraph, EntityOfConcern, grounding holon, viewpoint, reference scheme, representation scheme, and metadata; preserve or retarget EntityOfConcern only through declared c… |
+| A.6.3 | 10840 |  | U.EpistemicViewing - EntityOfConcern-Preserving Morphism | EntityOfConcern-preserving effect-free projection between epistemes: content, representation, viewpoint, or reference scheme may change, but `entityOfConcernRef` stays fixed unless A.6.4 retargeting is explicitly opened. |
+| A.6.3.CSC | 11314 |  | Controlled Semantic Coarsening | kw: controlled semantic coarsening, source-bearing episteme or source publication, coarsened rendering, narrower admissible use, non-admissible downstream use, reopen trigger, redaction, dashboard tile, lookup handle, state-representatio… |
+| A.6.3.CR | 11676 |  | ConservativeRetextualization - entityOfConcernRef-preserving textual re-expression | Textual re-expression, summary, report rewrite, translation, or filtering that preserves `entityOfConcernRef`, keeps source tether and omission/loss visible, and exits to explanation, representation change, retargeting, bridge, work, evi… |
+| A.6.3.RT | 12020 |  | Representation-Scheme Transition: EntityOfConcern-Preserving Representation-Scheme Transition | Representation-scheme or reasoning-medium transition that preserves `entityOfConcernRef`, makes recoverability and loss visible, and blocks geometry, notation, carrier work, decode work, or transformation-flow language from becoming hidd… |
+| A.6.4 | 12487 |  | U.EpistemicRetargeting - EntityOfConcern-Retargeting Morphism | Effect-free episteme-to-episteme morphism that intentionally changes `entityOfConcernRef` under a declared KindBridge, invariant, loss boundary, and admissible use while preserving only the commitments that the bridge makes reviewable. |
+| A.6.P | 12999 |  | Relational Precision Restoration (RPR) — Kind-Explicit Qualified Relation Discipline | kw: relation precision restoration, under-specified relational language, support/support-headed wording, selected support reading, RelationKind, QualifiedRelationRecord, coupling, probe, measurement, export, endpoint referential compress… |
+| A.6.RSIR | 13825 |  | Relation, Signature, Interface, Role, and Slot Precision Restoration | kw: relation-signature-interface-role-slot recovery, interface wording, role wording, slot wording, field, parameter, endpoint, port, API, protocol, capability, affordance, method, function, concern, interest, shadow ontology. \| q: "How … |
+| A.6.A | 14063 |  | U.ActionInvitationPrecisionRestoration — Affordance / Action-Invitation Precision Restoration (ACT-INV) | kw: affordance, action invitation, action-first language, post-threshold classification, A.15 docking, language-state seam. \| q: "How do I repair overloaded affordance language in FPF?", "When does action-guiding language become an actio… |
+| A.6.F | 14790 |  | Function and Functional Precision Restoration (RPR-FUNCTION) | kw: function wording, functional architecture, FunctionalStructure, function-use repair, capability/effect, work/method boundary, module allocation, mathematical function. \| q: "When is functional architecture a structure kind rather tha… |
+| A.6.M | 15171 |  | Module Relation Repair | kw: module relation, component, interface, port, platform, layer, stack, open architecture, substitutability, interface specification. \| q: "When is a module relation being claimed?" |
+| A.6.5 | 15515 |  | U.RelationSlotDiscipline - SlotKind / ValueKind / RefKind discipline for n‑ary relations (with slot‑operation lexicon) | kw: slot, argument position, value, reference, signature, substitution, pass-by-value, pass-by-reference. \| q: “How do I declare positions and references in relations?”, “How do we stop mixing roles, values and ids in signatures?”, “How … |
+| A.6.6 | 15797 |  | U.BaseDeclarationDiscipline - Kind-explicit, scoped, witnessed base declaration discipline (with base-change lexicon) | kw: base declaration, basedness, baseRelation, SWBD, witnesses, scope, Γ_time, anchoring, support-as-basedness, rebase, retime, rescope. \| q: "What is U.BaseDeclarationDiscipline?", "How to model base-dependence without anchoring?", "Whe… |
+| A.6.7 | 16363 |  | `MechSuiteDescription` — Description of a set of distinct mechanisms | kw: mechanism suite, distinct mechanisms, suite obligations, spec pins, CN-Spec, CG-Spec, P2W, planned baseline, crossing visibility. \| q: "What is a MechSuiteDescription?", "How to describe a bundle of distinct mechanisms without using … |
+| A.6.8 | 16804 |  | Service Polysemy Unpacking (RPR-SERV) | kw: service polysemy, service situation, interface semantics, promise content, provider principal, service/cell analogy, boundary exchange, viability envelope, API read/export. \| q: "How do I unpack service talk in FPF?", "When is an API… |
+| A.6.9 | 17324 |  | `U.CrossContextSamenessDisambiguation` — Repairing cross-context “same / equivalent / align” via explicit Bridges (RPR-XCTX) | kw: cross-context sameness, bridge, alignment, mapping, direction, substitution licence, loss notes, CL, SenseCells, weakest-link. \| q: "How to disambiguate 'same' across contexts?", "How to avoid silent inversion in mappings?", "Naming-… |
+| A.6.S | 17745 |  | U.SignatureEngineeringPair — Constructive signature engineering (ConstructorSignature + TargetSignature) | kw: signature engineering, TargetSignature, ConstructorSignature, two-signature arrangement, EFEM, editioning, retargeting, slot/base change lexicon, MVPK views (no new semantics), claim register, no epistemic agency. \| q: "What is U.Sig… |
+| A.6.H | 18176 |  | Wholeness Language Unpacking (RPR-WHOLE) | kw: wholeness, integrity, part-of, boundary, environment, mereology, completeness, order/time, publication-carrier and EntityOfConcern/Description distinction, role-method-work. \| q: "How to unpack 'whole/part/integrity' in FPF?", "RPR-W… |
+
+## Cluster A.V - Constitutional Principles of the Kernel
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| A.7 | 18542 |  | Strict Distinction (Clarity Lattice) | kw: category error, EntityOfConcern ≠ Description episteme, Role ≠ Work, ontology. \| q: "How to avoid common modeling mistakes?", "What are FPF's core distinctions?" |
+| A.8 | 18962 |  | Universal Core (C-1) | kw: universality, transdisciplinary, domain-agnostic, generalization. \| q: "How does FPF ensure its concepts are universal?" |
+| A.9 | 19079 |  | Cross-Scale Consistency (C-3) | kw: composition, aggregation, holarchy, invariants, roll-up. \| q: "How do rules compose across different scales?", "How to aggregate metrics safely?" |
+| A.10 | 19193 |  | Evidence Graph Referring (C-4) | kw: evidence, traceability, provenance, evidence carrier, claim support, authority-reliance evidence path, status register, register excerpt, generated-explanation source support, exact authority reference, probe/distributed/export/causa… |
+| A.11 | 19588 |  | Ontological Parsimony (C-5) | kw: minimalism, simplicity, Occam's razor, essential concepts. \| q: "How does FPF avoid becoming too complex?", "Rule for adding new concepts." |
+| A.12 | 19687 |  | External Transformer & Reflexive Split (C-2) | kw: causality, agency, self-modification, external agent, control loop. \| q: "How to model a self-healing or self-calibrating system?", "What is the external transformer principle?" |
+| A.13 | 19820 |  | The Agential Role & Agency Spectrum | kw: agency as role, agency spectrum, contextual role assignment, autonomy grading, substrate-neutral autonomy. \| q: "How does FPF model agency without minting a `U.Agent` type?", "How do I grade autonomy on an evidence-backed spectrum?" |
+| A.14 | 19971 |  | Advanced Mereology: Components, Portions, Aspects & Phases | kw: mereology, part-of, ComponentOf, PortionOf, PhaseOf, composition. \| q: "How to model different kinds of 'part-of' relationships?" |
+| A.15 | 20242 |  | Role-Method-Work Alignment (Contextual Enactment) | kw: role-method-work distinction, `U.Role`, `U.Method`, `U.MethodDescription`, `U.WorkPlan`, actual `U.Work`, contextual enactment, coordinated-work evidence, work admission display, source-restoration boundary. \| q: "How do role, method… |
+| A.15.1 | 20670 |  | `U.Work`: The Record of Occurrence | kw: execution, event, run, actuals, log, occurrence. \| q: "What is a Work record?", "Where are actual resource costs stored?" |
+| A.15.2 | 21096 |  | `U.WorkPlan`: The Schedule of Intent | kw: plan, schedule, intent, forecast. \| q: "How to model a plan or schedule?", "Difference between a WorkPlan and a MethodDescription." |
+| A.15.3 | 21341 |  | `SlotFillingsPlanItem` — Planned Slot-Fillings Baseline (WorkPlanning PlanItem) | kw: planned baseline, slot-bearing description, planned filler, edition pins, `Γ_time` selector, guard pins, WorkPlanning, P2W seam, variance trail. \| q: "What is SlotFillingsPlanItem in FPF?", "How to keep planned slot filling separate … |
+| A.15.4 | 21702 |  | Work-Relevant Source Restoration | kw: work-relevant source restoration, dashboard display, credential view, generated explanation, copied statement, provenance mark, required project-side FPF kind and reference, admissible next project move, blocked overread, P2W load an… |
+| A.16 | 22043 |  | Language-State Move Coordination | kw: language-state, move, admissible move, reopen, sketch-backoff, respecify, retire, handoff. \| q: "How do governed epistemes move across the language-state chart?", "What are the admissible move kinds in FPF?" |
+| A.16.0 | 22390 |  | `U.LanguageStateMoveTrajectory` — Optional trajectory-account normal form | kw: trajectory account, lineage, fork, merge, supersedes, handoff, heavy history. \| q: "When do I publish a language-state trajectory account?", "How does FPF record lineage and branch history?" |
+| A.16.1 | 22634 |  | `U.PreArticulationCuePack` | kw: cue pack, pre-articulation, early publication, cue nucleus, primary witness, candidate route cues. \| q: "What is a PreArticulationCuePack?", "How do I preserve early cues before `RoutedCueSet` publication?" |
+| A.16.2 | 22919 |  | Reopen / SketchBackoff / Respecify | kw: reopen, backoff, respecify, retire, retreat, branch withdrawal, authority withdrawal. \| q: "How do I admissibly reopen or back off a language-state publication?", "How do I retire a branch without silent deletion?" |
+| A.17 | 23144 |  | A.CHR-NORM — Canonical “Characteristic” & rename (Dimension/Axis → Characteristic) | kw: characteristic, measurement, property, attribute, dimension, axis. \| q: "What is the correct term for a measurable property?", "How to define a metric?" |
+| A.18 | 23280 |  | A.CSLC-KERNEL — Minimal CSLC in Kernel (Characteristic/Scale/Level/Coordinate) | kw: CSLC, Characteristic, Scale, Level, Coordinate, polarity, ordinal vs cardinal scale, one-characteristic-one-scale rule, lawful comparability, no illegal averaging, measurement interpretability. \| q: "What must be declared before a va… |
+| A.19 | 23432 |  | CharacteristicSpace & Dynamics Hook (A.CHR-SPACE) | kw: CharacteristicSpace, U.Dynamics.stateSpace, state trajectories, declared Characteristics and Scales, subspace, embedding, product, structural overlays, coordinatewise comparability, role-specific space refs stay outside A.19. \| q: "H… |
+| A.19.ECS | 23830 |  | Evaluation CharacteristicSpace Construction | Constructs or repairs the evaluation `CharacteristicSpace` for one evaluated object kind and use: characteristics, scales, value meanings, evidence rules, missingness, protected trade-offs, status meanings, stop or reopen conditions, and… |
+| A.19.SPR | 24074 |  | State-Family Precision Restoration | Repairs state, status, posture, readiness, stance, currentness, and close state-family wording by recovering bearer, state frame or governing pattern, value set, admissible use, blocked overread, and reopen condition. |
+| A.19.CN | 25314 |  | CN-frame (comparability & normalization) | kw: CN-frame, CN-Spec, chart, comparability modes, normalization refs, indicator policy refs, Γ-fold governance, registry, bridges, CL/loss notes, WLNK discipline, conformance checklist, SCR/RSCR harness, RSG admission hooks. \| q: "What … |
+| A.19.CHR | 25692 |  | `CHRMechanismSuite` — CHR mechanism-suite anchor (suite obligations + P2W planned baseline) | kw: CHR suite, characterization core, CN-Spec, CG-Spec, legality gate, suite obligations, set-return selection, tri-state guard decision, crossing visibility, Bridge-only transport, penalties→R_eff, planned baseline, `SlotFillingsPlanIte… |
+| A.19.UNM | 26375 |  | Unified Normalization Mechanism (UNM) | kw: normalization, `CV→NCV`, `≡_UNM`, `NormalizationMethodId`, `NormalizationMethodInstanceId`, `NormalizationInvariant[*]`, `NormalizationFixSpec`, validity window (no implicit “latest”), fail-closed tri-state guard (`pass |
+| A.19.UINDM | 26797 |  | Unified Indicatorization Mechanism (UINDM) | kw: indicatorization, indicator set, `IndicatorChoicePolicy`, `CN-Spec.indicator_policy`, CHR suite stage `indicatorize`, tri-state admissibility (`pass |
+| A.19.USCM | 27086 |  | Unified Scoring Mechanism (USCM) | kw: scoring, score profile, `ScoringMethodDescription`, ScaleComplianceProfile (SCP), CSLC-lawful transforms, `CG-Spec.MinimalEvidence`, tri-state admissibility (`pass |
+| A.19.ULSAM | 27414 |  | Unified Lawful Scale Aggregation Mechanism (ULSAM) | kw: lawful aggregation, scale-lawful fold, `fold_Γ?`, `ΓFoldRef`, `CG-Spec.Γ_fold`, `CG-Spec.SCP`, `MinimalEvidence`, tri-state guard (`pass |
+| A.19.CPM | 27709 |  | Unified Comparison Mechanism (CPM) | kw: comparison, comparator, `ComparatorSpecRef`, `ComparatorSet`, set-valued comparison outcome, partial order, tri-state admissibility (`pass |
+| A.19.SelectorMechanism | 28040 |  | Unified Selection Kernel (SelectorMechanism) | kw: selection kernel, set-returning selection, selected set, `SelectEligibility`, tri-state guard (`pass |
+| A.20 | 28408 |  | U.Flow.ConstraintValidity — Eulerian | kw: flow, ConstraintValidity, Eulerian, TransformationFlowStructure, GateFit, MVPK, SquareLaw, Sentinel, PathSlice. \| q: "What is ConstraintValidity in FPF?", "What is the Eulerian stance in FPF flows?", "How does E.18 relate to flows?" |
+| A.21 | 28760 |  | GateProfilization: `OperationalGate(profile)` (GateFit core) | kw: OperationalGate, GateFit, GateProfile, GateChecks, join-semilattice, `GateDecision`, `DecisionLog`, EquivalenceWitness, LaunchGate, CV⇒GF. \| q: "What is GateProfilization in FPF?", "How does OperationalGate aggregate GateChecks?", "W… |
+| A.22 | 29173 |  | Structure and Structural Views (STRUCT-CAL) | kw: structure, structural view, selected structure, preserved and lost structure, source return, architecture-description boundary, structural description. \| q: "What is structure in FPF?", "How do I separate structure from a description… |
+| B.1 | 29550 |  | Universal Algebra of Aggregation (Γ) | kw: aggregation, composition, holon, invariants, IDEM, COMM, LOC, WLNK, MONO, gamma operator. \| q: "How does FPF combine parts into a whole?", "What are the rules for aggregation?", "What is the Gamma (Γ) operator?" |
+| B.1.1 | 29718 |  | Dependency Graph & Proofs | kw: dependency graph, proofs, structural aggregators, sum, set, slice. \| q: "What is the input for the Gamma operator?", "How are aggregation invariants proven in FPF?" |
+| B.1.2 | 30043 |  | System-specific Aggregation Γ_sys | kw: system aggregation, physical systems, mass, energy, boundary rules, Sys-CAL. \| q: "How to aggregate physical systems?", "Conservation laws in FPF aggregation?" |
+| B.1.3 | 30180 |  | Γ_epist — Knowledge-Specific Aggregation | kw: knowledge aggregation, epistemic, provenance, trust, KD-CAL. \| q: "How to combine epistemes?", "How does trust propagate in FPF?" |
+| B.1.4 | 30467 |  | Contextual & Temporal Aggregation (Γ_ctx & Γ_time) | kw: temporal aggregation, time-series, order-sensitive, composition. \| q: "How does FPF handle time-series data?", "How to model processes where order matters?" |
+| B.1.5 | 30752 |  | Γ_method — Order-Sensitive Method Composition & Work Enactment | kw: method composition, workflow, sequential, concurrent, plan vs run. \| q: "How to combine methods or workflows?", "How does FPF model complex procedures?" |
+| B.1.6 | 31082 |  | Γ_work — Work as Spent Resource | kw: work, resource aggregation, cost, energy consumption, Resrc-CAL. \| q: "How to calculate the total cost of a process?", "How are resources aggregated in FPF?" |
+| B.2 | 31362 |  | Meta-Holon Transition (MHT): Recognizing Emergence and Re-identifying Wholes | kw: emergence, MHT, meta-system, new whole, synergy, system of systems. \| q: "How does FPF model emergence?", "What is a Meta-Holon Transition?", "When does a collection become more than the sum of its parts?" |
+| B.2.1 | — | Planned | BOSC Triggers | kw: BOSC, triggers for emergence, boundary, objective, supervisor, complexity. \| q: "What triggers an MHT?", "What are the BOSC criteria for emergence?" |
+| B.2.2 | 31647 |  | MST (Sys) — Meta-System Transition | kw: system emergence, super-system, physical emergence. \| q: "How do new systems emerge from parts?", "What is a Meta-System Transition?" |
+| B.2.3 | 31742 |  | MET (KD) — Meta-Epistemic Transition | kw: knowledge emergence, meta-theory, paradigm shift, scientific revolution. \| q: "How do new theories emerge?", "What is a Meta-Epistemic Transition?" |
+| B.2.4 | 31893 |  | MFT (Meta-Functional Transition) | kw: functional emergence, capability emergence, adaptive workflow, new process. \| q: "How do new capabilities or workflows emerge?", "What is a Meta-Functional Transition?" |
+| B.2.5 | 32003 |  | Supervisor–Subholon Feedback Loop | kw: control architecture, feedback loop, supervisor, stability, layered control. \| q: "How does FPF model control systems?", "What is the supervisor-subholon pattern?" |
+| B.3 | 32146 |  | Trust & Assurance Calculus (F–G–R with Congruence) | kw: trust, assurance, reliability, F-G-R, formality, scope, congruence, evidence, claim-support posture, authority-looking labels, dashboard tiles, probe/distributed/export/causal assurance. \| q: "How is trust calculated in FPF?", "When … |
+| B.3.1 | — | Planned | Components & Epistemic Spaces | kw: F-G-R components, measurement templates, epistemic space. \| q: "How are F, G, and R measured?", "What are epistemic spaces?" |
+| B.3.2 | — | Planned | Evidence & Validation Logic (LOG-use) | kw: verification, validation, confidence, logic, proof. \| q: "What is the logic for validating claims in FPF?", "Difference between verification and validation." |
+| B.3.3 | 32738 |  | Assurance Subtypes & Levels | kw: assurance levels, L0-L2, TA, VA, LA, typing, verification, validation. \| q: "What are the assurance levels in FPF?", "How does an assurance record mature in FPF?" |
+| B.3.4 | 32822 |  | Evidence Decay & Epistemic Debt | kw: evidence aging, decay, freshness, epistemic debt, stale data. \| q: "How does FPF handle outdated evidence?", "What is epistemic debt?" |
+| B.3.5 | 32940 |  | CT2R-LOG — Working-Model Relations & Grounding | kw: grounding, constructive trace, working model, assurance layer, CT2R, Compose-CAL. \| q: "How are FPF models grounded in evidence?", "What is the CT2R-LOG?" |
+| B.4 | 33236 |  | Canonical Evolution Loop | kw: evolution loop, DesignRunTag feedback, observe-notice-stabilize-route, drift repair, open-ended evolution. \| q: "How does FPF evolve a system or episteme without design-reality drift?", "Where does pre-abductive routing sit in the ca… |
+| B.4.1 | 33358 |  | Observe -> Notice -> Stabilize -> Route | kw: routed cue set, route plurality, route selection, pre-abductive seam, task-family specialization route. \| q: "How do under-articulated cues become routed before endpoint claim publication?", "When should a cue become a routed cue set… |
+| B.4.2 | — | Planned | Knowledge Instantiation | kw: theory refinement, knowledge evolution, scientific method. \| q: "How are scientific theories refined in FPF?" |
+| B.4.3 | — | Planned | Method Instantiation | kw: adaptive workflow, process improvement, operational evolution. \| q: "How do workflows or methods evolve in FPF?" |
+| B.5 | 33587 |  | Canonical Reasoning Cycle | kw: reasoning, problem-solving, Abduction-Deduction-Induction, scientific method. \| q: "How does FPF model problem-solving?", "What is the canonical reasoning cycle?" |
+| B.5.1 | 33687 |  | Explore → Shape → Evidence → Operate | kw: development state cycle, open-ended progression, state machine, Explore, Shape, Evidence, Operate. \| q: "What states can project work and its records pass through in FPF?" |
+| B.5.2 | 33747 |  | Abductive Loop | kw: abduction, explanatory prompt, candidate hypotheses, plausibility filters, origin trace, route-to-hypothesis. \| q: "How does FPF model abductive hypothesis generation?", "What is the abductive loop?" |
+| B.5.2.0 | 34046 |  | `U.AbductivePrompt` | kw: abductive prompt, prompt species, rival-set discipline, threshold crossing, explanation-ready cue. \| q: "When is a routed cue ready to enter abduction?", "What prompt species does FPF distinguish before hypothesis work begins?" |
+| B.5.2.1 | 34227 |  | Creative Abduction with NQD | kw: creative abduction, NQD binding, Γ_nqd.generate, Creativity-CHR, Q-front, declared Q components, retained exploration/archive evidence, Novelty@context, ΔDiversity_P, E/E-LOG, DecisionSubject note. \| q: "How do I make abductive idea … |
+| B.5.3 | 34401 |  | Role-Projection Bridge | kw: domain-specific vocabulary, concept bridge, mapping, terminology. \| q: "How does FPF integrate domain-specific language?", "What is a Role-Projection Bridge?" |
+
+## Cluster C.I – Core CALs / LOGs / CHRs
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| C.1 | — | Planned | Sys‑CAL | kw: physical system, composition, conservation laws, energy, mass, resources, U.System. \| q: "How to model physical systems in FPF?", "What are conservation laws in FPF?", "Modeling a pump or engine." |
+| C.2 | 34517 |  | KD‑CAL | kw: knowledge, epistemic, evidence, trust, assurance, F-G-R, Formality, ClaimScope, Reliability, provenance. \| q: "What is F-G-R?", "How does FPF handle evidence and trust?", "How to model a scientific theory?". |
+| C.2.1 | 34626 |  | U.Episteme - Epistemes and their slot relation | `U.EpistemeSlotRelation` organizes EntityOfConcern, GroundingHolon, ClaimGraph, Viewpoint, View, ReferenceScheme, RepresentationScheme, and related slots for claim-bearing epistemes across symbolic, diagrammatic, latent, and tool-mediate… |
+| C.2.P | 35469 |  | Epistemic Precision Restoration | Restores precision for source expression, claim-bearing episteme, publication, view, face, carrier, PublicationUnit, EntityOfConcern, grounding relation, pattern-application wording, and FPF-governed use dispositions without turning file… |
+| C.2.2 | 36110 |  | Reliability R in the F–G–R triad | kw: Reliability (R), warrant, evidence-bound, F–G–R, ClaimScope (G), Bridge-only reuse, Congruence Level (CL / CL^k / CL^plane), weakest-link, pathwise justification (PathId), TA/VA/LA lanes, no implicit averaging. \| q: "What is R in F–G… |
+| C.2.2a | 36485 |  | `U.LanguageStateSpace` — Language-state chart over `U.CharacteristicSpace` | kw: language-state chart, characteristic space, position claim, partial coordinates, thresholds, governed episteme publication. \| q: "What is the language-state space in FPF?", "How do I publish a position claim before endpoint claim pub… |
+| C.2.3 | 36753 |  | Unified Formality Characteristic F | kw: Formality, F-scale, F0-F9, rigor, proof, specification, language-state separation. \| q: "What is Formality F in FPF?", "How does F differ from articulation, closure, or anchoring?" |
+| C.2.LS | 37064 |  | `U.LanguageStateFacetProfile` — Compact profile for language-state facets | kw: facet profile, articulation, closure, anchoring, representation factors, threshold package. \| q: "How are language-state facets named together in FPF?", "What is a LanguageStateFacetProfile?" |
+| C.2.4 | 37308 |  | `U.ArticulationExplicitness` | kw: articulation explicitness, semantic shape, under-articulated cue, explicitness, early repair readiness. \| q: "How explicit is a governed episteme already?", "What is ArticulationExplicitness in FPF?" |
+| C.2.5 | 37482 |  | `U.LanguageStateClosureDegree` | kw: closure degree, candidate-space closure, reopen, rival routes, settledness. \| q: "How closed is the current candidate space?", "What is LanguageStateClosureDegree in FPF?" |
+| C.2.6 | 37667 |  | `U.LanguageStateAnchoringMode` | kw: anchoring mode, embodiment, trace, model state, document, operator loop. \| q: "How is a language-state claim anchored in FPF?", "What is LanguageStateAnchoringMode?" |
+| C.2.7 | 37832 |  | `U.LanguageStateRepresentationFactorBundle` | kw: representation factors, locality, sparsity, symbolicity, factor bundle, representation organization. \| q: "How does FPF describe representation factors in language-state work?", "What is the representation-factor bundle?" |
+| C.2.P.DR | 37997 |  | Declarative Representation Precision Restoration | Repairs overread of graph paths, evidence paths, query paths, dashboards, schemas, formal substrates, method descriptions, publication faces, and pattern relations when a declarative representation is treated as method, work, gate, relea… |
+| C.3 | 38301 |  | Kind‑CAL — Kinds, Intent/Extent, and Typed Reasoning | kw: kind, type, intension, extension, subkind, typed reasoning, classification, vocabulary. \| q: "How does FPF handle types?", "What is a 'Kind'?", "Difference between 'scope' and 'type'?". |
+| C.3.1 | 39160 |  | `U.Kind` & `U.SubkindOf` (Core) | kw: kind, subkind, partial order, type hierarchy. \| q: "What is U.Kind in FPF?", "How to model 'is-a' relationships?". |
+| C.3.2 | 39283 |  | `KindSignature` (+F) & `Extension`/`MemberOf` | kw: KindSignature, intension, extension, MemberOf, Formality F, determinism. \| q: "How to define the meaning of a Kind?", "What is the difference between intent and extent in FPF?". |
+| C.3.3 | 39484 |  | `KindBridge` & `CL^k` — Cross‑context Mapping of Kinds | kw: KindBridge, type-congruence, CL^k, cross-context mapping, R penalty. \| q: "How to map types between domains?", "What is a KindBridge?". |
+| C.3.4 | 39720 |  | `RoleMask` — Contextual Adaptation of Kinds (without cloning) | kw: RoleMask, context-local adaptation, constraints, subkind promotion. \| q: "How to adapt a Kind for a local context?", "What is a RoleMask in FPF?". |
+| C.3.5 | 39944 |  | `KindAT` — Intentional Abstraction Facet for Kinds (K0…K3) | kw: KindAT, abstraction tier, K0-K3, informative facet, planning. \| q: "What are the abstraction tiers for Kinds?", "How to plan formalization effort?". |
+| C.3.A | 40107 |  | Typed Guard Macros for Kinds + USM (Annex) | kw: Typed guard, ESG, Method-Work, USM, Kind-CAL, regulatory profile. \| q: "How to write a typed guard?", "How do Kinds and USM interact in gates?". |
+| C.4 | — | Planned | Method‑CAL | kw: method, recipe, procedure, workflow, SOP, MethodDescription, operator. \| q: "How to model a process or workflow?", "What is a MethodDescription in FPF?". |
+| C.5 | — | Planned | Resrc‑CAL | kw: resource, energy, material, information, cost, budget, consumption, Γ_work. \| q: "How does FPF model resource usage?", "How to track costs of a process?". |
+| C.6 | — | Planned | LOG‑CAL – Core Logic Calculus | kw: logic, inference, proof, modal logic, trust operators, reasoning. \| q: "What is the base logic of FPF?", "How does FPF handle formal proofs?". |
+| C.7 | — | Planned | CHR‑CAL – Characterisation Kit | kw: characteristic, property, measurement, metric, quality. \| q: "How to define a new measurable property in FPF?", "What is a CHR pattern?". |
+
+## Cluster C.II – Domain‑Specific Patterns
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| C.9 | — | Planned | Agency‑CHR | kw: agency, agent, autonomy, decision-making, active inference. \| q: "How to measure autonomy?", "What defines an agent in FPF?". |
+| C.10 | — | Planned | Norm‑CAL | kw: norm, constraint, ethics, obligation, permission, deontics. \| q: "How to model rules and constraints?", "Where are ethical principles defined in FPF?". |
+| C.11 | 40835 |  | Decision Theory (Decsn-CAL) | kw: decision theory, DecisionSubject, OptionSet, comparison basis, ChoiceRule, ChoiceResult, question order, probe-worthiness, non-shared comparison frame, ValueOfInformation, ValueOfComputation, choose now, reject current set, probe aga… |
+
+## Cluster C.III – Meta‑Infrastructure CALs
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| C.12 | — | Planned | ADR‑Kind-CAL | kw: versioning, rationale, DRR, architecture decision record. \| q: "How are changes to kinds managed?". |
+| C.13 | 41547 |  | Compose‑CAL — Constructional Mereology | kw: mereology, part-whole, composition, sum, set, slice, extensional identity. \| q: "How does FPF formally construct parts and wholes?", "What is Compose-CAL?". |
+
+## Cluster C.IV – Composite & Macro‑Scale
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| C.14 | — | Planned | M‑Sys‑CAL | kw: system-of-systems, infrastructure, large-scale systems, orchestration. \| q: "How to model a complex infrastructure like a power grid?". |
+| C.15 | — | Planned | M‑KD‑CAL | kw: paradigm, scientific discipline, meta-analysis, knowledge ecosystem. \| q: "How to model an entire field of science?". |
+| C.16 | 41742 |  | MM-CHR — Measurement & Metrics Characterization | kw: measurement, measurement template, `U.DHCMethod(Ref)`, `U.Measure`, `U.Unit`, `U.EvidenceStub`, polarity, direct comparability, scoring method disclosure, probe-changing-state, shared-frame check, CSLC. \| q: "How do I define a measur… |
+| C.16.P | 42154 |  | Characteristic and Scale Precision Restoration | Repairs overloaded characteristic, scale, coordinate, metric, score, indicator, threshold, comparison, and scalar-quality wording before C.16/A.17-A.19/C.25/C.29/E.21 or another governing pattern is applied. |
+| C.16.Q | 42384 |  | Quality-Term Precision Restoration | Repairs overloaded quality and evaluative-characterization wording by selecting an endpoint-governed evaluative form or a bounded transitional quality-term repair form with declared bearer, evaluation frame, sense family, admissible norm… |
+| C.17 | 43161 |  | Creativity‑CHR — Characterising Generative Novelty & Value | kw: Creativity-CHR, Novelty@context, Use-Value and ValueGain, Surprise, ConstraintFit, Diversity_P, Originality, ResourceEfficiency, MM-CHR measurement templates, ReferenceBase, evidence, portfolio composition. \| q: "How do I make a crea… |
+| C.18 | 43881 |  | NQD‑CAL — Open‑Ended Search Calculus | kw: NQD-CAL, Γ_nqd.generate, Γ_nqd.updateArchive, Γ_nqd.illuminate, Γ_nqd.selectFront, DescriptorMapRef, DistanceDefRef, NQDArchive, CandidateSet, Front vs ExplorationArchive, IlluminationSummary report-only telemetry, EmitterPolicyRef, … |
+| C.18.1 | 43992 |  | SLL — Scaling‑Law Lens (binding) | kw: scaling law, scale variables (S), compute‑elasticity, data‑elasticity, resolution‑elasticity, exponent class, knee, diminishing returns. \| q: "How to make search scale‑savvy?", "Where to declare scale variables and expected elasticit… |
+| C.19 | 44094 |  | Explore–Exploit Governor (E/E‑LOG) | kw: explore-exploit, live candidate pool, pool-policy result, widen, keep frontier, narrow to subset, sunset line, reroute, EmitterPolicy, InsertionPolicy, lens id, dominance default routing, DecisionSubject clarification. \| q: "How shou… |
+| C.19.1 | 44448 |  | Bitter‑Lesson Preference (BLP) | BLP comparison and waiver discipline for scalable general methods versus bounded specialization, including `E.23` method-family choice and cost/risk posture. |
+| C.20 | 44554 |  | Discipline‑CAL — Composition of `U.Discipline` | kw: discipline, **U.AppliedDiscipline**, **U.Transdiscipline**, episteme corpus, standards, institutions, **Γ_disc**. \| q: "How to compose and assess a discipline in FPF?" |
+| C.21 | 44654 |  | Discipline‑CHR - Field Health & Structure | kw: discipline, field health, reproducibility, standardisation, alignment, disruption. \| q: "How to measure the health of a scientific field?", "What is reproducibility rate?". |
+| C.22 | 44887 |  | Problem Typing & TaskSignature Assignment (Problem‑CHR) | kw: Problem‑CHR, TaskSignature, TaskKind, ScopeSlice(G), unknown handling, specialization anchor. \| q: "How does FPF bind a typed `TaskSignature` for lawful selection?", "How does TaskSignature stay separate from method choice and specia… |
+| C.22.1 | 45102 |  | Task-family adaptation signature | Durable task-family specialization fields: threshold target, time-to-threshold, budget-to-threshold, prior exposure, transfer, retention, downside, and corridor entry. |
+| C.22.2 | 45251 |  | ProblemCard@Context | kw: problem card, problem-side record, P2W-ready, Thin problem card, `setContextRef`, problem signal, support posture, validation boundary, first-principles cue, `safe-probe-needed`, freshness and unknown disposition. \| q: "How do I turn… |
+| C.23 | 45900 |  | Method‑SoS‑LOG — MethodFamily Evidence & Maturity | kw: MethodFamily, evidence, maturity, SoS-LOG, admit, degrade, abstain, selector. \| q: "How is method family maturity assessed?", "What is the SoS-LOG for selection?". |
+| C.24 | 46103 |  | Agentic Tool-Use and Call Planning (C.Agent-Tools-CAL) | Call-route and call-plan discipline for tool-using agents: plan/work separation, checkpoint return, tool-call budget, stop or replan condition, and overread boundaries. |
+| C.25 | 46451 |  | Q-Bundle: Authoring "-ilities" as Structured Quality Bundles | kw: quality bundle, -ility, quality family, characteristic plus scope, mechanism/status slots, endpoint classification, viability envelope, proxy metric, admissible quality-family use, failure mode. \| q: "What is a Q-Bundle in FPF?", "Wh… |
+| C.26 | 46864 |  | Quantum-Like Modeling Lens | kw: quantum-like, QL-lite, QL-NQ, probe frame, order effect, incompatible probes, instrument update, state export, source-loss coarsening, minimal admissible output. \| q: "When is quantum-like useful as a mathematical lens in FPF?", "Wha… |
+| C.26.1 | 47457 |  | Probe-Coupled Boundary Interaction | kw: probe-coupled boundary, passive read, dashboard as instrument, workshop as state-changing interaction, API read, survey, bridge result, export loss, evidence window. \| q: "When does a dashboard, workshop, metric, or API read change w… |
+| C.26.2 | 47757 |  | Enacted Distributed State Evidence | kw: distributed-state evidence, coordinated work, enacted state, minimal state reading, evidence carrier, window, rival explanation, no group mind, report/export loss. \| q: "When does coordinated work evidence a state no participant repo… |
+| C.26.3 | 48100 |  | Viability-Envelope Boundary Regulation | kw: viability envelope, homeostasis, allostasis, boundary regulation, sensor/probe/actuator split, metric-induced distortion, service viability, quality bundle, failure mode. \| q: "When is viability more than one green metric?", "How do … |
+| C.27 | 48426 |  | Temporal Claim Adequacy: State Readings, Temporal Trends, and Intervention-Sensitive Temporal Change | kw: temporal claim adequacy, temporal claim, state reading, rate reading, temporal trend, rate-change, intervention-sensitive temporal change, effort window, resistance/inertia, rhythm/cadence, throughput, recovery, braking, coasting, st… |
+| C.27.TA | 50388 |  | Temporal Aspect: Time Windows, Rhythm, Cadence, and Currentness | kw: temporal aspect, time window, freshness, currentness, rhythm, cadence, validity window, recovery timing. \| q: "Which time relation matters for this claim or object?", "How do I state freshness, rhythm, latency, or validity window wit… |
+| C.28 | 50660 |  | CausalUse-CAL: Causal-Use Questions, Causality-Ladder Rungs, Identification and Realizability | kw: causal-use question, causality ladder, association, intervention, counterfactual, Pearl Causal Hierarchy, Structural Causal Model, causal diagram, causal estimand, identification, counterfactual sampling realizability, causal evidenc… |
+| C.29 | 51527 |  | Mathematical Lens Use | kw: mathematical lens, structure-preserving representation, lens mapping mode, preserved structure, lost structure, invariants, stop condition, scale window, coarse-graining, rival lens, `LensUseAdmissibilityValue`, validation boundary, … |
+| C.30 | 52868 |  | Grounded Architecture and Selected-Structure Adequacy | kw: grounded architecture, ArchitectureOf@Context, selected structure, architecture claim, architecture question card, architecture-description boundary, artifact-as-architecture guard. \| q: "How do I recover a grounded architecture clai… |
+| C.30.AD | 53417 |  | Architecture Description Adequacy | kw: architecture description, ArchitectureDescription@Context, architecture description use card, architecture structural view, viewpoint, correspondence, source return, specification-use boundary. \| q: "When is an architecture descripti… |
+| C.30.P | 53766 |  | Architecture and Structure Precision Restoration | Repairs architecture or structure wording whose EntityOfConcern or claim kind is hidden before A.22, C.30, C.30.AD, C.30.ASV, a selected C.30.* pattern |
+| C.30.STRAT | 54006 |  | Stratification Wording Precision Restoration | Repairs source-label uses such as layer, level, tier, stack, ladder, rung, block, expert, cache, router, and gate by recovering selected ontological neighborhood, primary EntityOfConcern kind, governing pattern, admissible use, and remai… |
+| C.30.ASV | 54275 |  | Architecture Structural View Adequacy (ASV) | kw: architecture structural view, ArchitectureStructureKindRef, VF.ARCH.STRUCTURE, viewpoint bundle, structure kind, hidden/lost structure, correspondence, source return. \| q: "Which structure kind does this architecture view describe?",… |
+| C.30.LCA | 54969 |  | Control Structure View Adequacy (LCA) | kw: control-structure view, layered control architecture, supervisor loop, controller/plant, rate band, control layer, proof overread. \| q: "When is LCA a control-structure view rather than proof?", "How do layer, level, stack, and rate … |
+| C.30.ILC | 55238 |  | Cross-Scope Architecture Residual Triage | kw: cross-scope residual, interlevel conflict, frustration, declared scope, structure kind, local repair, source return. \| q: "What is the first architecture move when a local fix creates a residual elsewhere?", "How do level, layer, sco… |
+| C.31 | 55825 |  | Modularity and Reusable Structure Characteristics | kw: modularity characteristics, reusable-structure characteristics, coupling, cohesion, substitutability, interface variation, evidence reuse, bespoke residue, ModularityVectorLite. \| q: "Which modularity characteristic is under evaluati… |
+| C.31.RSA | 56188 |  | Reusable Structure Accounting | kw: reusable-structure accounting, reusable share, bespoke residue, accounting basis, report-only share, source return, refactoring opportunity. \| q: "Where is reusable structure located?" |
+| C.31.ASAP | 56568 |  | Architecture Scale-Amenability Preference | kw: architecture scale preference, scale amenability, ScaleClaimTriage, scale variable, scale window, architecture alternatives, source-return condition, coarse-graining, RG, platform scale claim, waiver reason. \| q: "When does modularit… |
+| D.2.1 | — | Planned | Local-Agent Ethics | kw: individual ethics, duties, permissions, agent, system. \| q: "Modeling duties for a single agent." |
+| D.2.2 | — | Planned | Group-Ethics Standards | kw: collective norms, team ethics, veto, subsidiarity. \| q: "How to define rules for a team in FPF?" |
+| D.2.3 | — | Planned | Ecosystem Stewardship | kw: externalities, tragedy of the commons. \| q: "Modeling ethical impact on an ecosystem." |
+| D.2.4 | — | Planned | Planetary-Scale Precaution | kw: catastrophic risk, long-termism, precautionary principle. \| q: "How does FPF handle long-term ethical risks?" |
+| D.3.1 | — | Planned | Conflict Detection Logic (LOG-use) | kw: conflict detection, logic, predicates, `conflictsWith`. \| q: "Formal logic for detecting conflicts." |
+| D.3.2 | — | Planned | Conflict Routing Protocol | kw: routing, mediation, negotiation, DRR, appeals. \| q: "How does FPF route unresolved conflicts?" |
+| D.4.1 | — | Planned | Fair-Share Negotiation Operator | kw: fair division, negotiation, Nash bargaining, bias correction. \| q: "Modeling fair negotiation between agents." |
+| D.4.2 | — | Planned | Assurance-Driven Override | kw: safety override, assurance, utility, risk management. \| q: "When does safety override performance in FPF?" |
+| D.5 | 56868 |  | Bias-Audit & Ethical Assurance | kw: bias, audit, ethics, assurance, fairness, review cycle, taxonomy, AI ethics, responsible AI. \| q: "How does FPF handle bias?", "What is the Bias-Audit Cycle?", "How to ensure a model is fair?", "Ethical review process in FPF." |
+| D.5.1 | — | Planned | Taxonomy-Guided Audit Templates | kw: bias taxonomy, audit checklist, template. \| q: "Templates for conducting a bias audit." |
+| D.5.2 | — | Planned | Assurance Metrics Roll-up | kw: ethical risk index, metrics, evidence, roll-up. \| q: "How to calculate an overall ethical risk score in FPF?" |
+
+## Cluster E.I — The FPF Constitution
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| E.1 | 57040 |  | Vision & Mission | kw: vision, mission, operating system for thought, purpose, scope, goals, non-goals. \| q: "What is FPF?", "What is the purpose of the First Principles Framework?", "What problem does FPF solve?". |
+| E.2 | 57101 |  | The Eleven Pillars | kw: principles, constitution, pillars, invariants, core values, rules, P-1 to P-11. \| q: "What are the core principles of FPF?", "What are the eleven pillars?". |
+| E.2.DA | 57225 |  | FPF Pillar-Adequacy Evaluation CharacteristicSpace | FPF-level object-under-improvement evaluation derived from the `E.2` Pillars for FPF as a whole, a corpus slice, release candidate, pattern family, projection set, or host set, including content-loss and excess-apparatus regressions. |
+| E.3 | 57499 |  | Principle Taxonomy & Precedence Model | kw: taxonomy, precedence, conflict resolution, hierarchy, principles, classification, Gov, Arch, Epist, Prag, Did. \| q: "How does FPF resolve conflicting principles?", "What is the hierarchy of FPF rules?". |
+| E.4 | 57653 |  | FPF Ecosystem Family Architecture | kw: ecosystem families, Conceptual Core, Tooling Reference, Pedagogical Companion, canon, tutorial, linter. \| q: "How are FPF publications, tools, and learning companions structured?", "What is the difference between the core spec and to… |
+| E.5 | 57723 |  | Four Guard-Rails of FPF | kw: guardrails, constraints, architecture, rules, safety, GR-1 to GR-4. \| q: "What are the main architectural constraints in FPF?". |
+| E.5.1 | 57824 |  | DevOps Lexical Firewall | kw: lexical firewall, jargon, tool-agnostic, conceptual purity, DevOps, CI/CD, yaml. \| q: "Can I use terms like 'CI/CD' in FPF core patterns?". |
+| E.5.2 | 57899 |  | Notational Independence | kw: notation, syntax, semantics, tool-agnostic, diagram, UML, BPMN. \| q: "Does FPF require a specific diagram style?", "How is meaning defined in FPF?". |
+| E.5.3 | 57978 |  | Unidirectional Dependency | kw: dependency, layers, architecture, modularity, acyclic, Core, Tooling, Pedagogy. \| q: "What are the dependency rules between FPF ecosystem families?". |
+| E.5.4 | 58058 |  | Cross-Disciplinary Bias Audit | kw: bias, audit, ethics, fairness, trans-disciplinary, neutrality, review. \| q: "How does FPF handle bias?", "Is there an ethics review process in FPF?". |
+
+## Cluster E.II — The Author’s Handbook
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| E.6 | 58142 |  | Didactic Architecture of the Spec | kw: didactic, pedagogy, structure, narrative flow, on-ramp, learning. \| q: "How is the FPF specification structured for learning?", "What is the 'On-Ramp first' principle?". |
+| E.7 | 58242 |  | Archetypal Grounding Principle | kw: grounding, examples, archetypes, U.System, U.Episteme, Tell-Show-Show. \| q: "How are FPF patterns explained?", "What are the standard examples in FPF?". |
+| E.8 | 58326 |  | FPF Authoring Conventions and Style Guide | Pattern body as user-facing pattern body; recognition text and assurance text; working-reader boundary; positive subject/action spine; precision-restoration profile and phrase-apparatus cleanup; evaluation-characteristic-space pattern pu… |
+| E.8.ECSPF | 58893 |  | Evaluation CharacteristicSpace FPF Pattern Publication Form | Authoring form for publishing an accepted evaluation `CharacteristicSpace` as an FPF pattern while preserving working-reader recognition, value meanings, non-use boundaries, neighbour relations, governing-pattern references, and phrase-a… |
+| E.9 | 59073 |  | Design-Rationale Record (DRR) Method | `DRR` as one bounded decision and rationale record: exact basis, selected answer, source and decision carry-through, positive content distribution to patterns and selected non-pattern FPF kind-reference pairs, kind-or-boilerplate diagnos… |
+| E.9.DA | 59420 |  | DRR Decision-Adequacy Evaluation CharacteristicSpace | Evaluates whether one `DRR` is decisive enough for its declared FPF authoring use: selected answer, source carry-through, selected-locus distribution, rejected alternatives, first drafting move, and phrase-apparatus or boilerplate debt b… |
+| E.10 | 59699 |  | Unified Lexical Rules for FPF | Word, head, and use precision; register discipline; term formation; ontology guards; precision-restoration trigger registry; and closure rule: local wording accepted, rewritten to kind or relation named by value, or sent to the selected … |
+| E.10.ARCH | 61360 |  | Wording-Use Ontological Precision Restoration Architecture | Distributes wording-use precision restoration: E.10 catches overloaded wording, E.10.ARCH selects the applicability row, selected restoration or governing patterns recover ontology, F.19 handles phrase-level apparatus after kind recovery… |
+| E.10.P | 61707 |  | Conceptual Prefixes (policy & registry) | kw: prefixes, U., Γ_, ut:, tv:, namespace, registry. \| q: "What do the prefixes like 'U.' mean in FPF?". |
+| E.10.D1 | 61737 |  | Lexical Discipline for “Context” (D.CTX) | kw: context, U.BoundedContext, anchor, domain, frame. \| q: "What is the formal meaning of 'Context' in FPF?". |
+| E.10.D2 | 61916 |  | EntityOfConcern, Description Episteme, and Specification-Use Discipline | kw: EntityOfConcern, Description episteme, specification use, DescriptionContext, testable, verifiable. \| q: "Difference between a description and a specification in FPF?". |
+| E.11 | 62271 |  | First-Practical Entry and Pattern-Use Discoverability Discipline | Public `readme` first-entry scenarios, Preface plain-engineering explanation of FPF ideas, ToC/retrieval cues, local Problem-frame recognition, expanded entry-disambiguation cases, and projection-boundary discipline. |
+| E.12 | 62593 |  | Didactic Primacy & Cognitive Ergonomics | kw: didactic, cognitive load, ergonomics, usability, Rationale Mandate, HF-Loop. \| q: "How does FPF ensure it's understandable?", "What is the 'So What?' test in FPF?". |
+| E.13 | 62681 |  | Pragmatic Utility and Value Alignment | kw: pragmatic utility, proxy-to-value alignment, Goodhart, Campbell, surrogation, minimally viable value slice. \| q: "How does FPF keep measures from replacing value?", "What got worse when the score improved?". |
+| E.14 | 62872 |  | Human-Centric Working-Model | kw: working model, human-centric, publication surface, grounding, assurance layers. \| q: "What is the main interface for FPF users?", "How does FPF separate human-readable models from formal assurance?". |
+| E.15 | 63173 |  | Lexical Authoring & Evolution Protocol (LEX-AUTH) | kw: lexical authoring, evolution protocol, LAT, delta-classes. \| q: "How are FPF patterns authored and evolved?", "What is a Lexical Authoring Trace (LAT)?". |
+| E.16 | 63359 |  | RoC‑Autonomy Budget & Enforcement | kw: autonomy budget, guarded enactment, autonomy ledger, override speech act, scout/probe/commit checkpoint. \| q: "How does FPF make autonomy enforceable and auditable?", "How do bounded specialization budgets stay separate from committe… |
+| E.17.0 | 63566 |  | U.MultiViewDescribing - Viewpoints, Views & Correspondences | Multi-view describing for families of Description epistemes and specification-use Description epistemes indexed by EntityOfConcernClass, EntityOfConcernRef, bounded context, and viewpoint; keeps viewpoint, episteme-lane view, publication… |
+| E.17.1 | 63956 |  | `U.ViewpointBundleLibrary` — Reusable Viewpoint Bundles | kw: viewpoint bundle, reusable viewpoint family, import discipline, alias discipline, governance, engineering/management/research bundles. \| q: "How do I define reusable viewpoint bundles in FPF?", "What is a ViewpointBundleLibrary?" |
+| E.17.2 | 64328 |  | TEVB - Typical Engineering Viewpoints Bundle | Archetypal engineering viewpoint bundle for holons, with Functional, Procedural, Role-Enactor or Device-Structure, and Module-Interface viewpoints over an `EntityOfConcernClass = U.Holon`; architecture-specific viewpoint bundles import T… |
+| E.17 | 64760 |  | Multi-View Publication Kit | Publication discipline for generic publication faces and governed MVPK faces; `U.View`, publication form, carrier and front-end, source pins, admissible publication use, and no face becoming evidence, gate, decision, or work by presentat… |
+| E.17.EFP | 65347 |  | ExplanationFaithfulnessProfile — explanation-use discipline over existing MVPK faces | Explanation-facing rendering classes; source-pinned rendering, source-linked reconstruction, didactic retelling, speculative retelling; admissible explanation use and boundary to evidence, gate, work, and source return. |
+| E.17.ID.CR | 65856 |  | ComparativeReviewUnit - bounded comparison over comparative review units | Comparative review unit, source anchors, comparison basis, bounded lift, blocked downstream claim or effect, and boundary to decision, equivalence, bridge, coarsening, explanation, prompt, ontology, or gate work. |
+| E.17.AUD | 66573 |  | PublicationUnit Stability Discipline | One bounded publication unit as a readable unit; primary EntityOfConcern or subject named by value, carried publication move, and outside boundary to work, decision, gate, or reliance claim; choose local head restoration, whole-unit stab… |
+| E.17.AUD.LHR | 66870 |  | PublicationUnit Stability Discipline and Local Head Restoration | Repair one overloaded local lexical head inside one publication unit before the whole publication unit inherits ambiguity; recover local head kind, active local reading, local head kind, carried move or question under repair, and outside… |
+| E.17.AUD.OOTD | 67235 |  | PublicationUnit Stability Discipline and PublicationUnit Primary EntityOfConcern Discipline | Keep one publication unit explicit about one primary EntityOfConcern or subject named by value, one carried move over that entity, and one outside-work boundary; stop quiet shifts into another primary EntityOfConcern, concern, or wider p… |
+| E.18 | 67554 |  | Transformation Flow Structure | kw: transformation flow structure, selected transformations, flow valuation, crossings, guards, composition, P2W support. \| q: "How do transformations compose into a selected flow structure?", "When is a graph/path a selected structure, … |
+| E.18.1 | 68103 |  | Principles-to-Work Carry-Through | kw: P2W, principles-to-work, carry-through record, accepted ProblemCard@Context, formal substrate, mechanism realization, method-family selection, work planning, evaluation refresh. \| q: "How do accepted problem-side distinctions become … |
+| E.18.2 | 68471 |  | Transformation Flow Mathematical Description | kw: mathematical description, transformation-flow math, graph expression, path expression, algebraic description, C.29 boundary. \| q: "When is a transformation-flow graph a mathematical description rather than the project structure?", "H… |
+| E.19 | 68672 |  | Pattern Quality Gates: Review and Refresh Profiles | Pattern-quality review and refresh profiles; PCP-TERM, PCP-ENTRY, SoTA binding, terminology restoration, reader-role discipline, support-role parity, phrase-apparatus cleanup, semantic trust, profile-depth decisions, and quality-evaluati… |
+| E.20 | 69353 |  | Mechanism Introduction Protocol (MIP) | kw: mechanism introduction, authoring protocol, governing-definition assignment, MIP-run manifest, canonical card-first, no dangling `…IntensionRef`, suite boundary hygiene, P2W seam, SlotKind lexicon discipline, alias docking, typed RSC… |
+| E.21 | 69760 |  | FPF Pattern-Quality Evaluation CharacteristicSpace | Evaluates one FPF pattern version for a declared reader, use, and scope with one required coordinate set, ordinal values with short rationales, protected trade-offs, precision-restoration profile, status, and stop or reopen conditions. |
+| E.22 | 70124 |  | Improvement-Oriented Quality Evaluation Question Framing | Frames one improvement-oriented quality evaluation over an object version named by value under a declared object-under-improvement evaluation, including evaluation purpose, floor or improvement aim, protected trade-offs, evidence basis, … |
+| E.23 | 70339 |  | Quality Improvement Loop Method | Repeated quality-improvement method parameterized by an object version named by value under improvement and object-under-improvement evaluation; governs change, re-evaluation, absorption, stop, continue, switch-method, open-new-frame, ho… |
+| E.24 | 70563 |  | U.Ontic and Ontic Introduction Discipline | Governs when a repeated FPF construct becomes a durable action-facing ontic with stable identity, typed slot relation, dependent-pattern obligations, local-use-frame alternatives, and publication boundary. |
+| E.24.CD | 71040 |  | Ontic Candidate Detection | Detects when repeated FPF or project material may need a durable ontic rather than a local record, table, schema, card, publication form, or wording repair; names candidate signals, sufficiency rationale, hidden-form classifications, and… |
+| E.24.PUB | 71340 |  | Ontic Description and Publication Discipline | Keeps an ontic, its description episteme, its publication, and the publication form distinct; prevents cards, records, tables, schemas, diagrams, views, pattern hosts, or source packets from becoming the ontic by appearance. |
+| F.0.1 | 71584 |  | Contextual Lexicon Principles | kw: local meaning, context, semantic boundary, bridge, congruence, lexicon, U.BoundedContext. \| q: "How does FPF handle ambiguity?", "What is the principle of local meaning?", "How do different contexts communicate?". |
+
+## Cluster F.I — Context of Meaning and Lexical Inputs
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| F.1 | 71901 |  | Domain‑Family Landscape Survey | Keywords: domain‑family survey, context map, canon, scope notes, versioning, authoritative source. |
+| F.2 | 72225 |  | Term Harvesting & Normalisation | kw: term harvesting, lexical unit, normalization, provenance, source-text terms. \| q: "How to extract terminology from a standard?", "What is a local lexical unit?", "How to handle synonyms within one domain?". |
+| F.3 | 72522 |  | Intra‑Context Sense Clustering | kw: sense clustering, disambiguation, Local-Sense, SenseCell, counter-examples. \| q: "How to group similar terms within a single domain?", "What is a SenseCell?", "How to handle words with multiple meanings in one context?". |
+
+## Cluster F.II — Concept-Sets & Role Assignment/Description (definition, naming, decision)
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| F.4 | 72841 |  | Role Description (RCS + RoleStateGraph + Checklists) | kw: role template, status template, invariants, RoleStateGraph (RSG), Role Characterisation Space (RCS). \| q: "How to define a role in FPF?", "What is a Role Description?", "How to specify the states of a role?". |
+| F.5 | 73175 |  | Naming Discipline for U.Types & Roles | kw: naming conventions, lexical rules, morphology, twin registers, U.Type naming. \| q: "What are the rules for naming roles in FPF?", "How to create clear and consistent names for concepts?". |
+| F.6 | 73468 |  | Role Assignment & Enactment Cycle (Six-Step) | kw: role assignment, enactment, conceptual moves, asserting status. \| q: "What is the process for assigning a role?", "How is a role enacted in FPF?", "What are the six steps of role assignment?". |
+| F.7 | 73844 |  | Concept‑Set Table Construction | kw: concept-set, table, row, columns, differences, comparisons. \| q: "How do I create a concept-set table?", "How do I compare concepts across contexts?". |
+| F.8 | 74117 |  | Mint or Reuse? (U.Type vs Concept-Set vs Role Description vs Alias) | kw: decision lattice, type explosion, reuse, minting new types, parsimony. \| q: "When should I create a new U.Type?", "How to avoid creating too many roles?", "Decision guide for new concepts.". |
+
+## Cluster F.III — Cross‑Context Alignment & Applied Bindings
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| F.9 | 74500 |  | Alignment & Bridge across Contexts | kw: bridge, cross-context alignment, CL, direction, loss notes, Bridge-supported use, bridge reading, weakest-link scope, state export. \| q: "How do I bridge concepts across contexts?", "How do I express alignment safely in FPF?", "When … |
+| F.9.1 | 75076 |  | Bridge Stance Overlay | kw: bridge stance, stance overlay, interpretive gloss, projection note, rename note, language-state comparisons, overlay annotation. \| q: "How do I add a stance gloss to a bridge card without changing bridge semantics?", "What is the Bri… |
+| F.10 | 75269 |  | Status Families Mapping (Evidence • Standard • Requirement) | kw: status, evidence, standard, requirement, polarity, applicability windows. \| q: "How to map different types of status like 'evidence' and 'requirement'?", "How does FPF handle compliance?". |
+| F.11 | 75521 |  | Method Quartet Harmonisation | kw: Method, MethodDescription, Work, Actuation, Role–Method–Work alignment. \| q: "How to align the concepts of 'method' and 'work' across domains?", "What is the method quartet?". |
+| F.12 | 75843 |  | Service Acceptance Binding | kw: Service Level Objective (SLO), Service Level Agreement (SLA), acceptance criteria, binding, observation. \| q: "How to bind an SLO to actual work?", "How is service acceptance modeled in FPF?". |
+
+## Cluster F.IV — Lexical Development Cycle, Growth Control, Tests & Examples
+
+| ID | Line | Status | Title | Keywords & queries |
+|----|------|--------|-------|--------------------|
+| F.13 | 76167 |  | Lexical Continuity & Deprecation | kw: evolution, deprecation, renaming, splitting terms, merging terms. \| q: "How to manage changes to terminology over time?", "What is the process for renaming a concept?". |
+| F.14 | 76465 |  | Anti‑Explosion Control (Roles & Statuses) | kw: vocabulary growth, guard-rails, separation-of-duties, bundles, reuse. \| q: "How to prevent having too many roles and statuses?", "What are the strategies for controlling vocabulary size?". |
+| F.15 | 76785 |  | SCR/RSCR Harness for Unification | kw: static checks, regression tests, acceptance tests, validation, SenseCell testing. \| q: "How is the unification process validated?", "What are SCR/RSCR tests in FPF?". |
+| F.16 | 77213 |  | Worked‑Example Template (Cross‑Domain) | kw: didactic template, example, pedagogy, cross-domain illustration. \| q: "What is the standard format for a worked example in FPF?", "How to show a concept applied across different fields?". |
+| F.17 | 77498 |  | Unified Term Sheet (UTS) | kw: Unified Term Sheet, UTS, summary table, glossary, publication, human-readable output. \| q: "What is the final output of the FPF unification process?", "Where can I find a summary of all unified terms?". |
+| F.18 | 77764 |  | Local-First Unification Naming Protocol | Local-first naming; Name Cards; guarded heads; NQD-front label candidates; context-bound semantic read-through; interpretive-view wording; stewardship context examples; FPF kind named by value and reference naming instead of topic-like o… |
+| F.19 | 78214 |  | Ontology-First Plain Technical Rewriting | Ontology-first plain rewriting; phrase apparatus; boilerplate apparatus; negative catalogue; pattern-application drift; kind-preserving plain technical prose. |
+| G.Core | 78449 |  | Part G Core Invariants | kw: Part‑G invariants, delegation-first core, RSCR trigger kinds, Default Governing Definition Index, ID continuity, core linkage. \| q: "How to universalize Part G without drift?", "How to make RSCR triggers id-based?" |
+| G.0 | 78892 |  | CG-Spec — Frame Standard & Comparability Governance | kw: CG-Spec, CG-Frame, legality gate, ComparatorSet, ScaleComplianceProfile (SCP), MinimalEvidence, Γ-fold, Φ(CL), Φ_plane, CL-routing, ReferencePlane, edition pins, RSCRTriggerKindId. \| q: "What is CG-Spec in FPF?", "How does CG-Spec co… |
+| G.1 | 79237 |  | CG-Frame-Ready Generator | kw: generator chassis, generator, selector, and set-result scaffold, six-card kit (M1-M6), `CGKitId` manifest, `SoTA_SetId`, `VariantPoolId`, `ShortlistId`, `CGFrameLibraryId`, `RefreshReadinessCardId`, set-return selection, set-result o… |
+| G.2 | 79670 |  | SoTA Harvester & Synthesis | kw: SoTA harvest, synthesis, SoTA Synthesis Pack@CG-Frame, SoTAPaletteDescription, Tradition, TraditionAtlasView, DeclaredSubstrateAtlasView, TypedSetViews, BridgeMatrix, GammaEpistSynthId, FlowRecord, palette-first. \| q: "How does FPF h… |
+| G.3 | 80174 |  | CHR Authoring: Characteristics - Scales - Levels - Coordinates | kw: CHR authoring, characteristics, scales, levels, coordinates, CSLC legality, typed measurement, CHR Pack@CG-Frame, ReferencePlane, Φ/CL policy pins, edition pins, RSCRTriggerKindId. \| q: "How do I author CHR packs (typed characteristi… |
+| G.4 | 80612 |  | CAL Authoring: Calculi - Acceptance - Evidence | kw: CAL authoring, operators, acceptance clauses, evidence profiles, tri-state admissibility, Γ-fold hooks, Φ/Ψ/Φ_plane policy pins, legality gates, edition pins, RSCRTriggerKindId. \| q: "How to author CAL operators and acceptance clause… |
+| G.5 | 81083 |  | Multi‑Method Dispatcher & MethodFamily Registry | kw: method-family registry, generator-family registry, dispatcher, SelectorOutcomeKind, selected-set publication, set-result outcome, `Shortlist`, `RankedShortlist`, `ShortlistId`, `SpecialistHandoff`, abstain/escalation result, basis pi… |
+| G.6 | 81731 |  | Evidence Graph & Provenance Ledger | kw: EvidenceGraph, provenance, PathId, PathSliceId, lane tags (TA/VA/LA), SCR/RSCR, GateCrossing, CrossingBundle, UTS PathCard, TriggerAliasMap, Γ-fold pinning. \| q: "How does FPF trace claims to evidence?", "What is an EvidenceGraph?", … |
+| G.7 | 82046 |  | Cross-Tradition Bridge Calibration Kit (BridgeMatrix → BridgeCards + BCT/Sentinels) | kw: bridge calibration, BridgeCard, BridgeCalibrationTable (BCT), RegressionSet, SentinelSet, BridgeSentinel, Congruence Level (CL/CL^k/CL^plane), loss notes, waivers, ReferencePlane, Φ(CL)/Ψ(CL^k)/Φ_plane policy pins, PathSliceId, GateC… |
+| G.8 | 82433 |  | SoS-LOG Bundles & Maturity Ladders | kw: SoS-LOG, rule ids, admissibility ledger, tri-state `{pass |
+| G.9 | 82902 |  | Parity / Benchmark Harness | kw: parity harness, benchmark plan, adaptation parity, freshness windows, comparator pins, selected-set outcomes. \| q: "How does FPF run reproducible parity with explicit pins and windows?", "How do adaptation-speed and specialization cl… |
+| G.10 | 83413 |  | SoTA Pack Shipping (pack-boundary governing definition; `SoTA-Pack(Core)`) | kw: shipping, `SoTA-Pack(Core)`, pack-boundary governing definition, selector-ready publication surface, `AuditPins`, `MOOManifest`, `PortfolioRosterId`, UTS publication, `PathId`/`PathSliceId`, `CrossingBundle`, edition pins, telemetry … |
+| G.11 | 83817 |  | Telemetry-Driven Refresh & Decay Orchestrator | kw: telemetry, refresh, decay, RSCR, PathSlice, Bridge Sentinels, edition-aware, epistemic debt, deprecation, edition bumps, re-shipping. \| q: "How does FPF keep SoTA packs up-to-date?", "What triggers refresh / RSCR reruns?", "How are d… |
+| G.12 | 84190 |  | DHC Dashboards — Discipline-Health Time-Series (admissible telemetry, generation-first) | kw: dashboard, DHC, discipline health, time-series, admissible telemetry, view-only slices, PathId/PathSliceId, edition pins, UTS twins, RSCR/refresh wiring. \| q: "How to build DHC dashboards in FPF?", "How to publish admissible DHC time… |
+| G.13 | 84601 |  | External Interop Hooks for SoTA Discipline Packs (conceptual; normative when used) | kw: interop, external index, claim mapper, mapping policy, plane map, embedding spec, `ExternalIndexCard@Context`, `ClaimMapperCard@Context`, `InteropSurface@Context`, CHR-typed SoS features, edition pins, UTS twins, RSCRTriggerKindId, t… |
+| H.1 | — | Planned | Alphabetic Glossary | Every `U.Type`, relation & operator with four‑register naming. |
+| H.2 | — | Planned | Definitional Pattern Catalogue | One‑page micro‑stubs of every definitional pattern for quick lookup. |
+| H.3 | — | Planned | Cross‑Reference Maps | Bidirectional links: Part A ↔ Part C ↔ Part B terms. |
+| I.1 | — | Planned | Deprecated Aliases | Deprecated names kept as alias labels for continuity; aliases do not carry current semantics. |
+| I.2 | 84960 |  | Expanded Entry Disambiguation Cases | Expanded entry-disambiguation cases for high-risk or compact-insufficient first-entry pattern comparison; compact-index-only is a complete admissible posture when enough. |
+| I.3 | — | Planned | Change‑Log (auto‑generated) | Version history keyed to DRR ids. |
+| I.4 | — | Planned | External Standards Mappings | Trace tables to ISO 15926, BORO, CCO, Constructor‑Theory terms. |
+| J.1 | — | Planned | Concept‑to‑Pattern Index | Quick jump from idea (“boundary”) to pattern (§, id). |
+| J.2 | — | Planned | Pattern‑to‑Example Index | Table listing every archetypal grounding vignette. |
+| J.3 | — | Planned | Principle‑Trace Index | Maps each Pillar / C‑rule / P‑rule to concrete clauses. |
+| K.1 | — | Planned | Mandatory Replacement of Measurement Terms | Retires "axis/dimension" in favor of "Characteristic" and aligns other measurement terms. |
+| K.2 | — | Planned | Migration Debt from A.2.6 (USM) | Specifies the required edits across the FPF to align with the new Unified Scope Mechanism (USM). |
+| K.3 | — | Planned | Temporal Claim Lexical Debt from C.27 | Retires untyped velocity, acceleration, cadence, agility, rhythm, inertia, and dynamics language when it is used outside a named C.27, C.16, or A.3.3 reading. |

@@ -194,12 +194,20 @@ Before publishing any artifact in a multi-agent system:
 
 ## FPF Knowledge Base
 
-FPF-Spec.md (56K строк, ~5MB) слишком велик для загрузки целиком. Скилл включает навигационные файлы для точечного доступа:
+FPF-Spec.md (~85K строк, ~8.7MB) слишком велик для загрузки целиком. Скилл включает навигационные файлы для точечного доступа:
 
-- **`references/fpf-glossary.md`** — 100 ключевых терминов FPF с определениями и ссылками на секции
-- **`references/fpf-sections-map.md`** — Полная карта секций FPF-Spec с приблизительными номерами строк
-- **`references/fpf-tasks-lookup.md`** — 55 задач → секции → grep-паттерны для поиска
-- **`references/fpf-grep-patterns.md`** — 59 regex-паттернов для Grep по FPF-Spec.md
+- **`references/fpf-sections-map.md`** — карта **279 паттернов** (242 Stable + 37 Planned) по 16 кластерам, с номерами строк, статусом, заголовками и keywords/queries из встроенного реестра спеки
+- **`references/fpf-grep-patterns.md`** — проверенные regex-паттерны для Grep (каждый реально матчится в спеке этого SHA)
+- **`references/fpf-glossary.md`** — ключевые термины FPF (EN/RU) с определениями и ссылками на секции
+- **`references/fpf-tasks-lookup.md`** — задачи → секции → grep-паттерны для поиска
+
+> **Провенанс индекса:** все навигационные файлы сгенерированы из встроенного реестра
+> FPF-Spec.md @ ailev/FPF `646b0b9b164f` (2026-06-17). Что изменилось при последней
+> ре-индексации — в `CHANGES-fpf-spec.md`. Насколько индекс актуален: сравни этот SHA
+> с `upstream_commit` в `~/.claude/knowledge/fpf/FPF-Spec.version` (его пишет
+> `scripts/fetch-fpf-spec.sh`) и с текущим `gh api repos/ailev/FPF/commits/main`.
+> Расходятся → стоит перегенерировать индекс (Grep-навигация работает и при дрейфе,
+> но номера строк устаревают).
 
 **Протокол доступа к FPF-Spec.md:**
 

@@ -59,5 +59,22 @@ fi
 
 mv "$tmp" "$target"
 trap - EXIT
+
+# Record the upstream commit SHA next to the spec, so the skill can tell how
+# current the local spec is versus the SHA the navigation index was built on.
+sha=""
+if command -v curl >/dev/null 2>&1; then
+  sha="$(curl -fsSL "https://api.github.com/repos/ailev/FPF/commits/main" 2>/dev/null \
+        | grep -m1 '"sha"' | sed -E 's/.*"sha"[: ]+"([0-9a-f]+)".*/\1/')"
+fi
+{
+  echo "spec_source=https://github.com/ailev/FPF"
+  echo "spec_file=FPF-Spec.md"
+  echo "downloaded_bytes=$bytes"
+  [ -n "$sha" ] && echo "upstream_commit=$sha"
+} > "$dest_dir/FPF-Spec.version"
+
 echo "Done: $target ($bytes bytes)."
+[ -n "$sha" ] && echo "Upstream commit: $sha (recorded in $dest_dir/FPF-Spec.version)."
 echo "The fpf-integration skill will now find it (global copy, used across projects)."
+echo "Index built against commit: see references/fpf-sections-map.md header — compare to detect drift."

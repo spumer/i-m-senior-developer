@@ -1,5 +1,9 @@
 # FPF — Глоссарий ключевых терминов
 
+> Сгенерировано из FPF-Spec.md @ ailev/FPF `646b0b9b164f` (2026-06-17). Полный SHA: `646b0b9b164f7c13258633a33b92d2d0a569da28`.
+> Проверять актуальность: сравни с `~/.claude/knowledge/fpf/FPF-Spec.version` и текущим upstream.
+
+
 > 100 основных терминов FPF. Для поиска в спеке используй Grep по EN-термину.
 
 | Термин (EN) | Термин (RU) | Определение | Где найти |
@@ -25,7 +29,7 @@
 | Effect Free Epistemic Morphing | Безэффектный эпистемический морфинг | Морфизмы эпистем без эффектов для трансформаций descriptions. | A.6.2, A.6.3, E.17.0 |
 | Epistemic Viewing | Эпистемический просмотр | Просмотр с сохранением describedEntity через viewpoints. | A.6.3, E.17, E.18 |
 | Epistemic Retargeting | Эпистемическое перенаправление | Морфизм с изменением describedEntity через kind bridges. | A.6.4, E.18, C.2.1 |
-| Relational Precision Restoration | Восстановление точности отношений | Сюита для ремонта underspecified relations через qualified records. | A.6.P, A.6.Q, A.6.A |
+| Relational Precision Restoration | Восстановление точности отношений | Сюита для ремонта underspecified relations через qualified records. | A.6.P, A.6.A |
 | Strict Distinction | Строгое различие | Clarity lattice для избежания category errors как Object ≠ Description. | A.7, A.1, A.3 |
 | Universal Core | Универсальное ядро | Трансдисциплинарное ядро без domain-specifics. | A.8, P-8 |
 | Cross Scale Consistency | Последовательность через масштабы | Инварианты в композиции holarchies. | A.9, B.1, P-8 |
@@ -99,3 +103,22 @@
 | Congruence Level | Уровень congruence | CL для penalty routing в bridges. | C.2.2, F.9 |
 | Weakest Link | Слабое звено | Discipline для propagation R в paths. | C.2.2, G.6 |
 | Evidence Decay | Устаревание доказательств | Aging evidence с epistemic debt. | B.3.4, G.11 |
+
+## Новые термины (добавлено при ре-индексации, проверено по спеке)
+
+| Термин (EN) | Термин (RU) | Определение | Где найти |
+|-------------|-------------|-------------|-----------|
+| U.Episteme | Эпистема (U.Episteme) | Несущий утверждения неагентивный холон со слотами EntityOfConcern, GroundingHolon, ClaimGraph, Viewpoint и ReferenceScheme; реализуется видами Card/View/Publication. | C.2.1, A.1, A.6.2 |
+| U.EpistemePublication | Публикация эпистемы (U.EpistemePublication) | Вид эпистемы, публикующий определение/представление через форму и носитель; публикация не становится определяющей эпистемой по факту того, что её встретили. | C.2.1, E.24.PUB, A.10 |
+| EntityOfConcern | Сущность интереса (EntityOfConcern) | Слот эпистемы, указывающий о ЧЁМ утверждение; сохраняется при viewing (A.6.3) и намеренно ретаргетится только через KindBridge (A.6.4). | A.6.2, A.6.3, C.2.1 |
+| U.Ontic | Онтик (U.Ontic) | То, что существует независимо от своего описания; отделяется от описывающей эпистемы, публикации и формы публикации, чтобы карточки/таблицы/диаграммы не подменяли сам онтик. | E.24, E.24.PUB, A.7 |
+| Controlled Semantic Coarsening | Контролируемое семантическое огрубление | Безэффектное огрубление эпистемы или публикации до узкой допустимой области использования с обязательным условием reopen к источнику при выходе за её пределы. | A.6.3.CSC, A.6.3, E.17.EFP |
+| Evidence Graph Referring | Отсылка к графу доказательств | Конституционный принцип (C-4): каждое утверждение прослеживается до носителя доказательств через SCR/RSCR, с разделением носителя и сообщаемого им состояния. | A.10, G.6, B.3 |
+| Evidence Graph & Provenance Ledger | Граф доказательств и реестр происхождения | Структура трассируемости (PathId) и реестр provenance, отделённая от принципа отсылки (A.10); хранит цепочки доказательств для аудита. | G.6, A.10, B.3 |
+| U.LanguageStateSpace | Пространство языка-состояния (U.LanguageStateSpace) | Карта языка-состояния поверх U.CharacteristicSpace: частичные координаты и пороги для публикации position-claim до публикации endpoint-claim. | C.2.2a, A.16, B.4.1 |
+| Publication Discipline (Ontic Description) | Дисциплина публикации (описание онтика) | Держит онтик, его описывающую эпистему, публикацию и форму публикации различимыми; карточки/схемы/виды/источники не становятся онтиком по внешнему виду. | E.24.PUB, E.24, C.2.1 |
+| NQD Onboarding Glossary | Онбординг-глоссарий NQD (A.0) | Вводный глоссарий по novelty/quality-diversity и explore/exploit (E/E-LOG): какие термины обязан публиковать генератор/селектор/публикация набора результатов, чтобы избежать single-winner bias. | A.0, C.18, C.19 |
+| PublicationUnit Stability Discipline | Дисциплина стабильности единицы публикации | Правила стабильности PublicationUnit при ауд­ите и редактировании: восстановление локальной головы и сохранение первичной EntityOfConcern единицы публикации. | E.17.AUD, E.17, E.17.AUD.OOTD |
+| U.EpistemicRetargeting | Эпистемический ретаргетинг (U.EpistemicRetargeting) | Безэффектный морфизм эпистемы, намеренно меняющий entityOfConcernRef под объявленным KindBridge, инвариантом и границей потерь, с сохранением только проверяемых мостом обязательств. | A.6.4, A.6.3, E.18 |
+
+> Правки ссылок при ре-индексации: `A.6.Q` удалён (живая секция — `A.6.P`); термин «Ontic Debt» отсутствует в спеке — используется `U.Ontic` / `Epistemic Debt` (B.3.4). Сквозное переименование `describedEntity` → `EntityOfConcern` по всей спеке.

@@ -1,6 +1,11 @@
 # FPF — Поиск по задаче
 
 > Найди задачу → используй Grep-паттерны для поиска в FPF-Spec.md
+>
+> Сверено с FPF-Spec.md @ ailev/FPF `646b0b9b164f` (2026-06-17). Секции-ID стабильны;
+> если grep-паттерн не находится, см. актуальные/починенные в `fpf-grep-patterns.md`
+> (концепты переименованы: `describedEntity` → `EntityOfConcern`,
+> `Language-State Transduction` → `Language-State Move`).
 
 | Задача | Секции | Grep-паттерны |
 |--------|--------|---------------|
