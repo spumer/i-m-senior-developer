@@ -40,7 +40,7 @@
 
 ### [functional-clarity](plugins/functional-clarity/)
 
-22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии.
+22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии. Включает 7-шаговую Code-Change Discipline (с FPF-нормативами) и скилл `fpf-integration` — внедрение First Principles Framework ([ailev/FPF](https://github.com/ailev/FPF)) в multi-agent проекты: evidence-аудит, decay/DRR, NQD, навигационный индекс по спеке.
 
 ### [tdd-master](plugins/tdd-master/)
 
@@ -52,11 +52,15 @@ TDD по Кенту Беку и дяде Бобу. Red-Green-Refactor, FIRST, п
 
 ### [planner](plugins/planner/)
 
-Мета-диспетчер: анализирует задачу, строит план исполнения (architecture / execution mode), детектирует пробелы в каталоге агентов проекта, учится на прошлых сессиях через `/plan-reflect`. Заменяет legacy `~/.claude/agents/planner.md`.
+Мета-диспетчер: анализирует задачу, строит план исполнения (architecture / execution mode), детектирует пробелы в каталоге агентов проекта, учится на прошлых сессиях через `/plan-reflect`.
 
 ### [sdlc](plugins/sdlc/)
 
-SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-reviewer`) покрывают design → implement → review для backend (Python: Django/FastAPI) и frontend (React). Stack-aware через on-demand references. Ссылается на `tdd-master` и `functional-clarity` вместо дублирования. Заменяет legacy `~/.claude/agents/python-implementer.md`, `django-architect.md`, `code-reviewer.md`.
+SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-reviewer`) покрывают design → implement → review для backend (Python: Django/FastAPI) и frontend (React). Stack-aware через on-demand references. Ссылается на `tdd-master` и `functional-clarity` вместо дублирования.
+
+### [clarity-language](plugins/clarity-language/)
+
+Три скилла против AI-синтетики в текстах + SessionStart hook: `clarity-validator` (12 смысловых паттернов в тех-доках, FPF-обоснование), `ai-prose-detector` (стиль художественной прозы по 6 методам), `russian-style` (естественный русский — без кальки, без пустых антитез, простой язык для инженеров).
 
 ## Установка
 
@@ -67,12 +71,13 @@ SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-re
 /plugin install llms-keeper@i-m-senior-developer
 /plugin install planner@i-m-senior-developer
 /plugin install sdlc@i-m-senior-developer
+/plugin install clarity-language@i-m-senior-developer
 ```
 
 Локально:
 
 ```bash
-claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc
+claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc --plugin-dir plugins/clarity-language
 ```
 
 ## Автор
