@@ -1,9 +1,9 @@
 {
   "name": "functional-clarity",
-  "version": "0.2.0",
-  "description": "Принципы Функциональной ясности — философия разработки надежного, простого и понятного кода. Включает 22 принципа, style-guide и 7-шаговую дисциплину работы с существующим кодом (Code-Change Discipline) с FPF-нормативами.",
+  "version": "0.3.0",
+  "description": "Принципы Функциональной ясности — философия разработки надежного, простого и понятного кода. Включает 22 принципа, style-guide, 7-шаговую дисциплину работы с существующим кодом (Code-Change Discipline) с FPF-нормативами и скилл fpf-integration для внедрения First Principles Framework в multi-agent проекты.",
   "author": {
     "name": "Svyatoslav Posokhin"
   },
-  "keywords": ["principles", "functional-clarity", "code-quality", "python", "senior"]
+  "keywords": ["principles", "functional-clarity", "code-quality", "python", "senior", "fpf", "first-principles", "decision-quality"]
 }

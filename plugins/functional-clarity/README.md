@@ -14,6 +14,7 @@
 
 - **SessionStart hook** — краткое напоминание ключевых принципов при старте каждой сессии
 - **Skill `functional-clarity`** — полный набор принципов, загружается автоматически при упоминании "принципы", "code quality", "fail-fast", "рефакторинг" и др.
+- **Skill `fpf-integration`** — внедрение First Principles Framework (FPF) в multi-agent проекты: evidence-аудит решений, decay-механизм (DRR), проверка альтернатив (NQD), аксиомы A.7/A.10/A.11/A.1.1. Загружается на "integrate FPF", "FPF audit", "review decisions with FPF", "evidence graph review". Источник FPF: `https://github.com/ailev/FPF`.
 
 ## Установка
 
