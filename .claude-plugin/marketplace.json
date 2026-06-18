@@ -16,7 +16,7 @@
     },
     {
       "name": "functional-clarity",
-      "description": "Functional Clarity principles — philosophy for building reliable, simple, and understandable code. 22 principles, Python style guide, fail-fast architecture.",
+      "description": "Functional Clarity principles — philosophy for building reliable, simple, and understandable code. 22 principles, Python style guide, fail-fast architecture, Code-Change Discipline, plus an fpf-integration skill for adopting the First Principles Framework in multi-agent projects.",
       "author": {
         "name": "Svyatoslav Posokhin"
       },
@@ -49,6 +49,15 @@
       },
       "source": "./plugins/sdlc",
       "category": "development"
+    },
+    {
+      "name": "clarity-language",
+      "description": "Clarity of language: three skills against AI-synthetic text. clarity-validator (12 meaning-level antipatterns in technical docs, FPF-grounded), ai-prose-detector (fiction prose style across 6 methods), russian-style (natural Russian without calques, empty antitheses, or bureaucratese).",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/clarity-language",
+      "category": "documentation"
     }
   ]
 }
