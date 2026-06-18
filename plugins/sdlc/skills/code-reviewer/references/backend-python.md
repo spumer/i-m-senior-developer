@@ -110,7 +110,7 @@ Review lens from `functional-clarity:functional-clarity` Error Hiding principle:
 - **Catch and return success:** `except Exception: return {"status": "ok"}` — caller gets success signal for a failed operation. Flag as high finding.
 - **Logging and continuing:** `except Exception as e: logger.error(e); return default_value` — if `default_value` masks a required value, this is still Error Hiding. Flag when the default masks a required field.
 - **Swallowing `DoesNotExist`:** `except ObjectDoesNotExist: return None` — acceptable if `None` is a documented valid return; a finding if callers assume the object always exists.
-- **`print()` for error reporting:** `except Exception as e: print(e)` — no structured logging, invisible in production. Flag as minor if no other log; flag as major if this replaces a removed `logger` call (information loss per `code-change-discipline.md` rule 7).
+- **`print()` for error reporting:** `except Exception as e: print(e)` — no structured logging, invisible in production. Flag as minor if no other log; flag as major if this replaces a removed `logger` call (information loss per Code-Change Discipline rule 7).
 
 ---
 

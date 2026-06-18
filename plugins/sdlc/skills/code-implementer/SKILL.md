@@ -45,7 +45,8 @@ never reviews others' code.
 
 5. **Don't change contract without discussion.** Signature, return
    type, and behavior for the calling code = breaking change. See
-   `~/.claude/rules/code-change-discipline.md` rule 6. Surface the
+   Code-Change Discipline rule 6 (`functional-clarity:functional-clarity`
+   → `references/02-code-change-discipline.md`). Surface the
    intention before committing to the change.
 
 6. **Apply Functional Clarity.** If `functional-clarity:functional-clarity`
@@ -107,12 +108,14 @@ do not silently rewrite.
 
 Anti-pattern: "while I was here I also fixed X" — produces
 unreviewable diffs and hides the original change under noise.
-`code-change-discipline.md` rule 6: do not change contract without
+Code-Change Discipline rule 6: do not change contract without
 explicit discussion.
 
-Reference: `~/.claude/rules/code-change-discipline.md` — the full
-seven-step algorithm for working with existing code. Read it before
-modifying any file that was not created in this session.
+Reference: Code-Change Discipline — the full seven-step algorithm for
+working with existing code. It ships with the `functional-clarity`
+plugin: activate `functional-clarity:functional-clarity` and read
+`references/02-code-change-discipline.md` before modifying any file
+that was not created in this session.
 
 ## Fail-fast rule
 
@@ -141,9 +144,14 @@ against the real contract.
 
 ## Code-change discipline
 
-Before modifying any file not created in this session, read
-`~/.claude/rules/code-change-discipline.md`. That file is the source
-of truth for the seven-step algorithm; do not restate it here.
+Before modifying any file not created in this session, read the
+Code-Change Discipline reference bundled with the `functional-clarity`
+plugin: activate `functional-clarity:functional-clarity` and read
+`references/02-code-change-discipline.md`. That file is the source of
+truth for the seven-step algorithm; do not restate it here. If the
+`functional-clarity` plugin is not installed, apply the seven steps
+from memory: idea → assumptions → evidence → ask human → no contract
+changes → no information loss.
 
 ## Output format — implementation report
 

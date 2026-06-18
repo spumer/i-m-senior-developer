@@ -102,7 +102,7 @@ Severity labels used in the security section: **critical** (exploitable now, no 
 
 ## FPF check (Functional Clarity)
 
-Activate `functional-clarity:functional-clarity` for the full 22-principle methodology and bodies. Key checks the reviewer must surface, regardless of stack: **Error Hiding** (silently swallowed exceptions, defaults masking failures), **fail-fast violations** (validation deep in the call stack instead of at the entry boundary), **contract changes without migration** (changed signature/return-type/semantics for existing callers — `code-change-discipline.md` rule 6), **leaked invariants** (state assumptions not enforced in code), and **information removal** (removed log/comment/error without replacement — `code-change-discipline.md` rule 7). Names only here; cite `functional-clarity:functional-clarity` for the bodies. The check runs on the entire diff regardless of language.
+Activate `functional-clarity:functional-clarity` for the full 22-principle methodology and bodies. Key checks the reviewer must surface, regardless of stack: **Error Hiding** (silently swallowed exceptions, defaults masking failures), **fail-fast violations** (validation deep in the call stack instead of at the entry boundary), **contract changes without migration** (changed signature/return-type/semantics for existing callers — Code-Change Discipline rule 6), **leaked invariants** (state assumptions not enforced in code), and **information removal** (removed log/comment/error without replacement — Code-Change Discipline rule 7). Code-Change Discipline ships with the `functional-clarity` plugin as `references/02-code-change-discipline.md`. Names only here; cite `functional-clarity:functional-clarity` for the bodies. The check runs on the entire diff regardless of language.
 
 ## System-issues focus
 
@@ -223,7 +223,7 @@ can fetch any order by changing the ID — fix direction: add `.filter(user=requ
 
 ## Integration with other plugins
 
-- **`functional-clarity:functional-clarity`** — primary co-skill. Activate for the full 22-principle methodology when installed. If not installed, apply the Error Hiding, fail-fast, and contract discipline principles cited in the FPF check section above. Also apply `code-change-discipline.md` rule 7 (do not remove information).
+- **`functional-clarity:functional-clarity`** — primary co-skill. Activate for the full 22-principle methodology when installed. If not installed, apply the Error Hiding, fail-fast, and contract discipline principles cited in the FPF check section above. Also apply Code-Change Discipline rule 7 (do not remove information).
 
 - **`tdd-master:tdd-master`** — the reviewer checks "is there a test for this behavioral change?" A new or modified behavior without a covering test is a review item. Format: `"no test for <behavior> — implementer to add RED test per tdd-master:tdd-master workflow before merge."` The reviewer does NOT write the test — test authoring is implementer work, governed by `tdd-master`.
 
