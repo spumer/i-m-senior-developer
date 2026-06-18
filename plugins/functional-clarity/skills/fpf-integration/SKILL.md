@@ -215,7 +215,9 @@ FPF-Spec.md (56K строк, ~5MB) слишком велик для загруз
      разбор по секциям недоступен; работаю в облегчённом режиме (Quick Reference +
      glossary + audit-patterns + role-templates). Чтобы включить полный режим: скачать
      спеку из `https://github.com/ailev/FPF` в `~/.claude/knowledge/fpf/FPF-Spec.md`
-     (глобально, на все проекты) или в `<проект>/.claude/knowledge/fpf/FPF-Spec.md`»*.
+     (глобально, на все проекты) или в `<проект>/.claude/knowledge/fpf/FPF-Spec.md`.
+     Проще всего — запустить `scripts/fetch-fpf-spec.sh` (качает в глобальный путь;
+     флаг `--project` — в проектный, `--force` — перекачать)»*.
      Спросить: продолжить облегчённо или сначала положить файл. **Не выдумывать содержимое
      секций спеки по памяти** — опираться только на встроенные reference-файлы
      (A.10: claim without source = opinion).
@@ -227,7 +229,9 @@ FPF-Spec.md (56K строк, ~5MB) слишком велик для загруз
    потом Read вокруг матча — не доверять offset вслепую.
 
 **Где взять FPF-Spec.md:**
-- GitHub: https://github.com/ailev/FPF
+- **Скрипт (рекомендуется):** `scripts/fetch-fpf-spec.sh` — качает с GitHub в
+  `~/.claude/knowledge/fpf/FPF-Spec.md`. Флаги: `--project` (в проект), `--force` (перекачать).
+- Вручную с GitHub: https://github.com/ailev/FPF (ветка `main`, файл `FPF-Spec.md`)
 - **Глобально (рекомендуется, одна копия на все проекты):** `~/.claude/knowledge/fpf/FPF-Spec.md`
 - Либо в проекте: `<проект>/.claude/knowledge/fpf/FPF-Spec.md`
 - Автор: Анатолий Левенчук. Версия: March 2026. Статус: "Normative kernel, eternal alpha"
