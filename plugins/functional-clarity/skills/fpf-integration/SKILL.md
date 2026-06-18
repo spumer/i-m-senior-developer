@@ -204,14 +204,20 @@ FPF-Spec.md (56K строк, ~5MB) слишком велик для загруз
 **Протокол доступа к FPF-Spec.md:**
 
 0. **Проверить наличие файла ПЕРЕД первым обращением к спеке** (перед чтением
-   `fpf-sections-map.md`/`fpf-grep-patterns.md` или Grep/Read по FPF-Spec.md):
-   Glob по `.claude/knowledge/fpf/FPF-Spec.md`, `FPF-Spec.md` в корне, `**/FPF-Spec.md`.
-   - **Не найден** → предупредить пользователя: *«FPF-Spec.md не найден — глубокий разбор
-     по секциям недоступен; работаю в облегчённом режиме (Quick Reference + glossary +
-     audit-patterns + role-templates). Чтобы включить полный режим: скачать спеку из
-     `https://github.com/ailev/FPF` в `.claude/knowledge/fpf/FPF-Spec.md`»*. Спросить:
-     продолжить облегчённо или сначала положить файл. **Не выдумывать содержимое секций
-     спеки по памяти** — опираться только на встроенные reference-файлы
+   `fpf-sections-map.md`/`fpf-grep-patterns.md` или Grep/Read по FPF-Spec.md).
+   Искать в двух местах — глобальном (одна копия на все проекты) и проектном:
+   - **Глобально:** `~/.claude/knowledge/fpf/FPF-Spec.md` (разверни `~` в
+     `$HOME` — Glob не раскрывает тильду; путь к домашней папке возьми из окружения).
+   - **В проекте:** Glob по `.claude/knowledge/fpf/FPF-Spec.md`, `FPF-Spec.md` в корне,
+     `**/FPF-Spec.md`.
+   Использовать первый найденный (глобальный приоритетнее — он общий для всех проектов).
+   - **Не найден нигде** → предупредить пользователя: *«FPF-Spec.md не найден — глубокий
+     разбор по секциям недоступен; работаю в облегчённом режиме (Quick Reference +
+     glossary + audit-patterns + role-templates). Чтобы включить полный режим: скачать
+     спеку из `https://github.com/ailev/FPF` в `~/.claude/knowledge/fpf/FPF-Spec.md`
+     (глобально, на все проекты) или в `<проект>/.claude/knowledge/fpf/FPF-Spec.md`»*.
+     Спросить: продолжить облегчённо или сначала положить файл. **Не выдумывать содержимое
+     секций спеки по памяти** — опираться только на встроенные reference-файлы
      (A.10: claim without source = opinion).
 1. Определить задачу → найти в `fpf-tasks-lookup.md`
 2. Получить секцию и grep-паттерн → **Grep по FPF-Spec.md (по паттерну, не по номеру строки)**
@@ -222,7 +228,8 @@ FPF-Spec.md (56K строк, ~5MB) слишком велик для загруз
 
 **Где взять FPF-Spec.md:**
 - GitHub: https://github.com/ailev/FPF
-- При интеграции в проект: скопировать в `.claude/knowledge/fpf/FPF-Spec.md`
+- **Глобально (рекомендуется, одна копия на все проекты):** `~/.claude/knowledge/fpf/FPF-Spec.md`
+- Либо в проекте: `<проект>/.claude/knowledge/fpf/FPF-Spec.md`
 - Автор: Анатолий Левенчук. Версия: March 2026. Статус: "Normative kernel, eternal alpha"
 
 ## Additional Resources
