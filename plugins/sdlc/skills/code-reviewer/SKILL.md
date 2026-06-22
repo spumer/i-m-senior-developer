@@ -24,7 +24,7 @@ Reviews code changes for system-level issues, security vulnerabilities, and FPF 
 
 1. **System issues over taste.** "I would name this differently" is not a review item. "This name says what it does, but the function does something else" is. Flag objective defects — correctness, safety, contract adherence. Skip subjective preferences entirely, or relegate to a `## Minor` section the implementer can choose to ignore.
 
-2. **Evidence per finding (FPF A.10).** Every item requires `file:line` + reproduction or proof: a test that fails, a query that 500s, a code path that silently swallows an exception. A finding without evidence is an opinion. Opinions do not belong in a review report. Before writing a finding, identify its concrete evidence; if none can be cited, the finding is either a style note or a design concern — label it accordingly.
+2. **Evidence per finding (FPF A.10).** Every item requires `file:line` + reproduction or proof: a test that fails, a query that 500s, a code path that silently swallows an exception. A finding without evidence is an opinion. Opinions do not belong in a review report. Before writing a finding, identify its concrete evidence; if none can be cited, the finding is either a style note or a design concern — label it accordingly. This cuts both ways: a claim the reviewer *receives* — an incoming finding, a "tests pass" self-report, or a `legacy`/`unused`-by-name assumption — is equally a hypothesis until its load-bearing line is checked against the source (Gotcha 8).
 
 3. **Security always.** Load `references/security.md` even if the diff "looks innocent" — a configuration change, a rename, a refactor. Secrets and auth bugs slip in via innocuous-looking changes. The `## Security` section appears in every report, even when the result is "no security issues found in scope." The empty section is a force-function; its presence proves the check ran.
 
@@ -77,28 +77,11 @@ Additional tools for context:
 
 Review is strictly read-only. The rationale: a reviewer who can modify the repository is no longer a reviewer — they become a co-author of unreviewed changes. Maintain the separation of concerns.
 
-If a finding requires running code to verify (e.g. confirming a race condition is observable), instruct the implementer: "unverified — implementer to reproduce by running `<command>`." The implementer confirms and reports back; the reviewer then updates the finding if the reproduction fails.
+If a finding requires running code to verify (e.g. confirming a race condition is observable), instruct the implementer: "unverified — implementer to reproduce by running `<command>`." The implementer confirms and reports back; the reviewer then updates the finding if the reproduction fails. The report's `## Certification boundary` section names, up front, the defect classes static review cannot certify — state them as a self-limitation; do not silently imply they were cleared.
 
 ## OWASP / security framing
 
-`references/security.md` is the always-active checklist covering: OWASP Top 10 (current edition), secrets/credentials in code, auth/authz (IDOR, missing decorators, JWT pitfalls, session handling), injection vectors (SQL, template, shell, path traversal), CSRF/CORS/CSP, and SSRF.
-
-This reference is non-optional. It loads regardless of:
-
-- Stack (Python, React, Go, anything)
-- Diff size (even a 2-line change can introduce a secret or weaken auth)
-- Apparent scope ("it's just a refactor" is the most common context for accidental secret exposure)
-
-The `## Security` section appears in every review report under all circumstances. Two cases:
-
-- **Issues found:** `file:path:line — <OWASP category> — <evidence> — <fix direction>`.
-- **No issues found:** write exactly "no security issues found in scope" — do not omit the section.
-
-If the diff contains only non-web code (a CLI script, a data pipeline) and no security issues are found, still emit: "no security issues in scope — no web surface, secrets scan clean, no auth/authz changes." This three-element confirmation is more informative than the single-line form and proves each of the three major categories was checked.
-
-Severity labels used in the security section: **critical** (exploitable now, no prerequisites — stop the merge immediately), **high** (exploitable with low effort, e.g. authenticated user accessing other users' data), **medium** (requires prerequisites or chained vulnerabilities), **low** (defense-in-depth, not directly exploitable but weakens posture).
-
-**Never downgrade a security finding based on "it's internal" or "only admins can reach it."** Internal services get breached; admin accounts get compromised. Security findings are assessed on exploitability, not on assumed access control.
+`references/security.md` is always loaded — every activation, every stack, every diff size (Principle 3). The `## Security` section appears in every report: list findings as `file:path:line — <OWASP category> — <evidence> — <fix direction>`, or write exactly "no security issues found in scope". Severity labels: **critical** (exploitable now), **high** (low-effort, e.g. cross-user data access), **medium** (needs prerequisites/chaining), **low** (defense-in-depth). **Never downgrade a security finding for "it's internal" or "only admins reach it"** — assess on exploitability, not assumed access. Full rationale and the non-web confirmation form: `references/review-conventions.md`.
 
 ## FPF check (Functional Clarity)
 
@@ -116,6 +99,9 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
 - **Leaked secrets** — credentials, API keys, tokens in the diff. This includes test fixtures, comments, and URLs with embedded auth strings.
 - **Missing migrations** — model or schema changes without a corresponding migration file. The migration is part of the change, not "to be added later."
 - **Untested edge cases** — happy path is tested; negative paths, empty inputs, and permission boundaries are not. Flag each missing test case; the implementer adds them.
+- **Object lifecycle / teardown** — manual `create`/`destroy` (init/dispose, subscribe/unsubscribe, mount/unmount) gets review regardless of apparent simplicity. Watch for orphan objects (never attached to the managed tree), a method called on an already-destroyed object, a non-null ref trusted as proof of liveness (guard on a liveness flag, not `!= null`), one-shot listeners surviving a skip/interrupt, and double-fired transition handlers. Severity: major on a live render/event path. Stack-neutral.
+- **Incomplete sweep / partial migration** — the diff point-fixes one site of a defect class (hardcoded literal, missing auth check, un-migrated call site, renamed field) while identical sites remain. `Grep` the whole class; if others remain, format as "partial fix: N of M sites; remaining: `file:line`". For a project-wide invariant, recommend a scanning test (per `tdd-master:tdd-master`) over eternal manual audit. Severity: major if unswept sites are exploitable/user-visible, else minor.
+- **Test runtime config diverges from prod** (stack-neutral) — tests run under a different runtime/concurrency config than production, so a prod-only failure mode stays green in CI (e.g. a test runner that auto-cleans pending work vs a long-lived prod runner; test parallelism flags masking shared/singleton-state leaks; a test config/middleware stack thinner than prod). Flag concurrency / parallel / shutdown code tested only under the harness default — require a test or smoke under the prod runtime config.
 
 **Severity triage:** Major findings block the merge and require a fix commit before re-review. Minor findings are advisory — the implementer decides whether to address them now or file a ticket. Design concerns never block the current merge — they are inputs to the next architecture iteration. Security findings at high or critical severity always block merge; medium and low are advisory.
 
@@ -175,6 +161,14 @@ Template for `<feature-dir>/review-request-changes/REVIEW-NN.md`. When no featur
 <!-- Taste, style, naming. Only if not delegated to a linter. Max 5 items. -->
 - `file:path:line` — <observation>
 
+## Certification boundary
+<!-- Always present. What static review does NOT certify. -->
+Static diff review certifies only what is readable in the diff. It does NOT
+certify runtime behavior: defect classes that surface only at run time
+(teardown/shutdown ordering, calls on destroyed objects, lifecycle leaks) or
+at render (visual-spec deviation) are out of scope of static review — flag
+them for runtime/human verification; do not record them as cleared.
+
 ## Hand-off
 Next: `sdlc:code-implementer` to apply fixes for all major and security items.
 Design concerns (if any): escalate to `sdlc:architect` via the orchestrator.
@@ -188,38 +182,20 @@ Finding format (mandatory for every non-minor item):
 
 No finding without evidence. No finding without a file:line reference. No findings in freeform prose — the bullet format enables the implementer to act on each item independently without parsing paragraphs.
 
-**Example of a well-formed finding (major, system issue):**
-
-```
-`services/order.py:47` — missing transaction.atomic on multi-step write — evidence: lines 47-52
-create two records sequentially with no atomic wrapper; if the second save raises IntegrityError the
-first record is committed (partial state) — fix direction: wrap lines 47-52 in
-`with transaction.atomic():`
-```
-
-**Example of a well-formed finding (security, high):**
-
-```
-`api/views.py:112` — IDOR via user-supplied pk — A01 Broken Access Control — evidence: line 112
-`Order.objects.get(pk=request.GET['order_id'])` with no ownership filter; any authenticated user
-can fetch any order by changing the ID — fix direction: add `.filter(user=request.user)` before .get()
-```
+Two worked examples (a system-issue finding and a security finding) are in `references/review-conventions.md`.
 
 ## Gotchas
 
-1. **Reviewer rewrites code in their head.** The impulse to write the "correct version" inline in the review report is an anti-pattern. A review that contains a complete corrected implementation is a code submission, not a review. The reviewer has incomplete context about surrounding constraints — the implementer knows which other callers exist, which tests would need updating, which invariants would break. The reviewer's job is diagnosis; the implementer's job is treatment.
+Headlines below; full explanations in `references/review-conventions.md`.
 
-2. **Style issues drown the report.** A report with 40 minor style items and 2 real security findings buries the security findings. The implementer opens the report, sees a wall of style nits, and mentally dismisses the whole thing. Configure a linter (ESLint, Ruff, Flake8). If no linter is configured, limit `## Minor` to 5 items and note "full style audit pending linter configuration." The reviewer's attention should be on system and security items only a human can find.
-
-3. **"Looks fine" — security still gets a section.** The `## Security` section is non-negotiable. Write "no security issues found in scope" explicitly rather than omitting it. A missing section is indistinguishable from "reviewer forgot to check." The force-function of the always-present section is intentional — it signals to the implementer and any downstream auditors that the security pass was conscious, not accidental.
-
-4. **Reviewing without running tests.** The reviewer reads code; the reviewer does not run the test suite during the review pass (that is the implementer's responsibility during the implementation phase). When a finding requires a test run to confirm reproduction — say so explicitly: "unverified — implementer to confirm by running `pytest tests/test_foo.py::test_bar`." Do not present unverified findings as confirmed; it wastes implementer time on false positives, and inflates the severity of the report.
-
-5. **Same finding in 5 places → consolidate.** One finding with all `file:line` locations is cleaner and more actionable than 5 identical items. The pattern is the issue; enumerate all locations in one finding: "`file:a:10`, `file:b:44`, `file:c:7` — missing `transaction.atomic` on multi-step write — all three write sequences can produce partial state on failure." This makes it easy for the implementer to fix all instances in one commit.
-
-6. **"I would have designed it differently" → design concern, not defect.** A defect means "code contradicts the existing design or its documented contract." A design concern means "the design itself could be better." They require different agents and different timelines: defect → `sdlc:code-implementer` (fix now, in the current PR); design concern → `sdlc:architect` via the orchestrator (address in a future design iteration). Misclassifying a design concern as a major defect inflates severity, routes to the wrong agent, and blocks a merge unnecessarily.
-
-7. **Skipping `references/security.md` because the diff "is just a refactor."** Refactors that extract magic strings to named constants routinely expose hardcoded credentials. Refactors that restructure error handling introduce Error Hiding. Refactors that reorder middleware can silently disable CSRF protection. Refactors that rename functions can break the assumed calling convention in security-sensitive code. Run the security checklist unconditionally, every time, regardless of the apparent scope of the change.
+1. **Reviewer rewrites code in their head** — a review containing a corrected implementation is a code submission, not a review. Diagnose; the implementer treats.
+2. **Style issues drown the report** — 40 nits bury 2 security findings. Delegate style to a linter; cap `## Minor` at 5.
+3. **"Looks fine" — security still gets a section** — the `## Security` section is non-negotiable; write "no security issues found in scope" rather than omitting it.
+4. **Reviewing without running tests** — the reviewer reads, does not run; mark run-required findings "unverified — implementer to reproduce by running `<cmd>`".
+5. **Same finding in 5 places → consolidate** — one finding, all `file:line` locations.
+6. **"I would have designed it differently" → design concern, not defect** — defect → `sdlc:code-implementer` (now); design concern → `sdlc:architect` (next iteration).
+7. **Skipping `references/security.md` because "it's just a refactor"** — refactors expose secrets, disable CSRF, introduce Error Hiding. Run security unconditionally.
+8. **Incoming claims are hypotheses, not evidence (FPF A.10)** — verify the load-bearing assertion against the source both ways (confirm the cited line exists and says so; `grep` for counter-evidence) before promoting or dismissing. Verify static claims against static source; do not run code (Gotcha 4).
 
 ## Integration with other plugins
 
@@ -269,6 +245,8 @@ The reviewer does **not** write to:
 
 - `references/security.md` — **always loaded**, regardless of stack or diff size. OWASP Top 10 review checklist with grep patterns per category, secrets detection patterns, auth/authz review (IDOR, JWT pitfalls, missing decorators, session handling), injection vectors table, CSRF/CORS/CSP, SSRF. Non-optional; present in every review activation.
 
-- `references/backend-python.md` — load when diff contains `*.py` files. Django security specifics (`mark_safe`, `raw()`, `extra()`), n+1 query detection and DRF nested serializer patterns, ORM pitfalls (`get_or_create` race, `bulk_create` bypass, `update()` signal skip), transaction boundary rules, Error Hiding patterns in Python, type-safety and test quality review. Review angle only — no implementation patterns, no design decisions.
+- `references/backend-python.md` — load when diff contains `*.py` files. Django security specifics (`mark_safe`, `raw()`, `extra()`), n+1 query detection and DRF nested serializer patterns, ORM pitfalls (`get_or_create` race, `bulk_create` bypass, `update()` signal skip, validators-on-`.create()`, nullable-unique `''`), transaction boundary rules (incl. counter/balance lost-update), re-runnable command idempotency, ASGI middleware & JWT-claim hazards, Error Hiding patterns in Python, type-safety and test quality review. Review angle only — no implementation patterns, no design decisions.
 
-- `references/frontend-react.md` — load when diff contains `*.tsx` / `*.jsx` / `*.ts` / `*.vue` / `*.svelte` files. XSS vectors (`dangerouslySetInnerHTML`, `javascript:` scheme, `eval`), CSP violations, accessibility anti-patterns (`<div onClick>`, missing `alt`, unlabeled inputs, focus management), performance pitfalls (inline objects in JSX, overused `useMemo`), hooks anti-patterns (stale closures, missing cleanup, conditional hook calls), state management overengineering, type-safety and test quality review. Review angle only — no implementation patterns, no design decisions.
+- `references/frontend-react.md` — load when diff contains `*.tsx` / `*.jsx` / `*.ts` / `*.vue` / `*.svelte` files. XSS vectors (`dangerouslySetInnerHTML`, `javascript:` scheme, `eval`), CSP violations, accessibility anti-patterns (`<div onClick>`, missing `alt`, unlabeled inputs, focus management), performance pitfalls (inline objects in JSX, overused `useMemo`), hooks anti-patterns (stale closures, missing cleanup, conditional hook calls), state management overengineering (incl. mixed state sources), form & rendering runtime pitfalls (tsc-clean, runtime-failing), type-safety and test quality review (incl. error-envelope mock fidelity). Review angle only — no implementation patterns, no design decisions.
+
+- `references/review-conventions.md` — loaded on demand. Full Gotcha explanations, two worked finding examples, and the security-framing rationale (severity labels, non-web confirmation form, never-downgrade rule). SKILL.md keeps the headlines; this holds the detail.

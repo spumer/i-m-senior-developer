@@ -65,6 +65,8 @@ Read the feature README or task description. If neither is present → fail-fast
 
 Minimum readable input: a description of what the feature does, who uses it, and what the acceptance criteria are. If any of these three are missing, surface the gap in Open Questions before producing the architecture document.
 
+**Rank source authority.** When the README cites another artifact as authoritative — a canonical spec, an OpenAPI contract, a domain protocol — that primary source outranks the README's paraphrase of it. Before encoding a "X is forbidden" / "Y is required" constraint into the design, verify it against the cited primary source (`Read`/`grep` the actual line). A constraint that paraphrases without a findable source is an Open Question, not a design rule (FPF A.10) — the orchestrator's framing is not evidence.
+
 **Step 2 — Detect stack.**
 
 Scan the project root for signals:
@@ -93,6 +95,7 @@ Work through the template in order:
 - Fill Hand-off Contracts after contexts are named — each row requires both contexts to exist.
 - Write Data Flow after contracts — the flow connects the contexts via their contracts.
 - Fill Integration Points last — external dependencies usually emerge from the data flow.
+- Fill Decisions & owners after Integration Points — every behavioral predicate is either committed here or surfaced as an Open Question.
 - Always end with Open Questions — capture every unresolved decision, even minor ones.
 
 **Step 5 — Hand-off.**
@@ -103,11 +106,7 @@ If the architecture reveals that implementation should be split into parallel ph
 
 ## Stack detection (summary)
 
-Scan project root for the file-based signals described above. Detection order: Python markers first (`pyproject.toml`, `requirements.txt`, top-level `*.py` files), then Node/frontend markers (`package.json`, `node_modules/`). Treat the first positive match as the primary stack candidate, but do not stop — scan for secondary stack markers too before concluding.
-
-If both sets are present → mixed stack. Load both `references/backend-python.md` and `references/frontend-react.md`. Produce one architecture document with two clearly separated stack sections (Backend and Frontend). The Hand-off Contracts table explicitly covers cross-stack calls (e.g. "React component calls Python API endpoint").
-
-If no signals match any known pattern → apply universal design principles. Set `stack: unknown` in the document metadata header. Do not fail. The full 9-stack heuristic table (9 stacks including Go, Java Spring, mobile, and others) lives in `plugins/planner/skills/planner/references/bootstrap.md` §4 — consult it before concluding "unknown".
+Stack detection is Step 2 above — Python markers first (`pyproject.toml`, `requirements.txt`, top-level `*.py`), then Node/frontend (`package.json` with `react`/`next`/`vue`/`svelte`); scan for secondary markers before concluding. Both → mixed: load both references, produce one document with separate Backend/Frontend sections, and cover cross-stack calls in the Hand-off Contracts table. No match → `stack: unknown`, universal principles, do not fail. The full 9-stack heuristic table lives in `plugins/planner/skills/planner/references/bootstrap.md` §4.
 
 ## Output format — architecture document
 
@@ -143,6 +142,11 @@ Flow 1 — <name>:
   - Retry: <yes/no, policy>
   - Failure degrade: <fallback behavior>
 
+## Decisions & owners
+| Decision (behavioral predicate) | Verdict | Owner | Traces to requirement |
+|---|---|---|---|
+| <e.g. "duplicate email on signup"> | committed: <chosen behavior> — OR — implementer's-choice: <constraint to satisfy> | <single owner> | <README / AC line> |
+
 ## Open questions
 - <question> → <who decides> — <deadline or trigger for decision>
 
@@ -167,6 +171,8 @@ Stack references loaded: <list from metadata header>
 
 **Integration points** — Every external system the feature depends on (third-party API, message broker, S3, payment gateway) or exposes to (webhook consumer, client SDK). For each: the protocol, the auth model, the failure handling strategy (retry policy, circuit breaker, graceful degrade behavior).
 
+**Decisions & owners** — One row per behavioral predicate the feature decides (how it behaves at a fork: duplicate email, empty-cart checkout, concurrent edit, missing optional field). Each predicate is either **committed** (name the single chosen behavior — never "A or B"; the implementer does not re-decide) or **implementer's-choice** (the implementer may pick; name the constraint the choice must satisfy). Exactly one owner per predicate. Trace each to the requirement that motivates it: a decision with no requirement is scope creep; a requirement with no decision is an Open question. This is the seam that stops the implementer from raising design questions at runtime (Gotcha 6).
+
 **Open questions** — Every design decision that is unresolved at time of writing. Never genuinely empty on a non-trivial feature. If a decision is blocked on a stakeholder, name the stakeholder. If a decision requires a spike, name who runs the spike and when the answer is needed.
 
 **Out of scope** — Explicitly names things the architecture consciously excludes with a one-line reason. Prevents scope creep during implementation. When in doubt, add a line — an explicit "out of scope" is better than silence that the implementer interprets as "in scope".
@@ -175,65 +181,22 @@ Stack references loaded: <list from metadata header>
 
 ## Design-only rule
 
-The architect does **not** write code, tests, or migrations. The architecture document is the only permitted output artifact.
+The architect does **not** write code, tests, or migrations — the architecture document is the only output artifact (Principle 1). It **may** include named type definitions, ≤5-line contract pseudocode, ASCII flow diagrams, and service-interface type signatures; it **must not** include functional implementation, test fixtures, ORM/SQL queries, or review/security checklists. The full may / must-not lists and the design / implement / review angle-boundary table are in `references/design-conventions.md`.
 
-The architect **may** include:
-
-- Named type definitions in pseudo-notation (e.g. `UserCreatedEvent { user_id: UUID, email: str }`)
-- Contract pseudocode of ≤5 lines (to illustrate a hand-off shape — not runnable code)
-- ASCII flow diagrams (to illustrate data flow or state transitions)
-- Type signatures showing inputs and outputs of service-layer interfaces
-
-The architect **must not** include:
-
-- Functional implementation — any code that could be copy-pasted into production and run
-- Test fixtures, factory_boy configurations, pytest patterns — those are implement angle
-- Migration commands, ORM queryset patterns, SQL queries — those are implement angle
-- Security audit checklists, n+1 query detection steps — those are review angle
-
-**Spike protocol:** If a design decision requires running code to validate — benchmarking two ORM strategies, verifying that a framework supports a specific feature, measuring cache hit rates under realistic load — the architect writes this in Open Questions: «needs a spike — `sdlc:code-implementer` to validate, then revisit ARCH-NN §Hand-off contracts». The architect does not write the spike.
-
-**Angle boundary examples** (if in doubt, consult these):
-
-| Content | Angle | Lives in |
-|---|---|---|
-| "ORM session scope should be per-request" | Design | `SKILL.md` or `references/backend-python.md` (design) |
-| `session = SessionLocal()` + `try/finally` pattern | Implement | `code-implementer/references/backend-python.md` |
-| "Check for global `session` shared across requests" | Review | `code-reviewer/references/backend-python.md` |
-| "Use `select_related` for FK access pattern X" | Design | `references/backend-python.md` (design) |
-| Queryset with `.select_related("user")` invocation | Implement | `code-implementer/references/backend-python.md` |
+**Spike protocol:** if a design decision requires running code to validate (benchmark two ORM strategies, verify a framework feature, measure cache hit rates), write it in Open Questions: «needs a spike — `sdlc:code-implementer` to validate, then revisit ARCH-NN §Hand-off contracts». The architect does not write the spike.
 
 ## Gotchas
 
-1. **Bounded context drift.**
+Headlines below; full explanations in `references/design-conventions.md`.
 
-   When two contexts repeatedly need the same piece of data, the instinct is to "share a model" across both. The correct diagnosis: a *missing third context* that owns the shared data and exposes it to the other two via named contracts. Shared models hide coupling by making it look like a clean dependency but behaving like a merge — any change to the shared model requires coordinating both contexts.
-
-2. **Premature microservices.**
-
-   Splitting into separate services before the seams are stable produces a distributed monolith: two repos, two CI pipelines, two deploys, all the coupling, none of the scalability benefits. FPF A.11: do not add distribution before requirements explicitly demand it. Start with a modular monolith where the seams are app or module boundaries. Extract to services only when a bounded context boundary has been proven stable under production traffic and the operational benefits outweigh the cost.
-
-3. **"Just CRUD" shorthand.**
-
-   Describing a feature as "just CRUD" hides real complexity: authentication and row-level authorization checks, cache invalidation when a record is updated, optimistic locking to prevent concurrent overwrites, event emission for downstream consumers, audit trail writes. These belong in Data Flow and Integration Points — capture them explicitly in the architecture document, even if implementation of some is deferred to a later phase.
-
-4. **Architecture vs directory layout.**
-
-   A directory tree is an implementation artifact, not an architecture. Directories are what `sdlc:code-implementer` derives from the architecture document. The architecture names bounded contexts, contracts, and data flows. Do not produce a directory tree and call it an architecture — that is a deliverable of the implementation phase, not the design phase.
-
-   Symptom: the architecture document contains `plugins/sdlc/skills/architect/` style paths but has no Bounded Contexts table and no Hand-off Contracts table. Treatment: restructure the document around contexts and contracts; let the implementer derive the paths.
-
-5. **Skipping `api-design.md` for "simple" REST.**
-
-   REST contracts have versioning strategy, error shape, idempotency classification, and pagination design — all of which are design decisions that cannot be retrofitted cleanly after clients are consuming the API. Load `references/api-design.md` whenever any endpoint is in scope, even if the endpoint "looks simple". The cost of loading the reference is low; the cost of an undesigned error contract discovered at client integration is high.
-
-6. **Implementer raising design questions at runtime.**
-
-   If the implementer raises a question that the architecture document should have answered ("which serializer?", "what is the error shape for 422?", "is this endpoint idempotent?", "which context owns the User email?"), that is a **design defect** in the architecture document — not the implementer's job to resolve. The architect should revise `ARCH-NN.md` and re-add the missing contract row before implementation continues.
-
-7. **Unknown stack treated as no-op.**
-
-   If stack detection finds no known signals, the architect must still produce a valid architecture document using universal design principles. Mark `stack: unknown` in the metadata header. The absence of a stack-specific reference does not license a shorter or less rigorous architecture — bounded contexts, explicit contracts, and data flow design are universal.
+1. **Bounded context drift** — two contexts needing the same data → a *missing third context* that owns it, not a shared model.
+2. **Premature microservices** — splitting before seams are stable = a distributed monolith (FPF A.11). Start modular-monolith; extract only when a boundary is proven stable under load.
+3. **"Just CRUD" shorthand** — hides auth, cache invalidation, optimistic locking, event emission, audit writes. Capture them in Data Flow / Integration Points.
+4. **Architecture vs directory layout** — a directory tree is an implementation artifact; the architecture names contexts, contracts, and flows (let the implementer derive paths).
+5. **Skipping `api-design.md` for "simple" REST** — versioning, error shape, idempotency, pagination can't be retrofitted. Load it whenever any endpoint is in scope.
+6. **Implementer raising design questions at runtime** — "which serializer? error shape for 422? idempotent?" is a design defect; revise `ARCH-NN.md` and add the missing contract row.
+7. **Unknown stack treated as no-op** — still produce a full architecture with universal principles; mark `stack: unknown`. No stack reference ≠ a shorter architecture.
+8. **Partial state space** — enumerate every discrete state, transition, prerequisite reachability, and identity-slot occupancy; an unreachable / missing-transition / doubly-occupiable state is a design defect found now, not a runtime bug later.
 
 ## Integration with other plugins
 
@@ -278,3 +241,5 @@ A reference adds stack-specific design guidance; it does not replace the SKILL.m
 
 - `references/api-design.md` — **load when:** the feature exposes or consumes an API (REST, GraphQL, gRPC, WebSocket), regardless of backend stack.
   Contents: protocol decision matrix, REST resource modeling (URL structure, verb-to-action mapping, idempotency table), spec-first vs code-first decision, versioning strategy (URL prefix vs header), error contract (RFC 7807 Problem Details), pagination and filtering design (cursor vs offset, filter syntax), idempotency and retry classification per endpoint.
+
+- `references/design-conventions.md` — loaded on demand (stack-agnostic, always available). Full Gotcha explanations, the design-only may / must-not lists, and the design / implement / review angle-boundary table. SKILL.md keeps the headlines; this holds the detail.

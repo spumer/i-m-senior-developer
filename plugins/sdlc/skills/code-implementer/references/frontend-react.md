@@ -125,6 +125,31 @@ Mock at the network boundary with `msw` (Mock Service Worker). Do not
 mock the component under test — the test proves only that the mock
 works, not the component.
 
+## Runtime visual smoke (mandatory for UI changes)
+
+RTL/vitest prove component logic and accessibility queries; they do NOT prove
+the change renders in a real browser. Any change a user can SEE or interact with
+(new/changed components, conditional hints, button enable/disable, i18n strings,
+displayed state) requires a browser-level smoke of the affected scenario BEFORE
+it is reported done. Type-checks and unit tests passing is necessary, not sufficient.
+
+Verification ladder for render/UI artifacts units can't fully cover:
+1. **Review** — read the diff against the design.
+2. **Headless smoke** — launch the dev server, drive the affected scenario in a
+   browser (Playwright; see the `webapp-testing` / `playwright-skill` skill if
+   available), assert no console errors / no crash, confirm the expected state
+   transition. For STABLE UI states, capture a screenshot as evidence.
+3. **Live acceptance** — for animation/motion/canvas payoff a headless run cannot
+   capture (animated-canvas frames come out black/frozen), do NOT claim visual
+   success from a screenshot; state that the motion needs human acceptance and
+   hand it off.
+
+Scope the smoke to the changed scenario only — the broad post-merge sweep across
+all flows is the planner's orchestration concern, not the implementer's DoD.
+Record the smoke under "Commands run" in the report. If no browser tooling is
+available, say so and downgrade explicitly to review + live-acceptance request —
+do not silently report a UI change as verified on unit tests alone.
+
 ## Async patterns
 
 `findBy*` queries auto-await element appearance (built-in `waitFor`):
@@ -162,3 +187,14 @@ second design system without explicit architectural decision.
 - **`any` type** — defeats TypeScript. Use `unknown` + narrowing, or
   a concrete interface. `any` at component boundaries removes type
   safety at the integration point.
+- **Verifying with `tsc --noEmit` instead of the real build** — `tsc
+  --noEmit` does not honor project references the way the CI build does,
+  so it can report 0 errors while `npm run build` (typically `tsc -b &&
+  vite build`) fails. Before hand-off run the build command CI runs
+  (check `package.json` scripts / the deploy target), not a substitute
+  type-check.
+- **Ignoring your own diagnostic anomaly** — if a grep / type-check /
+  quick script you ran prints something unexpected (an unused import, a
+  symbol used but not imported, `imports X: False`), resolve it before
+  committing. It is evidence, not noise (FPF A.10) — a silently-failed
+  `Edit` surfaces here first.

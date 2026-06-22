@@ -54,6 +54,13 @@ never reviews others' code.
    Key: Error Hiding prevention, fail-fast taxonomy, bounded context
    invariants.
 
+7. **A green suite is necessary, not sufficient (FPF A.10, widened).**
+   Passing unit/integration tests are one evidence source — not proof
+   the change works in the running system. Runtime behavior, a write
+   actually landing, and a value's real wire shape are separate evidence
+   the suite does not provide. Establish them before "done" — see
+   `Verification beyond the suite` below.
+
 ## Workflow
 
 Seven-step pipeline. Run steps in order; do not skip.
@@ -130,6 +137,41 @@ caller cannot distinguish "valid empty response" from "error". That
 is Error Hiding — see `functional-clarity:functional-clarity` for the
 full taxonomy.
 
+## Verification beyond the suite (FPF A.10)
+
+A passing test suite proves the tests pass — not that the system works.
+Before the hand-off, establish the evidence the suite cannot, for the
+classes the change touches:
+
+- **Runtime smoke** — for any change to a runnable surface (endpoint, UI
+  scene/route, CLI, worker), launch it, exercise the changed scenario,
+  observe the result, and tear down. A unit suite that never boots the
+  app misses crashes, wiring errors, and teardown leaks. Record the
+  command and what you observed.
+- **Write actually landed** — after a write you caused, re-read the state
+  through an **independent** path (a fresh query, an aggregate `COUNT`, a
+  separate endpoint) — never the writer's own success count.
+  `applied=N, errors=0` from the same code path that performed the write
+  is not integrity.
+- **Real wire shape** — for any value crossing a serialization or
+  interface boundary (API response, event payload, MCP/CLI output),
+  assert against the real contract shape, not a flattened in-memory
+  fixture. A test that mocks the convenience shape passes while the wire
+  shape diverges.
+- **Fixtures via the production write-path** — build cross-module
+  fixtures through the real create/import path, not a direct `.create()`
+  that bypasses validation, signals, and derived state.
+- **Prod runtime config** — for concurrency / parallel / shutdown code,
+  run the suite (or a smoke) under the *production* runtime configuration
+  — the real runner/executor/event-loop, prod parallelism, the full
+  config/middleware stack — not just the test-harness default, which can
+  mask a prod-only failure mode (stack-neutral).
+
+When a check is blocked (e.g. runtime needs credentials you do not have),
+record it as `judged statically — <check> unrun, blocked by <reason>` in
+the report. Never fabricate or brute-force the missing evidence — an
+unrun check is reported as unrun (FPF A.10).
+
 ## Stack detection (summary)
 
 Pointer to the master table: `(repo root)/plugins/planner/skills/planner/references/bootstrap.md` §4.
@@ -179,6 +221,13 @@ pytest tests/test_foo.py -v   # RED → passed after GREEN
 pytest                        # full suite — N passed, 0 failed
 ```
 
+### Verification beyond the suite
+<!-- FPF A.10: the suite is one evidence source. State the rest, or n/a. -->
+- Runtime smoke: <command + what was observed> | n/a (no runnable surface changed)
+- Write landed (independent re-read): <how confirmed> | n/a
+- Wire shape asserted against the real contract: <where> | n/a
+- Blocked checks: `judged statically — <check> unrun, blocked by <reason>` | none
+
 ### Assumptions made
 - <assumption> — <why it was needed>
 
@@ -216,6 +265,13 @@ Diff scope: <base-ref>..HEAD or <list of changed files>
    returning a default value that masks a failure is Error Hiding. See
    `functional-clarity:functional-clarity`. It is a defect, not a
    safety measure.
+
+8. **Trusting a success count over a re-read** — `applied=N, errors=0`
+   from the same code that performed the write is a self-report, not
+   integrity: a stale in-memory object can report success while the row
+   is wrong. After a write, re-read via an independent path (fresh query,
+   aggregate count) before claiming done. See Verification beyond the
+   suite.
 
 ## Integration with other plugins
 
@@ -255,8 +311,13 @@ mobile, Rust):
 - `references/backend-python.md` — load when stack is Python
   (Django / FastAPI / Flask / SQLAlchemy). Covers: project structure,
   Django ORM patterns, SQLAlchemy session scope, pytest fixtures,
-  mypy config, migrations, async/sync boundary.
+  mypy config, migrations, async/sync boundary, wire-contract
+  (serialization-boundary) tests, strict type-checker
+  (pyright/basedpyright) patterns, extending existing behavior,
+  `makemigrations --check` DoD.
 
 - `references/frontend-react.md` — load when stack is React. Covers:
   project structure, component patterns, hooks, TanStack Query,
-  TypeScript at component level, vitest + RTL testing, async patterns.
+  TypeScript at component level, vitest + RTL testing, async patterns,
+  runtime visual smoke, real-CI-build vs `tsc --noEmit`,
+  diagnostic-anomaly discipline.

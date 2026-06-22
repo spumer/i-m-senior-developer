@@ -112,6 +112,8 @@ const [fullName, setFullName] = useState(`${user.first} ${user.last}`);
 
 The `fullName` state diverges from `user` after initial mount. Flag as medium finding: compute derived values inline or with `useMemo`, do not duplicate as state.
 
+- **One logical value, two state sources:** a diff mutates a shared value (balance, role, count, unlocked flag) via `setQueryData` / `invalidateQueries`. Grep for OTHER consumers of that value; flag when one reads it via TanStack Query / SWR and another via a bespoke `useContext` / Zustand / hand-rolled `refetch` — the mutation refreshes only one, leaving the other stale (Card shows the new balance, Header the old). Fix: a single owner; secondary consumers subscribe, not re-fetch. Severity medium (high if money/role/permission).
+
 ---
 
 ## Type-safety review
@@ -129,6 +131,19 @@ The `fullName` state diverges from `user` after initial mount. Flag as medium fi
 - **Querying by class or id** — `container.querySelector('.submit-btn')` — brittle; breaks on CSS refactor. Flag as minor; fix direction: use `screen.getByRole('button', { name: /submit/i })` (accessibility-first query).
 - **Missing user-event tests for interaction** — new button / input without a test that fires `userEvent.click()` or `userEvent.type()`. Flag as minor.
 - **Mocked the component under test** — `jest.mock('./MyComponent')` in a test that is supposed to test `MyComponent`. The test is now a tautology. Flag as medium finding.
+- **Mock shape diverges from the real response envelope** — when client code reads a nested response field (`body.detail.balance`, `err.response.data.x`), verify the test's `msw` mock mirrors the real wire shape per the API contract / OpenAPI / ARCH doc, not a flattened convenience object. (FastAPI's `raise HTTPException(detail={...})` serializes as `{detail:{...}}`, so a flat `{balance}` mock passes while prod reads `undefined`.) Flag as medium.
+- **Error-status branch added but never triggered** — when a diff branches on an error status (402/409/422/429, `error.response.status`), check that a test drives the mock to RETURN that status and asserts the rendered user message (not a key name). A suite where only the 200 path fires gives no signal. Flag as medium.
+
+---
+
+## Form & rendering pitfalls (runtime, not caught by tsc)
+
+Diff-detectable runtime defects a type-check passes:
+
+1. **Unconditional `fieldX: undefined` in a form-handler spread** — `{ ...form, fieldX: undefined }` (or `setForm(prev => ({ ...prev, fieldX: cond ? val : undefined }))`) placed outside the branch that clears the field clobbers a value merged from `initialData` on save. Flag high. Fix: assign the field only inside the branch that needs to clear it. Grep cue: `: undefined` inside object spreads in form handlers.
+2. **`<button>` nested in `<label>`** — the label forwards its click to its control, so the button fires twice (flips a toggle back, races any AbortController/async the first click started). Flag high. Fix: a standalone `<button>` with `aria-label`, never inside `<label>`.
+3. **User free-text rendered without whitespace/wrap handling** — multi-line user text (feedback/comments/descriptions) in a normal block collapses newlines into one paragraph. Flag medium when rendered without `whitespace-pre-line` + `break-words`/`overflow-wrap` (and ideally `max-h` + `overflow`).
+4. **Ambient-namespace value used without a runtime import** — `new Phaser.Game(...)`, `Phaser.Input.Events.POINTER_UP` etc. when only the type declaration is in scope: `tsc` passes (the namespace exists at type level) but the browser throws `ReferenceError`. Flag high. Fix: a real runtime `import` must back every namespace *value* reference — type-only availability is not runtime availability. Generalizes to any ambient/global namespace.
 
 ---
 

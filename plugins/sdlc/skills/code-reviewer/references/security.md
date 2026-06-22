@@ -16,6 +16,14 @@ Common code smell: `queryset.filter(pk=pk)` where `pk` comes directly from reque
 
 Fix direction: add ownership filter; add `@permission_required` / `Depends`; write a test that changes the ID to another user's and asserts 403.
 
+#### Authorization gates: server-side and tested both ways
+
+- **A relaxation diff is a blocker until isolation tests ship in the same change.** Triggers: a stricter check replaced by a looser one (`require_captain` → `require_team_member`, `IsAdmin` → `IsAuthenticated`), `permission_classes` broadened, a JWT scope/audience widened, an `@permission_required` removed. Passing happy-path (student/owner) tests is a weightless claim (FPF A.10).
+- **Cross-tenant isolation.** Require a test where an actor of team/org A acts on a resource of team/org B and gets 404/403 (not the resource). Absent → flag the relaxation as unverified.
+- **Server-side derivation is the source of truth.** If the body/query/path carries a tenant/owner id (`team_id`, `org_id`), confirm the server derives it from the authenticated actor (`user.team_id`) and ignores the client value; a request-tampering test must send another team's id and assert it is ignored. Trusting client-supplied scope is mass-assignment of an authorization field.
+- **A frontend guard is not a security boundary.** A UI that hides a button or filters a list does not restrict access — the client can call the API directly. For each UI restriction in the diff (hidden action, role-gated menu, status-filtered list), confirm the SAME restriction exists in the handler. Smell: an endpoint returns records by status/visibility (`pending_moderation`, draft, archived) with the server queryset NOT filtering by that status/role.
+- **Per-endpoint authz triad** (generalizes the IDOR test above into a standing recipe): (1) authorized → 2xx; (2) no-token → 401; (3) wrong-role/owner → 403/404 (never the resource). If only the happy path exists, flag it.
+
 ### A02 — Cryptographic Failures
 
 What to look for: MD5 or SHA1 used for passwords (`hashlib.md5`, `hashlib.sha1`); plaintext storage or transmission of sensitive data; hardcoded encryption keys or IVs in source; weak random (`random.random()` instead of `secrets`); HTTP URLs for sensitive endpoints; session tokens with insufficient entropy.
