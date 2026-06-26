@@ -2,7 +2,7 @@
 
 > Найди задачу → используй Grep-паттерны для поиска в FPF-Spec.md
 >
-> Сверено с FPF-Spec.md @ ailev/FPF `646b0b9b164f` (2026-06-17). Секции-ID стабильны;
+> Сверено с FPF-Spec.md @ ailev/FPF `40b232f11ed9` (2026-06-26). Секции-ID сверены по валидности;
 > если grep-паттерн не находится, см. актуальные/починенные в `fpf-grep-patterns.md`
 > (концепты переименованы: `describedEntity` → `EntityOfConcern`,
 > `Language-State Transduction` → `Language-State Move`).
@@ -25,7 +25,7 @@
 | Управлять границами и signatures | A.6, A.6.0, A.6.1 | "Signature Stack", "U.Signature", "U.Mechanism" |
 | Разложить boundary statements | A.6.B, A.6.C | "Boundary Norm Square", "Contract Unpacking" |
 | Трансформировать эпистемы без эффектов | A.6.2, A.6.3, A.6.4 | "EffectFreeEpistemicMorphing", "EpistemicViewing", "EpistemicRetargeting" |
-| Восстановить точность отношений | A.6.P, A.6.Q, A.6.A | "RelationalPrecisionRestoration", "Q-TERM", "ACT-INV" |
+| Восстановить точность отношений | A.6.P, A.6.RSIR, A.6.A | "RelationalPrecisionRestoration", "RSIR", "ACT-INV" |
 | Избежать category errors | A.7, A.V | "Strict Distinction", "Clarity Lattice" |
 | Обеспечить universality концептов | A.8, A.9 | "Universal Core", "Cross-Scale Consistency" |
 | Обеспечить traceability через evidence | A.10, B.3 | "Evidence Graph Referring", "F-G-R" |
@@ -46,7 +46,7 @@
 | Проверить валидность flows | A.20 | "U.Flow.ConstraintValidity" |
 | Профилизировать гейты | A.21 | "GateProfilization" |
 | Агрегировать холоны | B.1, B.1.1 | "Universal Algebra of Aggregation", "Gamma" |
-| Распознать эмерджентность | B.2, B.2.1 | "Meta-Holon Transition", "BOSC Triggers" |
+| Распознать эмерджентность | B.2, B.2.2 | "Meta-Holon Transition", "BOSC" |
 | Рассчитать trust | B.3, C.2 | "Trust & Assurance Calculus", "F-G-R" |
 | Реализовать эволюционный цикл | B.4, B.4.1 | "Canonical Evolution Loop", "Observe-Notice-Stabilize-Route" |
 | Организовать рассуждения | B.5, B.5.2 | "Canonical Reasoning Cycle", "Abductive Loop" |

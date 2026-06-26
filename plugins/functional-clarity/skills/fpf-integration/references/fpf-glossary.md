@@ -1,6 +1,6 @@
 # FPF — Глоссарий ключевых терминов
 
-> Сгенерировано из FPF-Spec.md @ ailev/FPF `646b0b9b164f` (2026-06-17). Полный SHA: `646b0b9b164f7c13258633a33b92d2d0a569da28`.
+> Сгенерировано из FPF-Spec.md @ ailev/FPF `40b232f11ed9` (2026-06-26). Полный SHA: `40b232f11ed950ed34082273c57ff4f6c45b7f06`.
 > Проверять актуальность: сравни с `~/.claude/knowledge/fpf/FPF-Spec.version` и текущим upstream.
 
 
@@ -65,17 +65,17 @@
 | Role Projection Bridge | Мост проекции ролей | Bridge для domain-specific vocabulary. | B.5.3, C.3 |
 | Sys CAL | Sys-CAL | CAL для physical systems с conservation laws. | C.1, B.1.2 |
 | KD CAL | KD-CAL | CAL для knowledge с F-G-R и trust. | C.2, B.1.3, B.3 |
-| Episteme | Эпистема | Slot graph с describedEntity и grounding holon. | C.2.1, A.6.2, E.17 |
+| Episteme | Эпистема | Slot relation с EntityOfConcern и grounding holon. | C.2.1, A.6.2, E.17 |
 | Reliability R | Надежность R | Warrant в F-G-R с CL penalties и bridge-only reuse. | C.2.2, B.3, F.9 |
 | Language State Space | Пространство языка-состояния | Chart over characteristic space для position claims. | C.2.2a, A.16, B.4.1 |
-| Formality F | Формальность F | F-scale от F0-F9 для rigor и proofs. | C.2.3, B.3.1 |
-| Evidence Graph | Граф доказательств | Структура для traceability и audit с PathId. | G.6, A.10, B.3.2 |
+| Formality F | Формальность F | F-scale от F0-F9 для rigor и proofs. | C.2.3, B.3 |
+| Evidence Graph | Граф доказательств | Структура для traceability и audit с PathId. | G.6, A.10, B.3 |
 | Bridge | Мост | Mapping для cross-context sameness с CL и direction. | A.6.9, F.9, G.7 |
 | Multi View Publication Kit | MVPK | Kit для multi-view descriptions с viewpoints. | E.17, A.6, G.12 |
 | Assurance Level | Уровень assurance | L0-L2 с TA/VA/LA для artifact maturity. | B.3.3, B.3 |
 | Epistemic Debt | Эпистемический долг | Decay evidence от freshness и staleness. | B.3.4, B.3 |
 | Gamma Operator | Оператор Gamma | Агрегация для holons с invariants и proofs. | B.1, B.1.1 |
-| Emergence | Эмерджентность | Recognition через MHT и BOSC triggers. | B.2, B.2.1 |
+| Emergence | Эмерджентность | Recognition через MHT и BOSC triggers. | B.2, B.2.2 |
 | Feedback Loop | Петля обратной связи | Supervisor-subholon для stability в control. | B.2.5, A.12 |
 | Abductive Prompt | Абдуктивный промпт | Prompt с anomaly и rival-set для hypothesis generation. | B.5.2.0, B.5.2 |
 | Parity Run | Parity run | Сравнение для comparability с reference plane. | A.0, G.9 |
@@ -121,4 +121,4 @@
 | PublicationUnit Stability Discipline | Дисциплина стабильности единицы публикации | Правила стабильности PublicationUnit при ауд­ите и редактировании: восстановление локальной головы и сохранение первичной EntityOfConcern единицы публикации. | E.17.AUD, E.17, E.17.AUD.OOTD |
 | U.EpistemicRetargeting | Эпистемический ретаргетинг (U.EpistemicRetargeting) | Безэффектный морфизм эпистемы, намеренно меняющий entityOfConcernRef под объявленным KindBridge, инвариантом и границей потерь, с сохранением только проверяемых мостом обязательств. | A.6.4, A.6.3, E.18 |
 
-> Правки ссылок при ре-индексации: `A.6.Q` удалён (живая секция — `A.6.P`); термин «Ontic Debt» отсутствует в спеке — используется `U.Ontic` / `Epistemic Debt` (B.3.4). Сквозное переименование `describedEntity` → `EntityOfConcern` по всей спеке.
+> Правки ссылок при ре-индексации `40b232f` (полный дифф — в `CHANGES-fpf-spec.md`): `A.6.Q` quality-term restoration переехал в `C.16.Q`, relational — в `A.6.P`; планируемые заглушки `B.2.1`/`B.3.1`/`B.3.2` свёрнуты под живых родителей `B.2`/`B.3` (`B.2.2` Meta-System Transition); термин «Ontic Debt» в спеке отсутствует — используется `U.Ontic` / `Epistemic Debt` (B.3.4). `describedEntity` → `EntityOfConcern` почти завершено (8 остаточных упоминаний).
