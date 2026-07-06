@@ -161,6 +161,12 @@ TDD: activate `tdd-master:tdd-master` before any production code
 Stack references loaded: <list from metadata header>
 ```
 
+The feature-id (`FEAT-XXXX`) appears in the document title and in
+artifact filenames only. Do not embed it in contract pseudocode, code
+snippets, or identifier names anywhere in the document — the
+implementer copies these fragments verbatim, and the ID leaks into
+code comments and identifiers.
+
 **Section guidance:**
 
 **Bounded contexts** — One bullet per context. Name it. State its single responsibility in one sentence. Name the module, app, or path where it lives. A context may have named sub-boundaries (e.g. a service layer within a Django app, a repository layer within a FastAPI service); add a nested bullet for each sub-boundary worth naming. Rule: if you cannot state the context's responsibility in one sentence, the context is not yet bounded — it is two contexts fused together.

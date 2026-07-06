@@ -137,6 +137,17 @@ caller cannot distinguish "valid empty response" from "error". That
 is Error Hiding — see `functional-clarity:functional-clarity` for the
 full taxonomy.
 
+## No tracking IDs in code
+
+Feature and ticket identifiers (`FEAT-XXXX`, plan file names, issue
+numbers) belong to artifact filenames inside the feature directory —
+never to the code. Do not write them into code comments, docstrings,
+test names, identifiers, or fixtures. A comment states a constraint the
+code cannot express; "which ticket asked for this" is answered by
+`git blame` and the feature directory, not by a comment. When copying
+contract text or pseudocode from the ARCH/PLAN document into code,
+strip the tracking IDs — they must not travel with the text.
+
 ## Verification beyond the suite (FPF A.10)
 
 A passing test suite proves the tests pass — not that the system works.
