@@ -1,35 +1,29 @@
 #!/usr/bin/env bash
 # Clarity Language — SessionStart hook
-# Brief reminder of text & evidence discipline for every session
+# Injects the Plain Language Gate: a write-time rule set for human-facing text
 
 cat <<'EOF'
-## Clarity Language Active
+## Plain Language Gate — fires on write, not on session start
 
-When writing or editing prose, documentation, scripts, or user-facing text, keep it
-clear and free of AI-synthetic patterns. Evidence over assertion.
+TRIGGER: BEFORE every Write/Edit of any human-facing text (plans, decision
+docs, comparisons, summaries, questions, reports). This is a write-time gate,
+not a session-start notice: re-apply it at every such write, regardless of
+how long the session has run.
 
-Evidence discipline (FPF A.10 — "a claim without proof is only an opinion"):
-- No invented flows: "the bot assigns a reviewer", "the system notifies X" — verify the
-  process exists with the owner or the docs before writing it as fact.
-- No authority-by-number: "cuts load by 80%", "15-20 hours" without a source. Drop it or
-  replace with measurable components.
-- No references to things that don't exist: verify file/anchor/role links (Glob/Grep)
-  before citing them.
+Before writing: activate the russian-style skill (for Russian text) if not
+already active in this session. Do not wait to be asked.
 
-Natural language (skill `russian-style`):
-- No calques or unnatural foreign intrusions; prefer verbs over nominalizations.
-- BUT keep established loanwords ("фидбек", "баг", "коммит", "дедлайн") — don't "fix" them.
-- Uncertain whether a foreign word is established or a calque? ASK the human, don't decide
-  alone. Record the verdict to memory (loanword lexicon) so you don't ask twice.
-- No empty antitheses ("это не X, а Y" that carries no new fact); give the concrete action.
-- Plain language for engineers: instruction, not persuasion. No hedging, no "обсыпание".
+FORBIDDEN in human-facing text:
+1. Foreign calques where a native word exists. Established loanwords are
+   fine (баг, тест, коммит, дедлайн).
+2. Terms without a plain-words gloss at first use.
+3. Internal codes and abbreviations in prose (ticket IDs, milestone codes,
+   framework section numbers) — codes belong in files; prose says what the
+   thing is («решение о формате работы», not «DEC-006»).
+4. Ornate figures of speech that need decoding («кривая гнётся вниз») —
+   state it plainly («доработок к каждой следующей задаче меньше»).
+5. Sentences a reader outside this session cannot parse on first read.
 
-Skills available — activate proactively, don't wait to be told:
-- `clarity-validator` — 12 meaning-level AI antipatterns in technical docs (run it BEFORE
-  declaring docs "done", not after a reminder).
-- `ai-prose-detector` — fiction prose style (distance, metaphors, physiology, rhythm).
-- `russian-style` — natural Russian authoring rules.
-
-Do NOT ship synthetic text: leaked invariants, negation-of-nothing, design/run-time mixing,
-duplicated conclusions across sections.
+SELF-CHECK before sending: reread the text with the reader's eyes; if you
+stumble, rewrite. Never ship the first draft of a human-facing document.
 EOF
