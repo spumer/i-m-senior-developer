@@ -1,6 +1,6 @@
 {
   "name": "planner",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Meta-dispatcher plugin for the full feature pipeline: requirements (/plan-feat, /plan-jira), architecture/execution planning (/plan), implementation orchestration (/plan-do), post-task reflection (/plan-reflect). Detects agent-catalog gaps, learns from past sessions.",
   "author": {
     "name": "Svyatoslav Posokhin"
