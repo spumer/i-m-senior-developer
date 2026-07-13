@@ -106,6 +106,21 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
   These belong to artifact filenames in the feature directory; in code they
   are noise the team has to clean up. `Grep` the diff for the project's
   feature-id pattern. Severity: minor, but flag every occurrence.
+- **Comment hygiene** — comments that cite internal project docs (`see
+  DESIGN §…`, `per PLAN §2.4`), carry change history (`no longer reads`,
+  `— unchanged`, `since v2`, `RED→GREEN`), or restate the adjacent line
+  (`// increment counter`). They state nothing the code cannot express and
+  grow cognitive load. Distinct from the tracking-id bullet above (that
+  covers `FEAT-XXXX`) — do not merge them. Normative text (smell classes,
+  allowlist, borderline cases): `functional-clarity`
+  `references/05-comment-style.md`. Known false positives — do not flag:
+  external standards (`RFC 7231`, `PEP 8`), versioned-API doc conventions
+  (`.. versionadded::`, `@since`), `TODO`/`FIXME`/`SAFETY:` lines, and
+  changelog-looking wording that explains current behavior — if dropping the
+  reference to the past leaves a useful statement, suggest a present-tense
+  rewrite instead of deletion. `Grep` the diff's comment lines. Severity:
+  minor. In a large diff, report one finding with the list of locations, not
+  one finding per line.
 - **Test runtime config diverges from prod** (stack-neutral) — tests run under a different runtime/concurrency config than production, so a prod-only failure mode stays green in CI (e.g. a test runner that auto-cleans pending work vs a long-lived prod runner; test parallelism flags masking shared/singleton-state leaks; a test config/middleware stack thinner than prod). Flag concurrency / parallel / shutdown code tested only under the harness default — require a test or smoke under the prod runtime config.
 
 **Severity triage:** Major findings block the merge and require a fix commit before re-review. Minor findings are advisory — the implementer decides whether to address them now or file a ticket. Design concerns never block the current merge — they are inputs to the next architecture iteration. Security findings at high or critical severity always block merge; medium and low are advisory.

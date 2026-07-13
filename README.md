@@ -40,7 +40,7 @@
 
 ### [functional-clarity](plugins/functional-clarity/)
 
-22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии. Включает 7-шаговую Code-Change Discipline (с FPF-нормативами) и скилл `fpf-integration` — внедрение First Principles Framework ([ailev/FPF](https://github.com/ailev/FPF)) в multi-agent проекты: evidence-аудит, decay/DRR, NQD, навигационный индекс по спеке.
+22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии. Включает 7-шаговую Code-Change Discipline (с FPF-нормативами), дисциплину комментариев (объясняй «почему», не «что») и скилл `fpf-integration` — внедрение First Principles Framework ([ailev/FPF](https://github.com/ailev/FPF)) в multi-agent проекты: evidence-аудит, decay/DRR, NQD, навигационный индекс по спеке.
 
 ### [tdd-master](plugins/tdd-master/)
 
