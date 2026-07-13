@@ -148,6 +148,19 @@ code cannot express; "which ticket asked for this" is answered by
 contract text or pseudocode from the ARCH/PLAN document into code,
 strip the tracking IDs — they must not travel with the text.
 
+## Comment style — explain why, not what
+
+A comment states a constraint the code cannot express — the reason, an
+invariant, a non-obvious trade-off. It does **not** point at internal docs
+(`see DESIGN §9.4`), carry change history (`no longer reads X`, `— unchanged`),
+or restate the adjacent line (`// increment counter`). Write the self-contained
+reason, or write nothing. This is the sibling rule to "No tracking IDs in code"
+above — do not conflate them. The normative text — smell classes with ❌/✅,
+the allowlist (`TODO`, `SAFETY:`, security-why), and borderline cases — lives
+in one place: `functional-clarity:functional-clarity` →
+`references/05-comment-style.md`. This section is a reminder, not a copy;
+when in doubt, read the reference.
+
 ## Verification beyond the suite (FPF A.10)
 
 A passing test suite proves the tests pass — not that the system works.
@@ -283,6 +296,11 @@ Diff scope: <base-ref>..HEAD or <list of changed files>
    is wrong. After a write, re-read via an independent path (fresh query,
    aggregate count) before claiming done. See Verification beyond the
    suite.
+
+9. **Doc-ref / changelog comments** — `// see PLAN §2.4`, `// no longer reads
+   DATABASE_URL`, `// — unchanged` explain nothing the reader can act on and add
+   cognitive load. Write the reason or delete the comment. See *Comment style*
+   above and `functional-clarity` `references/05-comment-style.md`.
 
 ## Integration with other plugins
 

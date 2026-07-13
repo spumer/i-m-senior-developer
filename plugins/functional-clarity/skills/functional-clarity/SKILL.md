@@ -130,6 +130,11 @@ except Exception:
 - **`references/03-developer-levels.md`** — Developer level definitions (Junior → Senior+)
 - **`references/04-bash-instructions.md`** — Bash script guidelines
 - **`references/frameworks/python.md`** — Python-specific: modern syntax, pathlib, type annotations, pytest patterns
+- **`references/05-comment-style.md`** — Comment discipline: three comment
+  smell classes (doc-refs, changelog-in-code, restating the obvious) with
+  ❌/✅, the allowlist, and borderline cases (external standards,
+  versioned-API docs). Normative source — every other mention points here.
+  Tracking-id (`FEAT-XXXX`) enforced separately by `sdlc`.
 
 ## Reference Loading Order
 
@@ -140,6 +145,7 @@ except Exception:
 5. IF discussing developer levels, requirements, expectations, or code review standards → read `references/03-developer-levels.md`
 6. IF writing bash scripts → read `references/04-bash-instructions.md`
 7. IF writing Python code → read `references/frameworks/python.md`
+8. IF writing or reviewing code comments → read `references/05-comment-style.md`
 
 ## Integration
 
