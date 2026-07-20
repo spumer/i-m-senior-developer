@@ -1,7 +1,7 @@
 ---
 name: dpf-authoring
 description: This skill should be used when the user asks to "создай DPF", "доавтори DPF", "авторинг DPF", "собери DPF для компетенции", "обнови DPF", "переоцени DPF", "переоцени пакет по E.4.DPF.DA", "отремонтируй DPF", "прогони dpf-authoring", "author a DPF", or mentions DPF-компетенции со статусом стаб/seedOnly, требующие доавторинга. Самодостаточный access-carrier метода DPF-AUTHORING (FPF E.4.DPF × G.2, редакция f7c7e93f); работает из любого проекта, DPF пишутся в явно указанный repoRoot.
-version: 2.2.0
+version: 2.3.0
 ---
 
 # DPF-Authoring — авторинг сводов принципов (DPF) по FPF
@@ -15,7 +15,7 @@ version: 2.2.0
 - `assets/template-dpf.md` — скелет нового DPF; `assets/template-source-pack.md` — образец provenance-реестра.
 - `frameworks/DPF-ADVERSARIAL-REVIEW/`, `frameworks/DPF-KNOWLEDGE-CURATION/` — **встроенные пакеты ролей** конвейера (формат framework-apply: `DPF.md` + `assets/apply-prompt.md`).
 
-**Привязка к редакции:** FPF `ailev/FPF@f7c7e93f` (E.4.DPF spine, CC-DPF.1–9, E.4.DPF.DA) — см. `fpf_edition` во frontmatter `references/method.md`. Агенты читают FPF из локальной копии `~/.claude/knowledge/fpf/FPF-Spec.md` — работаем с той копией, что есть (её свежесть — зона скилла `fpf-integration`, не этого).
+**Привязка к редакции:** FPF `ailev/FPF@f7c7e93f` (E.4.DPF spine, CC-DPF.1–9, E.4.DPF.DA) — см. `fpf_edition` во frontmatter `references/method.md`. Агенты фаз читают FPF по приоритету источника: **сначала FPF-справочник через MCP** (`fpf_reference`: `search_fpf` / `read_fpf_doc` / `query_fpf_spec`), если он подключён — точные ID и цитаты; **иначе локальная копия** `~/.claude/knowledge/fpf/FPF-Spec.md`. Метод запинен на редакцию выше — если MCP отдаёт другую (`get_fpf_index_status`), агент фазы обязан явно отметить расхождение в `references/`, а не работать молча по чужой редакции (edition-пин E.4.DPF.DA). Свежесть локальной копии — зона скилла `fpf-integration`, не этого; переход на текущую редакцию спеки — отдельная задача.
 
 ## Роли фаз — встроенные пакеты компетенций
 

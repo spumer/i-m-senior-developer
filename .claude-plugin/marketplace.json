@@ -61,7 +61,7 @@
     },
     {
       "name": "fpf-integration",
-      "description": "FPF ecosystem in one plugin: fpf-integration skill for adopting the First Principles Framework in multi-agent projects, dpf-authoring for authoring principle frameworks (6-phase pipeline with embedded role packages), framework-apply for resolving and executing competency packages (ground/apply, freshness gate, worked-evidence journal), and end-session-setup for installing a session-closing ritual with a worked-evidence step.",
+      "description": "FPF ecosystem in one plugin: fpf-integration skill for adopting the First Principles Framework in multi-agent projects (reads the spec via the FPF reference MCP when connected, else a local copy), dpf-authoring for authoring principle frameworks (6-phase pipeline with embedded role packages), framework-apply for resolving and executing competency packages (ground/apply, freshness gate, worked-evidence journal), and end-session-setup for installing a session-closing ritual with a worked-evidence step.",
       "author": {
         "name": "Svyatoslav Posokhin"
       },
