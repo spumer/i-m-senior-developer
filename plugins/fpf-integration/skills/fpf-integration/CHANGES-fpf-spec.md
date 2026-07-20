@@ -1,5 +1,27 @@
 # FPF-Spec — что изменилось (журнал ре-индексации)
 
+> Индекс скилла обновлён под FPF-Spec.md @ ailev/FPF `44dd88188a07` (2026-07-12, «readme 15 usage cards»).
+> Полный SHA: `44dd88188a07646ef23aca32627a3f670525853f`. Спека выросла до 97 255 строк, реестр — 285 паттернов (280 Stable + 5 Planned).
+> Предыдущая база индекса — `40b232f11ed9` (2026-06-26, 279 паттернов: 274 Stable + 5 Planned).
+
+## Сводка (ре-индексация 2026-07-14)
+
+- **+6 ID**, **−0 ID**; **13 переименований**. Покрыты коммиты апстрима: `e2453d1a` (A.22.CGUS, E.18.3), `f509a921` (seeds по CGUS), `4a55618e` (E.11.PUA + readme-карточки), `44dd8818` (readme).
+- **Добавлено:** `A.22.CGUS` Constraint-Governed Unfolding Structure, `A.6.3.NAR` Structure-to-Narrative Rendering, `E.11.PUA` Pattern Use in a Working Situation and First Useful Result, `E.18.3` Constraint-Governed Transformation-Flow Unfolding Structure (специализация A.22.CGUS), `E.4.DPF.DA` DPF Package-Adequacy Evaluation CharacteristicSpace, `E.4.FPF` First Principles Framework Form and Publication-or-Access Carrier Assembly.
+- **Переименования (выборка из 13):** `A.2.2` «System Ability (dispositional property)» → «System Ability Envelope and Measures»; `A.3.1` «The Abstract Way of Doing» → «Context-Defined Way of Doing»; `A.3.2` «The Recipe for Action» → «Description Episteme for a Way of Doing»; `A.15.1` «The Record of Occurrence» → «Dated Performed Work Occurrence»; `E.4.DPF` «…Local-Monolith Landing» → «…Publication-or-Access Carrier Assembly»; `E.11` → «Practical-Use Guidance and Pattern Discovery»; `B.1.5` `Γ_method` → `Gamma_method` (лексическая нормализация).
+- **Структура карты:** разделы теперь повторяют реестр спеки — 22 раздела (части + кластеры) вместо 16 кластеров. Раньше строки частей без кластеров (B, D, G, I) сваливались в таблицу предыдущего кластера (G и I — в хвост F.IV); теперь у них свои разделы `## Part …`, а `A.0` — под «Part A».
+- **Починено в карте:** 7 строк реестра (`A.19.UNM/UINDM/USCM/ULSAM/CPM/SelectorMechanism`, `G.8`) содержат неэкранированные `|` внутри `` `{pass|degrade|abstain}` `` — прошлая генерация рвала на них ячейки; теперь пайпы склеены и экранированы как `\|`, все 285 строк парсятся ровно на 5 колонок.
+
+## Правки компаньонов индекса (2026-07-14)
+
+- `fpf-grep-patterns.md` — все hit-counts перепроверены (метрика — вхождения, не строки; подтверждена сверкой с задокументированными значениями): `U\.Work` 823→883, `U\.Method` 420→581, `Characteristic` 979→1000, `U\.Episteme` 691→1050, `EntityOfConcern` 1991→2076, `CSC` 156→165. Все паттерны (включая renamed-секцию) матчатся; «ontic debt» — по-прежнему 0.
+- `fpf-tasks-lookup.md` — grep-паттерн «dispositional property» протух (0 вхождений после переименования A.2.2) → заменён на «ability envelope». ID-ссылки сверены: висячих нет (ничего не дерегистрировано).
+- `fpf-glossary.md` — шапка провенанса обновлена; ID-ссылки валидны, `describedEntity` — по-прежнему 8 остаточных упоминаний.
+
+---
+
+# Предыдущая ре-индексация: `40b232f11ed9`
+
 > Индекс скилла обновлён под FPF-Spec.md @ ailev/FPF `40b232f11ed9` (2026-06-26, «architecture and FPF ecosystem architecture»).
 > Полный SHA: `40b232f11ed950ed34082273c57ff4f6c45b7f06`. Спека выросла до ~93 220 строк, реестр — 279 паттернов (274 Stable + 5 Planned).
 > Предыдущая база индекса — `646b0b9b164f` (2026-06-17, 279 паттернов: 242 Stable + 37 Planned).

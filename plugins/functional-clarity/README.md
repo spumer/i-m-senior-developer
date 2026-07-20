@@ -14,7 +14,6 @@
 
 - **SessionStart hook** — краткое напоминание ключевых принципов при старте каждой сессии
 - **Skill `functional-clarity`** — полный набор принципов, загружается автоматически при упоминании "принципы", "code quality", "fail-fast", "рефакторинг" и др.
-- **Skill `fpf-integration`** — внедрение First Principles Framework (FPF) в multi-agent проекты: evidence-аудит решений, decay-механизм (DRR), проверка альтернатив (NQD), аксиомы A.7/A.10/A.11/A.1.1. Загружается на "integrate FPF", "FPF audit", "review decisions with FPF", "evidence graph review". Источник FPF: `https://github.com/ailev/FPF`.
 
 ## Установка
 
@@ -39,3 +38,11 @@ claude --plugin-dir plugins/functional-clarity
 Дополняет плагин `tdd-master`:
 - **functional-clarity** — КАК писать код
 - **tdd-master** — КОГДА писать тесты
+
+## Куда делся скилл интеграции FPF
+
+Скилл `fpf-integration` (внедрение First Principles Framework в multi-agent
+проекты) переехал в отдельный плагин `fpf-integration` этого же маркетплейса —
+вместе со всей FPF-экосистемой (авторинг сводов `dpf-authoring`, резолвер
+компетенций `framework-apply`). Если он вам нужен — установите плагин
+`fpf-integration`; этот плагин продолжает нести только принципы кода.

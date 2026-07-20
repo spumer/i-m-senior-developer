@@ -2,7 +2,7 @@
 
 > Найди задачу → используй Grep-паттерны для поиска в FPF-Spec.md
 >
-> Сверено с FPF-Spec.md @ ailev/FPF `40b232f11ed9` (2026-06-26). Секции-ID сверены по валидности;
+> Сверено с FPF-Spec.md @ ailev/FPF `44dd88188a07` (2026-07-12). Секции-ID сверены по валидности;
 > если grep-паттерн не находится, см. актуальные/починенные в `fpf-grep-patterns.md`
 > (концепты переименованы: `describedEntity` → `EntityOfConcern`,
 > `Language-State Transduction` → `Language-State Move`).
@@ -11,7 +11,7 @@
 |--------|--------|---------------|
 | Разделить систему на bounded contexts | A.1.1, A.2.6, F.0.1 | "BoundedContext", "semantic frame", "bridge", "context slices" |
 | Определить роли в команде | A.2, A.2.1, A.13, A.2.7 | "RoleAssignment", "AgentialRole", "role taxonomy", "role algebra" |
-| Моделировать способности системы | A.2.2, A.2.6, B.2.4 | "Capability", "WorkScope", "dispositional property", "ability" |
+| Моделировать способности системы | A.2.2, A.2.6, B.2.4 | "Capability", "WorkScope", "ability envelope", "ability" |
 | Создать обещания для сервисов | A.2.3, A.6.C, F.12 | "PromiseContent", "SLO", "SLA", "accessSpec" |
 | Управлять доказательствами claims | A.2.4, A.10, B.3 | "EvidenceRole", "evidence graph", "SCR" |
 | Моделировать состояния ролей | A.2.5, A.19, A.3.3 | "RoleStateGraph", "RSG", "state machine" |

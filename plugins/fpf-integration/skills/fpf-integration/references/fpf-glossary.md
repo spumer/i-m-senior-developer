@@ -1,6 +1,6 @@
 # FPF — Глоссарий ключевых терминов
 
-> Сгенерировано из FPF-Spec.md @ ailev/FPF `40b232f11ed9` (2026-06-26). Полный SHA: `40b232f11ed950ed34082273c57ff4f6c45b7f06`.
+> Сверено с FPF-Spec.md @ ailev/FPF `44dd88188a07` (2026-07-12). Полный SHA: `44dd88188a07646ef23aca32627a3f670525853f`.
 > Проверять актуальность: сравни с `~/.claude/knowledge/fpf/FPF-Spec.version` и текущим upstream.
 
 
