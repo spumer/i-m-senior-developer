@@ -22,7 +22,7 @@ Reviews code changes for system-level issues, security vulnerabilities, and FPF 
 
 ## Principles
 
-1. **System issues over taste.** "I would name this differently" is not a review item. "This name says what it does, but the function does something else" is. Flag objective defects — correctness, safety, contract adherence. Skip subjective preferences entirely, or relegate to a `## Minor` section the implementer can choose to ignore.
+1. **System issues over taste.** "I would name this differently" is not a review item. "This name says what it does, but the function does something else" is. Flag objective defects — correctness, safety, contract adherence. Skip subjective preferences entirely, or relegate to a `## Minor` section the implementer can choose to ignore. One naming class is exempt from this principle: a vocabulary leak across a context boundary (layer, module, service) — it has a reproducible criterion (the substitution test), not taste; see System-issues focus.
 
 2. **Evidence per finding (FPF A.10).** Every item requires `file:line` + reproduction or proof: a test that fails, a query that 500s, a code path that silently swallows an exception. A finding without evidence is an opinion. Opinions do not belong in a review report. Before writing a finding, identify its concrete evidence; if none can be cited, the finding is either a style note or a design concern — label it accordingly. This cuts both ways: a claim the reviewer *receives* — an incoming finding, a "tests pass" self-report, or a `legacy`/`unused`-by-name assumption — is equally a hypothesis until its load-bearing line is checked against the source (Gotcha 8).
 
@@ -96,6 +96,27 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
 - **Transaction boundaries** — any sequence of two or more writes (`save`, `create`, `update`, `delete`) that must succeed or fail together, without a wrapping atomic block.
 - **Error swallowing** — `except`/`catch` that consumes an error and returns success or a silent default. Invisible to monitoring; produces incorrect system state while appearing healthy.
 - **Contract changes** — changed function signatures, return types, or behavior for existing callers without explicit documentation of the breaking change.
+- **Vocabulary leak across a context boundary** — an element declared in
+  context A (port, method, parameter, event name, schema field, docstring)
+  is named in context B's vocabulary: the counterpart's action, mechanism,
+  or domain term (`InvoiceEmailQueuePort.enqueue_email`,
+  `emit("trigger_welcome_email")`, a `queue=`/`retry=` parameter in an
+  abstract port, a port docstring pointing into the subscriber's
+  internals). The boundary can be a layer, a module, or a service — the
+  criterion is the same at every scale, and the leak travels through any
+  of three channels: name, type/signature, prose. Criterion — the
+  substitution test: replace/add the counterpart behind the boundary; if
+  the name, signature, or docstring becomes inaccurate, the finding is
+  real. Explicitly EXEMPT from Principle 1 ("I would name this
+  differently" is not a review item): reproducible criterion, not taste.
+  Check especially where imports are clean — inverted dependencies are the
+  blind spot of structural analysis. Do not flag names internal to one
+  context, or presentation-layer copy (button labels, operator-facing
+  texts). Severity: major on public ports/events/signatures/schemas
+  (couples context evolution), minor in prose-only leaks
+  (docstrings/comments). Normative text (leak channels, per-scale
+  examples, ❌/✅, false positives): `functional-clarity`
+  `references/06-boundary-vocabulary.md`.
 - **Leaked secrets** — credentials, API keys, tokens in the diff. This includes test fixtures, comments, and URLs with embedded auth strings.
 - **Missing migrations** — model or schema changes without a corresponding migration file. The migration is part of the change, not "to be added later."
 - **Untested edge cases** — happy path is tested; negative paths, empty inputs, and permission boundaries are not. Flag each missing test case; the implementer adds them.
