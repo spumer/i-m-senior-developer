@@ -3,3 +3,7 @@
 
 # Local planning artifacts (per-developer, not shipped with marketplace)
 features/
+
+# Python bytecode cache
+__pycache__/
+*.pyc

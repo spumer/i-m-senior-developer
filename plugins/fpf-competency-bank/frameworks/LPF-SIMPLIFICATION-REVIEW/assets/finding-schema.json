@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://esb-tools.local/frameworks/LPF-SIMPLIFICATION-REVIEW/assets/finding-schema.json",
+  "title": "LPF-SIMPLIFICATION-REVIEW finding output",
+  "description": "Force-форма выхода стадии «Упрощение». Каждый candidate обязан нести полный письменный вердикт по П1-П6 DPF-COUPLING-GENERALIZATION и по маршрутизации П1-П6 этой LPF - пустой/частичный вердикт не проходит валидацию. Ограничение draft-07 (осознанная делегация): реляционные инварианты — «число вердиктов = числу кандидатов», «findings ссылаются только на кандидатов с decision=generalize», диапазон индексов findings — схемой не выражаются и ОБЯЗАТЕЛЬНО проверяются механически оркестратором (SKILL.md dpf-apply, шаг проверок выхода).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidates",
+    "findings",
+    "summary"
+  ],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/candidate"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "description": "Индексы (0-based) кандидатов из candidates с decision=generalize. Пустой массив валиден только если ни один candidate не имеет decision=generalize.",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Короткое прозаическое резюме прогона: число кандидатов, число findings, наличие pending_human_confirmation=true."
+    }
+  },
+  "definitions": {
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "location",
+        "description",
+        "role_verdict",
+        "connascence_form",
+        "graph",
+        "context_verdict",
+        "rentability",
+        "decision",
+        "route",
+        "scope",
+        "pending_human_confirmation"
+      ],
+      "properties": {
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "files"
+          ],
+          "properties": {
+            "files": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "lines": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Диапазон строк, если применимо (напр. \"12-40\")."
+            }
+          }
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Что за повтор обнаружен и между какими местами."
+        },
+        "role_verdict": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "same_role",
+            "justification"
+          ],
+          "properties": {
+            "same_role": {
+              "type": "boolean"
+            },
+            "justification": {
+              "type": "string",
+              "minLength": 1,
+              "description": "П1 базового свода: обоснование, не 'выглядит похоже'."
+            }
+          }
+        },
+        "connascence_form": {
+          "type": "string",
+          "enum": [
+            "name",
+            "type",
+            "meaning",
+            "position",
+            "algorithm",
+            "none"
+          ],
+          "description": "П2 базового свода: форма связи; 'none' - после П1 обобщать нечего."
+        },
+        "graph": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "edges_before",
+            "edges_after",
+            "removed_edges"
+          ],
+          "properties": {
+            "edges_before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "edges_after": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "removed_edges": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "context_verdict": {
+          "type": "string",
+          "minLength": 1,
+          "description": "П5 базового свода: один bounded context или граница пересекается по-настоящему, с evidence."
+        },
+        "rentability": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "hypotheses",
+            "rollback"
+          ],
+          "properties": {
+            "hypotheses": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "П6 базового свода: прогнозные входы помечены явно как гипотезы, не факт."
+            },
+            "rollback": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Путь отката, если гипотеза не оправдается."
+            }
+          }
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "generalize",
+            "keep",
+            "defer"
+          ]
+        },
+        "route": {
+          "type": "string",
+          "enum": [
+            "maintainer",
+            "orchestrator"
+          ],
+          "description": "П1 этой LPF: Boundary -> maintainer (must-meet); Local/Module -> orchestrator (should-meet)."
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "in-diff",
+            "deferred-note"
+          ],
+          "description": "П3 этой LPF: in-diff только файлы текущего диффа фазы, иначе deferred-note."
+        },
+        "pending_human_confirmation": {
+          "type": "boolean",
+          "description": "П5 этой LPF: true для Boundary-находок, оформленных LLM-исполнителем стадии, до подтверждения человеком."
+        }
+      }
+    }
+  }
+}

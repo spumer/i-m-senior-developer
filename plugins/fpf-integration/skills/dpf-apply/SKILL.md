@@ -1,14 +1,14 @@
 ---
-name: framework-apply
-description: This skill should be used when the user asks to "apply competency", "framework-apply", "примени компетенцию", "прогони по своду", "resolve framework", "какие компетенции есть", or mentions a DPF-* or LPF-* id (e.g. "DPF-COUPLING-GENERALIZATION", "LPF-SIMPLIFICATION-REVIEW"). Универсальный резолвер и исполнитель пакетов компетенций (Domain/Local Practice Frameworks, FPF E.4.DPF): находит пакет по уровням project→user→plugin, проверяет свежесть (E.4.DPF.DA), затем либо читает свод в контекст (ground), либо спаунит агента по assets/apply-prompt.md (apply).
-version: 1.1.0
+name: dpf-apply
+description: This skill should be used when the user asks to "apply competency", "dpf-apply", "framework-apply" (alias), "примени компетенцию", "прогони по своду", "resolve framework", "какие компетенции есть", or mentions a DPF-* or LPF-* id (e.g. "DPF-COUPLING-GENERALIZATION", "LPF-SIMPLIFICATION-REVIEW"). Универсальный резолвер и исполнитель пакетов компетенций (Domain/Local Practice Frameworks, FPF E.4.DPF): находит пакет по уровням project→user→plugin, проверяет свежесть (E.4.DPF.DA), затем либо читает свод в контекст (ground), либо спаунит агента по assets/apply-prompt.md (apply).
+version: 2.0.0
 ---
 
-# framework-apply — резолвер и исполнитель пакетов компетенций
+# dpf-apply — резолвер и исполнитель пакетов компетенций
 
 Скилл сам не содержит ни одной компетенции. Он резолвит id пакета (`DPF-…` / `LPF-…`) до файла на диске и запускает нужный режим использования — как знание (ground) или как процедуру с типизированным выходом (apply). Каждое использование — пара «пакет × объявленное применение» (E.4.DPF.DA: `declaredUse`, `nonUseBoundary`, `intendedReaderOrOperator`, `reopenCondition`); скилл не даёт применить пакет «просто так», без этой пары.
 
-`packageKind` включает `local-practice-framework` и `skill-pack` — сам `framework-apply` при установке из плагина является пакетом `kind=skill-pack` (см. README, сценарий 3).
+`packageKind` включает `local-practice-framework` и `skill-pack` — сам `dpf-apply` при установке из плагина является пакетом `kind=skill-pack` (см. README, сценарий 3).
 
 ## Резолюция
 
@@ -17,7 +17,7 @@ python3 <каталог этого скилла>/scripts/resolve.py <id> [--json
 python3 <каталог этого скилла>/scripts/resolve.py --list [--json]
 ```
 
-Каталог скилла — тот, из которого прочитан этот файл; при установке из плагина это `plugins/fpf-integration/skills/framework-apply`.
+Каталог скилла — тот, из которого прочитан этот файл; при установке из плагина это `plugins/fpf-integration/skills/dpf-apply`.
 
 Порядок уровней (первый выигрывает при затенении id):
 
@@ -55,7 +55,7 @@ python3 <каталог этого скилла>/scripts/resolve.py --list [--js
 
 1. Прочитать `<path>/assets/apply-prompt.md` (промпт роли) и `<path>/assets/finding-schema.json`, если есть (контракт выхода).
 2. Спаунить агента: вход = `apply-prompt.md` + конкретный вход задачи (дифф, кандидат, вопрос). Выход агента обязан строго соответствовать `finding-schema.json` — не текстом произвольной формы.
-3. Механические проверки оркестратора после ответа агента (сам framework-apply, не агент):
+3. Механические проверки оркестратора после ответа агента (сам dpf-apply, не агент):
    - число вердиктов в ответе == числу кандидатов, поданных на вход (пропуски запрещены — молчание не значит «нет находки»);
    - находки с `route=maintainer` не принимаются автоматически — только эскалация, решение не за исполнителем;
    - каждая находка типа Boundary от LLM-исполнителя обязана нести `pending_human_confirmation: true` — граничные случаи пакета сам агент не закрывает;

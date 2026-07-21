@@ -53,7 +53,7 @@ review_due: "2026-09-29"
 
 ## 4. Алгоритм построения DPF — ядро (6 фаз)
 
-> Каждая фаза = inspectable-артефакт (A.10). **Ни одна не пропускается.** Роли фаз — встроенные в скилл пакеты компетенций (`../frameworks/<ID>/`: DPF.md + apply-prompt.md; формат framework-apply), не роли проекта: ресёрч — универсальный агент; **адверсарная функция** (анти-тезисы/контрпримеры/критика, devil's advocate против «AI-consensus = evidence») — пакет `DPF-ADVERSARIAL-REVIEW`; **кураторская функция** (провенанс, формат, сборка) — пакет `DPF-KNOWLEDGE-CURATION`. Фазы 1–2 можно вести параллельными агентами.
+> Каждая фаза = inspectable-артефакт (A.10). **Ни одна не пропускается.** Роли фаз — встроенные в скилл пакеты компетенций (`../frameworks/<ID>/`: DPF.md + apply-prompt.md; формат dpf-apply), не роли проекта: ресёрч — универсальный агент; **адверсарная функция** (анти-тезисы/контрпримеры/критика, devil's advocate против «AI-consensus = evidence») — пакет `DPF-ADVERSARIAL-REVIEW`; **кураторская функция** (провенанс, формат, сборка) — пакет `DPF-KNOWLEDGE-CURATION`. Фазы 1–2 можно вести параллельными агентами.
 
 ### Фаза 0 — Scope (E.4.DPF:1)
 Назвать: компетенцию, bounded context, intended reader, first use, non-use boundary; owner + critic.
@@ -180,7 +180,7 @@ Purpose, pattern split, dependency boundary, must-NOT-land; имена (F.18 →
 - **Скилл `dpf-authoring`** (`../SKILL.md` — самодостаточный, без машинных путей; решение Founder 2026-07-06) — парадная дверь: четыре режима (полный авторинг / переоценка пакета по E.4.DPF.DA / ремонт / точечная правка), инварианты метода. Запуск из любого проекта: обязательный `args.repoRoot` = целевой проект.
 - **Воркфлоу `dpf-authoring-pipeline`** (`../assets/dpf-authoring.workflow.js`) — двигатель: исполняемый 6-фазный конвейер.
 
-Роли конвейера (E.4.PFR, relationFunction: dependency, governedUse: роли фаз): `DPF-ADVERSARIAL-REVIEW@2026-07-06` (Bridge, Critic) и `DPF-KNOWLEDGE-CURATION@2026-07-06` (Source-pack, Assemble) — **встроены в скилл** (`../frameworks/<ID>/`, формат framework-apply, чем и резолвятся при использовании вне конвейера); нечитаемый пакет = громкий отказ фазы, обратной зависимости пакетов от метода нет (E.5.3).
+Роли конвейера (E.4.PFR, relationFunction: dependency, governedUse: роли фаз): `DPF-ADVERSARIAL-REVIEW@2026-07-06` (Bridge, Critic) и `DPF-KNOWLEDGE-CURATION@2026-07-06` (Source-pack, Assemble) — **встроены в скилл** (`../frameworks/<ID>/`, формат dpf-apply, чем и резолвятся при использовании вне конвейера); нечитаемый пакет = громкий отказ фазы, обратной зависимости пакетов от метода нет (E.5.3).
 
 Оба канала обязаны показывать edition метода (`fpf_edition` выше) и ломаться громко при несовпадении входа (fail-fast). Правки метода — только в этом файле, затем зеркалятся в комнату при ревизии (манифест канала ≠ архитектура метода).
 

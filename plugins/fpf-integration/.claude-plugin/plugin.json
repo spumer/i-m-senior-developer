@@ -1,9 +1,10 @@
 {
   "name": "fpf-integration",
-  "version": "0.4.0",
-  "description": "Экосистема First Principles Framework: интеграция FPF в multi-agent проекты (аудит решений, DRR, навигация по спеке — через FPF-справочник MCP, если подключён, иначе локальная копия; без источника скилл блокируется, а не деградирует), авторинг сводов принципов dpf-authoring (6-фазный конвейер со встроенными пакетами ролей), резолвер-исполнитель пакетов компетенций framework-apply (ground/apply, гейт свежести, журнал worked-evidence) и установщик ритуала end-session-setup (шаг worked-evidence в закрытие сессии).",
+  "version": "0.5.0",
+  "description": "Экосистема First Principles Framework: интеграция FPF в multi-agent проекты (аудит решений, DRR, навигация по спеке — через FPF-справочник MCP, если подключён, иначе локальная копия; без источника скилл блокируется, а не деградирует), авторинг сводов принципов dpf-authoring (6-фазный конвейер со встроенными пакетами ролей), резолвер-исполнитель пакетов компетенций dpf-apply (ground/apply, гейт свежести, журнал worked-evidence) и установщик ритуала end-session-setup (шаг worked-evidence в закрытие сессии).",
   "author": {
     "name": "Svyatoslav Posokhin"
   },
-  "keywords": ["fpf", "first-principles", "dpf", "framework-apply", "dpf-authoring", "evidence", "decision-quality"]
+  "keywords": ["fpf", "first-principles", "dpf", "dpf-apply", "framework-apply", "dpf-authoring", "evidence", "decision-quality"],
+  "hooks": "./hooks/hooks.json"
 }

@@ -1,6 +1,6 @@
 export const meta = {
   name: 'dpf-authoring-pipeline', // двигатель; парадная дверь — скилл dpf-authoring (../SKILL.md)
-  description: 'Авторинг DPF по методу DPF-AUTHORING (E.4.DPF × G.2, ред. FPF f7c7e93f): SoTA→тезисы/анти-тезисы→source-pack→сборка→критик (CC-DPF.1–9 + оценка пакета E.4.DPF.DA). Роли фаз — встроенные в скилл пакеты компетенций формата framework-apply (Bridge/Critic ← frameworks/DPF-ADVERSARIAL-REVIEW, Source-pack/Assemble ← frameworks/DPF-KNOWLEDGE-CURATION) — зависимостей от .claude/agents проекта нет. Все артефакты передаются ТОЛЬКО через файлы. Список компетенций — ТОЛЬКО явный args.competencies (fail-fast при пустом: массового bootstrap-фолбэка нет — инцидент 2026-07-04, прогон всех 29 вместо 5).',
+  description: 'Авторинг DPF по методу DPF-AUTHORING (E.4.DPF × G.2, ред. FPF f7c7e93f): SoTA→тезисы/анти-тезисы→source-pack→сборка→критик (CC-DPF.1–9 + оценка пакета E.4.DPF.DA). Роли фаз — встроенные в скилл пакеты компетенций формата dpf-apply (Bridge/Critic ← frameworks/DPF-ADVERSARIAL-REVIEW, Source-pack/Assemble ← frameworks/DPF-KNOWLEDGE-CURATION) — зависимостей от .claude/agents проекта нет. Все артефакты передаются ТОЛЬКО через файлы. Список компетенций — ТОЛЬКО явный args.competencies (fail-fast при пустом: массового bootstrap-фолбэка нет — инцидент 2026-07-04, прогон всех 29 вместо 5).',
   phases: [
     { title: 'SoTA Harvest' },
     { title: 'Bridge' },
@@ -75,7 +75,7 @@ const STATUS = {
 }
 const dirOf = (c) => FW + '/' + c.id
 
-// Роль фазы = ВСТРОЕННЫЙ пакет компетенции (формат framework-apply: DPF.md +
+// Роль фазы = ВСТРОЕННЫЙ пакет компетенции (формат dpf-apply: DPF.md +
 // assets/apply-prompt.md) в каталоге скилла — скилл самодостаточен, роли сильные
 // (полные процедуры проверки, не однострочный "ты guardian"). Никаких agentType из
 // .claude/agents проекта. Fail-fast: пакет не читается → фаза падает, а не работает

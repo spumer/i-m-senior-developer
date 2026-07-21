@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command",
+        "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_competency_card.py" } ] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command",
+        "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/prompt_competency_hint.py" } ] }
+    ]
+  }
+}

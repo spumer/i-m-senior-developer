@@ -16,7 +16,7 @@ review_due: "2026-10-06"
 # DPF-ADVERSARIAL-REVIEW: Адверсарная проверка пакетов знаний
 
 > Компетенция: диалектика + критика + оценка адекватности ПАКЕТА знаний (свода принципов, DPF) на двух точках метода авторинга `DPF-AUTHORING` — Фаза 2 (Bridge) и Фаза 6 (Critic/package adequacy). Owner — guardian.
-> **Особый класс носителя:** это **встроенный пакет ролей** скилла `dpf-authoring` (формат framework-apply: `DPF.md` + `apply-prompt.md`), не позиция таблицы `competency-map.md` (33 DPF) — access carrier для Фаз 2/6 метода на ЛЮБОМ авторимом DPF проекта (см. `DPF-AUTHORING/DPF.md` §Access carriers). Отсутствие в таблице 33 — не пробел.
+> **Особый класс носителя:** это **встроенный пакет ролей** скилла `dpf-authoring` (формат dpf-apply: `DPF.md` + `apply-prompt.md`), не позиция таблицы `competency-map.md` (33 DPF) — access carrier для Фаз 2/6 метода на ЛЮБОМ авторимом DPF проекта (см. `DPF-AUTHORING/DPF.md` §Access carriers). Отсутствие в таблице 33 — не пробел.
 > **FPF читать живьём** (не по памяти, не выжимки) через Grep по `~/.claude/knowledge/fpf/FPF-Spec.md`. Метод и фазы — `DPF-AUTHORING/DPF.md`.
 
 ---

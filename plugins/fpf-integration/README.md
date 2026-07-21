@@ -15,7 +15,7 @@
   конвейер с файловым handoff, встроенные пакеты ролей (adversarial review,
   knowledge curation), канон метода и шаблоны внутри. Загружается на «создай
   DPF», «авторинг DPF», «переоцени пакет».
-- **Skill `framework-apply`** — резолвер и исполнитель пакетов компетенций:
+- **Skill `dpf-apply`** — резолвер и исполнитель пакетов компетенций:
   находит пакет по уровням project → user → plugin, проверяет свежесть, читает
   свод в контекст (ground) или спаунит агента по apply-промпту (apply).
   Загружается на «примени компетенцию», id вида `DPF-*` / `LPF-*`.
@@ -41,8 +41,8 @@
    проектов со ссылками на скилл, ссылки в `.claude/workflows/`. Эти проекты
    правятся отдельно — плагин их не трогает.
 3. **Слэш-команды сменили имена.** `/dpf-authoring` →
-   `/fpf-integration:dpf-authoring`, `/framework-apply` →
-   `/fpf-integration:framework-apply`, `/fpf-integration` →
+   `/fpf-integration:dpf-authoring`, `/dpf-apply` →
+   `/fpf-integration:dpf-apply`, `/fpf-integration` →
    `/fpf-integration:fpf-integration`. Редиректов нет.
 4. **Редакция FPF у dpf-authoring не менялась.** Пин `ailev/FPF@f7c7e93f`
    переехал как есть; обновление редакции — отдельная задача, не связанная с

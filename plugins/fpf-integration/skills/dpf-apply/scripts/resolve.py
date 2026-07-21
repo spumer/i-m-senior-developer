@@ -57,7 +57,8 @@ def parse_frontmatter(dpf_md_path: str) -> dict[str, str]:
     try:
         with open(dpf_md_path, encoding="utf-8") as handle:
             lines = handle.readlines()
-    except OSError:
+    except (OSError, UnicodeError) as exc:
+        print(f"unreadable DPF.md: {dpf_md_path}: {exc}", file=sys.stderr)
         return {}
 
     if not lines or lines[0].strip() != "---":
@@ -112,6 +113,78 @@ def check_stale(status: str, review_due: str) -> tuple[bool, str | None]:
     if reasons:
         return True, "; ".join(reasons)
     return False, None
+
+
+KIND_ENUM = {"Domain Principle Framework", "Local Practice Framework"}
+REQUIRED_FIELDS = ("dpf_id", "kind", "status", "review_due", "owner")
+
+# Гейтящие проверки по области: local-авторинг пропускает свежесть/вердикт;
+# bank fail-closed гейтит всё. Ключ используют и run_verify, и печать финала.
+GATING = {
+    "local": ("structure", "kind"),
+    "bank": ("resolve", "structure", "kind", "freshness", "conformance"),
+}
+
+_CONFORMANCE_MARKER = "E.4.DPF.DA:"
+_ADMISSIBLE_TOKEN = "admissibleForDeclaredDPFUse"
+
+
+def read_conformance_verdict(dpf_md_path: str) -> tuple[bool, str | None]:
+    """Читает авторитетный вердикт E.4.DPF.DA из самого DPF.md.
+
+    Источник истины — ПОСЛЕДНЯЯ строка '> conformance:', несущая маркер
+    'E.4.DPF.DA:'; статус — токен сразу за маркером. references/ не сканируется:
+    там несколько вердиктов разных раундов и токен встречается в отрицаниях
+    (false-positive). admissible только если токен ровно admissibleForDeclaredDPFUse.
+    """
+    try:
+        with open(dpf_md_path, encoding="utf-8") as handle:
+            lines = handle.readlines()
+    except (OSError, UnicodeError) as exc:
+        print(f"unreadable DPF.md: {dpf_md_path}: {exc}", file=sys.stderr)
+        return False, None
+    verdict_line = None
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("> conformance:") and _CONFORMANCE_MARKER in stripped:
+            verdict_line = stripped
+    if verdict_line is None:
+        return False, None
+    after = verdict_line.split(_CONFORMANCE_MARKER, 1)[1].split()
+    token = after[0] if after else ""
+    return token == _ADMISSIBLE_TOKEN, token or None
+
+
+def run_verify(id_arg: str, scope: str, levels: list[tuple[str, str]]) -> tuple[dict, int]:
+    checks: list[dict] = []
+    info, _ = resolve_id(id_arg, levels)
+    checks.append({"name": "resolve", "ok": info is not None,
+                   "reason": None if info is not None else f"not found: {id_arg}"})
+    if info is None:
+        return {"id": id_arg, "scope": scope, "checks": checks, "ok": False}, 1
+
+    dpf_md = os.path.join(info["path"], "DPF.md")
+    fm = parse_frontmatter(dpf_md)
+
+    missing = next((name for name in REQUIRED_FIELDS if not fm.get(name, "").strip()), None)
+    checks.append({"name": "structure", "ok": missing is None,
+                   "reason": None if missing is None else f"missing field: {missing}"})
+
+    kind = fm.get("kind", "").strip()
+    kind_ok = kind in KIND_ENUM
+    checks.append({"name": "kind", "ok": kind_ok,
+                   "reason": None if kind_ok else f"kind not in enum: {kind}"})
+
+    stale, stale_reason = check_stale(fm.get("status", "").strip(), fm.get("review_due", "").strip())
+    checks.append({"name": "freshness", "ok": not stale, "reason": stale_reason})
+
+    admissible, _token = read_conformance_verdict(dpf_md)
+    checks.append({"name": "conformance", "ok": admissible,
+                   "reason": None if admissible else "no admissible E.4.DPF.DA conformance line in DPF.md"})
+
+    gating = GATING[scope]
+    overall_ok = all(c["ok"] for c in checks if c["name"] in gating)
+    return {"id": id_arg, "scope": scope, "checks": checks, "ok": overall_ok}, (0 if overall_ok else 2)
 
 
 def build_info(pkg_id: str, pkg_dir: str, level_name: str) -> dict:
@@ -203,14 +276,40 @@ def print_list_human(rows: list[dict]) -> None:
         print(f'{row["id"]:<32} {row["level"]:<8} {row["kind"]:<28} {row["status"]:<10}{shadow_note}{stale_note}')
 
 
+def print_verify_human(result: dict) -> None:
+    for c in result["checks"]:
+        status = "PASS" if c["ok"] else "FAIL"
+        suffix = f"  {c['reason']}" if c["reason"] else ""
+        print(f"{status}  {c['name']}{suffix}")
+    if result["ok"]:
+        print(f'verify: PASS (scope={result["scope"]})')
+    else:
+        gating = GATING[result["scope"]]
+        first = next(c["reason"] for c in result["checks"] if c["name"] in gating and not c["ok"])
+        print(f"verify: FAIL — {first}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Резолвер пакетов компетенций (DPF/LPF).")
     parser.add_argument("id", nargs="?", help="id пакета, опц. с префиксом plugin:")
     parser.add_argument("--list", action="store_true", help="показать слитую карту по всем уровням")
+    parser.add_argument("--verify", action="store_true", help="проверить пригодность пакета (гейт)")
+    parser.add_argument("--scope", choices=["local", "bank"], default="local",
+                        help="область гейта для --verify (дефолт local)")
     parser.add_argument("--json", action="store_true", help="вывод в JSON")
     args = parser.parse_args()
 
     levels = build_levels()
+
+    if args.verify:
+        if not args.id:
+            parser.error("нужен <id> для --verify")
+        result, code = run_verify(args.id, args.scope, levels)
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            print_verify_human(result)
+        return code
 
     if args.list:
         rows = list_all(levels)

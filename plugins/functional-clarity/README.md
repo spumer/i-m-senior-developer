@@ -44,5 +44,5 @@ claude --plugin-dir plugins/functional-clarity
 Скилл `fpf-integration` (внедрение First Principles Framework в multi-agent
 проекты) переехал в отдельный плагин `fpf-integration` этого же маркетплейса —
 вместе со всей FPF-экосистемой (авторинг сводов `dpf-authoring`, резолвер
-компетенций `framework-apply`). Если он вам нужен — установите плагин
+компетенций `dpf-apply`). Если он вам нужен — установите плагин
 `fpf-integration`; этот плагин продолжает нести только принципы кода.
