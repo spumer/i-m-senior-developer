@@ -223,5 +223,77 @@ class ParsePromptPayloadTests(unittest.TestCase):
         self.assertEqual(hint.parse_prompt_payload('{"prompt": 42}'), "")
 
 
+class ParseSessionIdTests(unittest.TestCase):
+    def test_valid_payload_returns_session_id(self):
+        raw = '{"prompt": "x", "session_id": "abc-123"}'
+        self.assertEqual(hint.parse_session_id(raw), "abc-123")
+
+    def test_missing_field_returns_empty(self):
+        self.assertEqual(hint.parse_session_id('{"prompt": "x"}'), "")
+
+    def test_malformed_json_returns_empty(self):
+        self.assertEqual(hint.parse_session_id("{not json"), "")
+
+    def test_non_dict_returns_empty(self):
+        self.assertEqual(hint.parse_session_id("[1,2]"), "")
+
+    def test_non_string_session_id_returns_empty(self):
+        self.assertEqual(hint.parse_session_id('{"session_id": 42}'), "")
+
+
+class SeenStorePathTests(unittest.TestCase):
+    def test_empty_session_returns_none(self):
+        self.assertIsNone(hint._seen_store_path(""))
+
+    def test_traversal_chars_are_sanitized(self):
+        path = hint._seen_store_path("../../etc/passwd")
+        self.assertIsNotNone(path)
+        # ни одного `..`-сегмента и никакого выхода за каталог стора
+        self.assertNotIn("..", os.path.basename(path))
+        self.assertEqual(
+            os.path.dirname(path),
+            os.path.join(tempfile.gettempdir(), "dpf-competency-hints"),
+        )
+
+    def test_normal_session_id_kept_as_safe_token(self):
+        path = hint._seen_store_path("abc-123_XYZ")
+        self.assertEqual(os.path.basename(path), "abc-123_XYZ")
+
+
+class SeenStoreRoundtripTests(unittest.TestCase):
+    SESSION = "unittest-session-DEDUP-fixture"
+
+    def tearDown(self):
+        path = hint._seen_store_path(self.SESSION)
+        if path and os.path.exists(path):
+            os.remove(path)
+
+    def test_unknown_session_loads_empty(self):
+        # гарантируем отсутствие стора
+        self.tearDown()
+        self.assertEqual(hint.load_seen(self.SESSION), set())
+
+    def test_record_then_load_roundtrip(self):
+        self.tearDown()
+        hint.record_seen(self.SESSION, ["DPF-A", "DPF-B"])
+        self.assertEqual(hint.load_seen(self.SESSION), {"DPF-A", "DPF-B"})
+
+    def test_record_appends_across_calls(self):
+        self.tearDown()
+        hint.record_seen(self.SESSION, ["DPF-A"])
+        hint.record_seen(self.SESSION, ["DPF-B"])
+        self.assertEqual(hint.load_seen(self.SESSION), {"DPF-A", "DPF-B"})
+
+    def test_record_empty_is_noop(self):
+        self.tearDown()
+        hint.record_seen(self.SESSION, [])
+        self.assertEqual(hint.load_seen(self.SESSION), set())
+
+    def test_no_session_id_load_is_empty_fail_open(self):
+        # пустой session_id -> путь None -> load всегда set() (дедуп не применяется)
+        self.assertEqual(hint.load_seen(""), set())
+        hint.record_seen("", ["DPF-A"])  # не должно падать и ничего не писать
+
+
 if __name__ == "__main__":
     unittest.main()

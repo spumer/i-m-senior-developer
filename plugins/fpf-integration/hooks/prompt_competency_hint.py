@@ -9,6 +9,9 @@
      хук не делает — только выкладывает совпадения.
 
 Дедуп по id, кап 3 подсказки на промпт. Ни id, ни cue не найдены -> молчит.
+Дедуп в пределах сессии: уже подсказанный в этой сессии свод повторно не
+всплывает (стор по `session_id` в temp; fail-open — проблема со стором не
+глушит подсказки и не роняет хук).
 Никогда не применяет пакет и никогда не блокирует промпт (exit 0 всегда).
 
 Только stdlib.
@@ -21,6 +24,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 ID_PATTERN = re.compile(r"(?:DPF|LPF)-[\w-]+", re.UNICODE)
 MAX_HINTS = 3
@@ -181,6 +185,60 @@ def parse_prompt_payload(raw: str) -> str:
     return prompt if isinstance(prompt, str) else ""
 
 
+def parse_session_id(raw: str) -> str:
+    """Достаёт `session_id` из payload UserPromptSubmit. Нет поля/битый JSON -> ''."""
+    if not raw.strip():
+        return ""
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return ""
+    if not isinstance(payload, dict):
+        return ""
+    session_id = payload.get("session_id", "")
+    return session_id if isinstance(session_id, str) else ""
+
+
+def _seen_store_path(session_id: str) -> str | None:
+    """Путь файла-стора «уже подсказано в этой сессии».
+
+    session_id санитизируется до безопасного токена (защита от path traversal в
+    имени файла). Пустой/несанируемый session_id -> None (сессионный дедуп не
+    применяется)."""
+    safe = re.sub(r"[^A-Za-z0-9_-]", "_", session_id)[:128]
+    if not safe:
+        return None
+    return os.path.join(tempfile.gettempdir(), "dpf-competency-hints", safe)
+
+
+def load_seen(session_id: str) -> set[str]:
+    """id, уже подсказанные в этой сессии. Любая проблема -> set() (fail-open: подскажем)."""
+    path = _seen_store_path(session_id)
+    if not path:
+        return set()
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return {line.strip() for line in handle if line.strip()}
+    except OSError:
+        return set()
+
+
+def record_seen(session_id: str, shown_ids: list[str]) -> None:
+    """Дописать показанные id в стор сессии. Любая проблема -> молча пропустить (fail-open)."""
+    if not shown_ids:
+        return
+    path = _seen_store_path(session_id)
+    if not path:
+        return
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as handle:
+            for pkg_id in shown_ids:
+                handle.write(pkg_id + "\n")
+    except OSError:
+        return
+
+
 def main() -> int:
     try:
         raw_stdin = sys.stdin.read()
@@ -204,9 +262,20 @@ def main() -> int:
             seen.add(pkg_id)
             merged.append(pkg_id)
 
+    # Сессионный дедуп: убрать своды, уже подсказанные в этой сессии. Без
+    # session_id (или при проблеме со стором) — fail-open: подсказываем как есть.
+    session_id = parse_session_id(raw_stdin)
+    if session_id:
+        already_seen = load_seen(session_id)
+        merged = [pkg_id for pkg_id in merged if pkg_id not in already_seen]
+
     lines = build_hint_lines(merged)
     if lines:
         print("\n".join(lines))
+    # Записать в стор ровно показанные (merged[:MAX_HINTS]) — не-показанный «хвост»
+    # сможет всплыть в следующем промпте.
+    if session_id:
+        record_seen(session_id, merged[:MAX_HINTS])
     return 0
 
 
