@@ -11,6 +11,7 @@ version: 2.4.0
 **Состав скилла:**
 
 - `references/method.md` — **канон метода** (6 фаз, гейты, канонический скелет, паттерны, типовые ошибки). Прочитать перед любым режимом ниже.
+- `references/lifecycle.md` — **задача-ориентированный маршрут** поверх канона: создать/дополнить DPF, создать/обновить LPF, петля worked-evidence, гейт банка. Для того, кто хочет «с чего начать» под конкретную задачу, а не читать метод целиком.
 - `assets/dpf-authoring.workflow.js` — конвейер `dpf-authoring-pipeline` (6 фаз, файловый handoff).
 - `assets/template-dpf.md` — скелет нового DPF; `assets/template-source-pack.md` — образец provenance-реестра.
 - `frameworks/DPF-ADVERSARIAL-REVIEW/`, `frameworks/DPF-KNOWLEDGE-CURATION/` — **встроенные пакеты ролей** конвейера (формат dpf-apply: `DPF.md` + `assets/apply-prompt.md`).
