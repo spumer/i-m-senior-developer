@@ -1,0 +1,67 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Юнит-тесты плагинов (stdlib unittest, без зависимостей).
+      # Каждый test_*.py сам добавляет свой каталог в sys.path — запускаем по пути.
+      - name: unit tests
+        run: |
+          set -e
+          for t in $(find plugins -name 'test_*.py' | sort); do
+            echo "== $t"
+            python3 "$t"
+          done
+
+      # Приёмочный smoke: уровни зрелости seed-сводов не должны съезжать с калибровки.
+      - name: maturity smoke — seed swords keep calibrated level
+        run: |
+          set -e
+          m=plugins/fpf-integration/skills/dpf-authoring/assets/maturity.py
+          bank=plugins/fpf-competency-bank/frameworks
+          got_dpf=$(python3 "$m" "$bank/DPF-COUPLING-GENERALIZATION" --json | python3 -c "import sys,json;print(json.load(sys.stdin)['level'])")
+          got_lpf=$(python3 "$m" "$bank/LPF-SIMPLIFICATION-REVIEW" --json | python3 -c "import sys,json;print(json.load(sys.stdin)['level'])")
+          echo "DPF-COUPLING=$got_dpf  LPF-SIMPLIFICATION=$got_lpf"
+          test "$got_dpf" = "L1" || { echo "::error::DPF-COUPLING ожидался L1, получен $got_dpf"; exit 1; }
+          test "$got_lpf" = "L2" || { echo "::error::LPF-SIMPLIFICATION ожидался L2, получен $got_lpf"; exit 1; }
+
+      # Инвариант: скрипт зрелости не пишет в DPF.md сводов (только на чтение).
+      - name: invariant — maturity read-only run leaves seed DPF.md untouched
+        run: |
+          set -e
+          m=plugins/fpf-integration/skills/dpf-authoring/assets/maturity.py
+          bank=plugins/fpf-competency-bank/frameworks
+          python3 "$m" "$bank/DPF-COUPLING-GENERALIZATION" >/dev/null
+          python3 "$m" "$bank/LPF-SIMPLIFICATION-REVIEW" >/dev/null
+          changed=$(git status --porcelain -- 'plugins/fpf-competency-bank/frameworks/*/DPF.md')
+          test -z "$changed" || { echo "::error::seed DPF.md изменён прогоном maturity.py:"; echo "$changed"; exit 1; }
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Каждый plugin.json и marketplace-манифест — валидный JSON.
+      - name: plugin.json + marketplace manifests are valid JSON
+        run: |
+          set -e
+          for f in $(find plugins -path '*/.claude-plugin/plugin.json') .claude-plugin/marketplace.json; do
+            [ -f "$f" ] || continue
+            echo "== $f"
+            python3 -c "import json,sys; json.load(open('$f'))"
+          done

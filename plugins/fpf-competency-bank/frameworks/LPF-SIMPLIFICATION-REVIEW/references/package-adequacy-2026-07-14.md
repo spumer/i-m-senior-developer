@@ -190,3 +190,26 @@ Guardian-инверсия (Munger): «Через 3 месяца Паттерн 6
 ## 13. Gate (круг 2, итоговый)
 
 **gate_passed = true.** CC-DPF.1–9 PASS; D1–D11 ≥ 4; PFM 11/11; статус = `admissibleForDeclaredDPFUse`. По заданию: conformance-строка в DPF.md обновлена на 2026-07-14 (строка критика 2026-07-13 заменена — история сохранена в `package-adequacy-2026-07-13.md` и этом файле); frontmatter `status: active` не тронут. История оценок: круг 1 (`repairBeforeDPFUse`, §1–§8) сохранён дословно выше; `critic-review.md`, `package-adequacy-2026-07-13.md` не переписаны.
+
+> maturity-critic: L2 confirmed (guardian, 2026-07-22); weak-components: []
+
+## Профиль зрелости
+
+- **Уровень: L2 — grounded** (grounded (admissible + PFR-сеть + refresh route + нет floor-fragile координаты)).
+- **D-ось (референс, не копия):** таблица D1-D11 — см. package-adequacy выше. Сводка: min=4; floor-fragile=[].
+- **Компоненты:**
+  | Компонент | Статус | Сигнал-локус |
+  |---|---|---|
+  | canon-patterns | ✓ | DPF.md §4 (6 тел) |
+  | pfr-network | ✓ | DPF.md §5/пер-паттерн (14 связей, 3 типов) |
+  | refresh-route | ✓ | DPF.md §11 (7 триггеров) + review_due |
+  | acceptance-cases | ✓ | DPF.md §10 (2/3 не-pending) |
+  | support-maps | ✗ | нет отдельной map/bridge-карты |
+  | executable-sync | ✓ | assets/apply-prompt.md |
+- **Доработать next (до L3):**
+  1. support-maps — фаза Assemble/Source-pack `dpf-authoring` (режим доавторинга) — добавить substantive support/bridge-карту
+- **Различение:** «✗» = компонента нет; «✓ presence / критик: слабый» = скрипт видит компонент, критик пометил его слабым (weak-components).
+- **Диагностика уровня:**
+  - L3 не достигнут: support-maps отсутствуют (файловый признак references/*map*.md|*bridge*.md)
+
+(эхо источника: maturity-critic L2 confirmed; weak-components: [])

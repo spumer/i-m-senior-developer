@@ -95,3 +95,24 @@
 - **Статус (E.4.DPF.DA:4.5): `admissibleForDeclaredDPFUse`** — все координаты ≥ пола 4 для заявленного использования (architect/dev/code-review), non-use boundary и reopen-условия названы.
 - **ГЕЙТ: `gate_passed = true`.** Conformance-строка дописана в конец DPF.md, frontmatter `status: "stage-0"` → `"active"` (этим прогоном).
 - Концерны 1–3 — repair-лист следующего касания, не блокеры.
+
+## Профиль зрелости
+
+- **Уровень: L1 — admissible** (admissible (статус admissible; все D≥4; canon-patterns присутствуют)).
+- **D-ось (референс, не копия):** таблица D1-D11 — см. package-adequacy выше. Сводка: min=4; floor-fragile=[2, 5, 7, 8, 9, 10, 11].
+- **Компоненты:**
+  | Компонент | Статус | Сигнал-локус |
+  |---|---|---|
+  | canon-patterns | ✓ | DPF.md §4 (6 тел) |
+  | pfr-network | ✓ | DPF.md §5/пер-паттерн (12 связей, 3 типов) |
+  | refresh-route | ✓ | DPF.md §11 (6 триггеров) + review_due |
+  | acceptance-cases | ✓ | DPF.md §10 (2/3 не-pending) |
+  | support-maps | ✗ | нет отдельной map/bridge-карты |
+- **Доработать next (до L2):**
+  1. support-maps — фаза Assemble/Source-pack `dpf-authoring` (режим доавторинга) — добавить substantive support/bridge-карту
+  2. floor-fragile — фаза Repair/Ремонт — снять открытые repair-предложения по floor-координатам
+- **Различение:** «✗» = компонента нет; «✓ presence / критик: слабый» = скрипт видит компонент, критик пометил его слабым (weak-components).
+- **Диагностика уровня:**
+  - L2 не достигнут: floor-fragile координаты [2, 5, 7, 8, 9, 10, 11]
+
+(эхо источника: строка `> maturity-critic:` отсутствует в package-adequacy)
