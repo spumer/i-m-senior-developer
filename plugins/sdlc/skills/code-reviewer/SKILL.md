@@ -129,9 +129,12 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
   feature-id pattern. Severity: minor, but flag every occurrence.
 - **Comment hygiene** — comments that cite internal project docs (`see
   DESIGN §…`, `per PLAN §2.4`), carry change history (`no longer reads`,
-  `— unchanged`, `since v2`, `RED→GREEN`), or restate the adjacent line
-  (`// increment counter`). They state nothing the code cannot express and
-  grow cognitive load. Distinct from the tracking-id bullet above (that
+  `— unchanged`, `since v2`, `RED→GREEN`), restate the adjacent line
+  (`// increment counter`), or report the author's own work — text written for
+  whoever reviewed the change, not for the next reader of the code (`took a
+  dict instead of the plan's list`, `left this untouched to keep tests green`);
+  that belongs in the commit message. They state nothing the code cannot
+  express and grow cognitive load. Distinct from the tracking-id bullet above (that
   covers `FEAT-XXXX`) — do not merge them. Normative text (smell classes,
   allowlist, borderline cases): `functional-clarity`
   `references/05-comment-style.md`. Known false positives — do not flag:

@@ -151,11 +151,16 @@ strip the tracking IDs — they must not travel with the text.
 ## Comment style — explain why, not what
 
 A comment states a constraint the code cannot express — the reason, an
-invariant, a non-obvious trade-off. It does **not** point at internal docs
+invariant, a non-obvious trade-off — and it must pay off on a **cold read**:
+someone opening the file months later with no task, plan, diff or chat at
+hand. It does **not** point at internal docs
 (`see DESIGN §9.4`), carry change history (`no longer reads X`, `— unchanged`),
-or restate the adjacent line (`// increment counter`). Write the self-contained
-reason, or write nothing. This is the sibling rule to "No tracking IDs in code"
-above — do not conflate them. The normative text — smell classes with ❌/✅,
+restate the adjacent line (`// increment counter`), or report your own work —
+text aimed at whoever reads your reply now, not the next reader of the code
+(`took a dict instead of the plan's list`, `left this untouched to keep tests
+green`); that belongs in the chat reply or the commit message. Write the
+self-contained reason, or write nothing. This is the sibling rule to "No
+tracking IDs in code" above — do not conflate them. The normative text — smell classes with ❌/✅,
 the allowlist (`TODO`, `SAFETY:`, security-why), and borderline cases — lives
 in one place: `functional-clarity:functional-clarity` →
 `references/05-comment-style.md`. This section is a reminder, not a copy;

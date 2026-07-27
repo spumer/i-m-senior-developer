@@ -24,4 +24,15 @@ Do NOT silently swallow exceptions or return defaults on errors.
 When modifying existing code, follow the 7-step **Code-Change Discipline**:
 idea → assumptions → evidence → ask human → no contract changes → no information loss.
 Read `references/02-code-change-discipline.md` for the full algorithm with FPF guards (A.7, A.10, A.11, A.1.1) before making non-trivial changes to unfamiliar code.
+
+When writing or reviewing comments, follow **«why, not what»**, and write for a
+**cold read** — someone opening the file months from now with no task, no plan,
+no diff and no chat in front of them. Hence: no pointers to
+design docs («see DESIGN §9.4»), no change history in the source, no restating
+what the next line already says, and no reporting your own work — text aimed at
+whoever reads your reply now instead of whoever reads the code later (e.g. why
+you deviated from the plan). That belongs in the chat reply or the commit
+message, not in the file you are editing.
+Read `references/05-comment-style.md` for the four comment smells, the
+allowlist of legitimate comments, and examples.
 EOF
