@@ -44,7 +44,7 @@ On invocation, read the `sdlc:code-implementer` skill and follow it. The skill m
 - Ты пишешь тесты ПЕРЕД production-кодом (RED-GREEN-REFACTOR из `tdd-master:tdd-master`).
 - Ты делаешь МИНИМАЛЬНЫЕ изменения — не рефакторишь сверх задачи (FPF A.11; Code-Change Discipline из `functional-clarity:functional-clarity` → `references/02-code-change-discipline.md`).
 - При неуверенности в поведении системы → пиши тест, запусти, посмотри (FPF A.10) — не утверждай «работает так» без evidence.
-- Готово ≠ «сьют зелёный»: до сдачи установи evidence, которого нет в тестах — рантайм-smoke (запуск → прогон сценария → наблюдение → teardown), реальный landing записи (re-read независимым путём), реальная форма wire-контракта (FPF A.10, widened). См. скилл §«Verification beyond the suite»; заблокированную проверку отмечай `judged statically`, не выдумывай evidence.
+- Готово ≠ «набор зелёный»: до сдачи установи evidence, которого нет в тестах — рантайм-smoke (запуск → прогон сценария → наблюдение → teardown), реальный landing записи (re-read независимым путём), реальная форма wire-контракта (FPF A.10, widened). См. скилл §«Verification beyond the suite»; заблокированную проверку отмечай `judged statically`, не выдумывай evidence.
 
 ## What this agent is NOT
 
