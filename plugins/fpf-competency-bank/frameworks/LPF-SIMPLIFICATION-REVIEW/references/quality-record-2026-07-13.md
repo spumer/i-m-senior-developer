@@ -9,11 +9,11 @@
 
 Было (сборка 2026-07-13, зафиксировано дословно):
 
-> добавил параметр `esb_middlewares: t.Sequence[Callable[[core.context.ESBContext], MiddlewareCM]] = ()` в конструкторы публичных Manager-классов обоих бэкендов — `FastStreamEventInManager.__init__`, `FastStreamRequestInManager.__init__`, `tochka_esb_tools/backends/faststream/request_out.py`, `tochka_esb_tools/backends/faststream/service.py`, `tochka_esb_tools/backends/kombu/bootstrap.py` (подтверждено `grep -rln "esb_middlewares: t.Sequence" tochka_esb_tools/backends/` — 6 файлов, оба бэкенда).
+> добавил параметр `esb_middlewares: t.Sequence[Callable[[core.context.ESBContext], MiddlewareCM]] = ()` в конструкторы публичных Manager-классов обоих бэкендов — `FastStreamEventInManager.__init__`, `FastStreamRequestInManager.__init__`, `esb_tools/backends/faststream/request_out.py`, `esb_tools/backends/faststream/service.py`, `esb_tools/backends/kombu/bootstrap.py` (подтверждено `grep -rln "esb_middlewares: t.Sequence" esb_tools/backends/` — 6 файлов, оба бэкенда).
 
 Находка критика (CONFIRMED запуском): точная команда даёт 3 файла, только faststream (kombu аннотирует `Sequence` без алиаса `t.`); число «6» не воспроизводится никакой командой. Архитектурный вывод (Boundary, оба бэкенда, must-meet) — истинен, ломалась только цитата-доказательство.
 
-Проверка при ремонте (оркестратор, прямой прогон 2026-07-13): `grep -rn "esb_middlewares:" tochka_esb_tools/backends/` (без `t.`) — kombu: `bootstrap.py:60`, `event_in.py:47,56`, `request_in.py:61,77`, `request_out.py:65,82`; faststream: `service.py:254`, `event_in.py:48`, `request_in.py:54`, `request_out.py:60`, `middlewares.py:59,141`. Инстанциация в `DPF.md` переписана на этот воспроизводимый вариант.
+Проверка при ремонте (оркестратор, прямой прогон 2026-07-13): `grep -rn "esb_middlewares:" esb_tools/backends/` (без `t.`) — kombu: `bootstrap.py:60`, `event_in.py:47,56`, `request_in.py:61,77`, `request_out.py:65,82`; faststream: `service.py:254`, `event_in.py:48`, `request_in.py:54`, `request_out.py:60`, `middlewares.py:59,141`. Инстанциация в `DPF.md` переписана на этот воспроизводимый вариант.
 
 ## R2 — процессное состояние, перенесённое из DPF.md
 

@@ -1,11 +1,11 @@
 # Scope — LPF-SIMPLIFICATION-REVIEW (Фаза 0, E.4.DPF:1)
 
 > Роль в конвейере: architect+dev. Дата прогона: 2026-07-13.
-> Компетенция: **ревью-обобщение диффов кодовых фаз на стадии «Упрощение»** конвейера 4.0 библиотеки `tochka-esb-tools` — практика reviewer'а этой стадии, применяющего гейты П1→П6 `DPF-COUPLING-GENERALIZATION` к конкретному диффу одной фазы, между GREEN (тесты прошли) и код-ревью на корректность (следующая стадия).
+> Компетенция: **ревью-обобщение диффов кодовых фаз на стадии «Упрощение»** конвейера 4.0 библиотеки `esb-tools` — практика reviewer'а этой стадии, применяющего гейты П1→П6 `DPF-COUPLING-GENERALIZATION` к конкретному диффу одной фазы, между GREEN (тесты прошли) и код-ревью на корректность (следующая стадия).
 
 ## Bounded context
 
-Локальная практика (Local Practice Framework, не Domain Principle Framework) одной стадии конвейера 4.0 — «Упрощение» — применяемая к диффу **над-фреймворка** `tochka-esb-tools` (`tochka_esb_tools/core` + `tochka_esb_tools/backends/{kombu,faststream}`). Опорный доменный свод принципов — `.claude/frameworks/DPF-COUPLING-GENERALIZATION/DPF.md` (status `active`, `admissibleForDeclaredDPFUse`, П1–П6 + типовые ошибки №1–12). Эта LPF **не переоткрывает** принципы coupling/connascence/SDP/bounded-context — она специализирует их в процедуру ревью: как reviewer стадии «Упрощение» проходит гейты П1→П6 по конкретному диффу, в каком формате фиксирует находки, что считается пройденным гейтом, а что — блокером.
+Локальная практика (Local Practice Framework, не Domain Principle Framework) одной стадии конвейера 4.0 — «Упрощение» — применяемая к диффу **над-фреймворка** `esb-tools` (`esb_tools/core` + `esb_tools/backends/{kombu,faststream}`). Опорный доменный свод принципов — `.claude/frameworks/DPF-COUPLING-GENERALIZATION/DPF.md` (status `active`, `admissibleForDeclaredDPFUse`, П1–П6 + типовые ошибки №1–12). Эта LPF **не переоткрывает** принципы coupling/connascence/SDP/bounded-context — она специализирует их в процедуру ревью: как reviewer стадии «Упрощение» проходит гейты П1→П6 по конкретному диффу, в каком формате фиксирует находки, что считается пройденным гейтом, а что — блокером.
 
 Покрывает:
 - **применение гейтов П1→П6** ДПФ к диффу одной фазы конвейера — письменный ответ на каждый гейт (не число, не галочка); П4 (Stable Dependencies) в этом проекте достаётся **бесплатно** через существующий AST-тест `tests/test_architecture.py` (структурный enforcement subtree-isolation `backends/` ↔ `core`), reviewer не обязан вручную считать `Ca`/`Ce` — тест уже гарантирует `Ce(core→backends)=0`;

@@ -17,7 +17,7 @@
 | §4 П3, c0b62cb | `core.testing.collect_rejected` извлечён из ДВУХ файлов, оба тронуты диффом: `faststream/pytest_plugin/dlx.py` + `kombu/pytest_plugin/dlx.py` | `git show c0b62cb --stat`: оба `dlx.py` изменены, `core/testing/__init__.py` добавлен с `collect_rejected` | **CONFIRMED** |
 | §4 П4 / §10 Случай A, cc8f191 | Пять `test_invariant_a…e` + общий `_format_violations`, report-and-fail форма | `grep`: `_format_violations` (стр.91) + `test_invariant_a…e` (стр.117/131/147/159/173) | **CONFIRMED** |
 | §4 П4/П5, КП-6 | `request_in.py` несёт `decode_request`+`ESBResponseMessage`+`_finalize` (роль другая), `event_in.py` — нет; оба несут `_on_message`+`UnknownMessageError` | `grep`: request_in — `decode_request` (98), `ESBResponseMessage.from_request` (120), `_finalize` присутствует; event_in — только `UnknownMessageError`, без response-машинерии | **CONFIRMED** |
-| §4 П1 / §4 П2 / Carrier note, 0e6117b | `esb_middlewares` добавлен в конструкторы Manager-классов **обоих бэкендов**, «подтверждено `grep -rln "esb_middlewares: t.Sequence" tochka_esb_tools/backends/` — **6 файлов, оба бэкенда**» | На commit 0e6117b и в рабочем дереве **точная** команда даёт **3 файла, ТОЛЬКО faststream** (`event_in`, `request_in`, `request_out`). НЕ 6, НЕ оба бэкенда. | **DEFECT (CONFIRMED)** |
+| §4 П1 / §4 П2 / Carrier note, 0e6117b | `esb_middlewares` добавлен в конструкторы Manager-классов **обоих бэкендов**, «подтверждено `grep -rln "esb_middlewares: t.Sequence" esb_tools/backends/` — **6 файлов, оба бэкенда**» | На commit 0e6117b и в рабочем дереве **точная** команда даёт **3 файла, ТОЛЬКО faststream** (`event_in`, `request_in`, `request_out`). НЕ 6, НЕ оба бэкенда. | **DEFECT (CONFIRMED)** |
 
 ### Разбор дефекта П1 (главная находка)
 
@@ -107,7 +107,7 @@
 **R1 — исправить evidence-цитату П1 (закрывает D7, D11, CC-DPF.5).**
 В §4 Паттерн 1, §4 Паттерн 2 и Carrier note заменить невоспроизводимую цитату:
 - Убрать «подтверждено `grep -rln "esb_middlewares: t.Sequence"` — 6 файлов, оба бэкенда» (не воспроизводится).
-- Заменить на воспроизводимое: либо loose-команда `grep -rln esb_middlewares tochka_esb_tools/backends/` (оба бэкенда, 10 файлов в рабочем дереве), либо — точнее для «конструктор публичного менеджера» — назвать два loci прямо: `backends/kombu/bootstrap.py:60` и `backends/faststream/service.py:254` (оба — публичные Manager-конструкторы, оба несут параметр; проверено).
+- Заменить на воспроизводимое: либо loose-команда `grep -rln esb_middlewares esb_tools/backends/` (оба бэкенда, 10 файлов в рабочем дереве), либо — точнее для «конструктор публичного менеджера» — назвать два loci прямо: `backends/kombu/bootstrap.py:60` и `backends/faststream/service.py:254` (оба — публичные Manager-конструкторы, оба несут параметр; проверено).
 - Архитектурный вывод (Boundary, must-meet, оба бэкенда) оставить — он ИСТИНЕН и самодокументирован сообщением коммита 0e6117b; правится только цитата-доказательство.
 - В Carrier note снять сверх-обобщённое «каждое числовое утверждение ... не экстраполировано» либо привести число в соответствие.
 
