@@ -130,8 +130,9 @@ except Exception:
 - **`references/03-developer-levels.md`** — Developer level definitions (Junior → Senior+)
 - **`references/04-bash-instructions.md`** — Bash script guidelines
 - **`references/frameworks/python.md`** — Python-specific: modern syntax, pathlib, type annotations, pytest patterns
-- **`references/05-comment-style.md`** — Comment discipline: three comment
-  smell classes (doc-refs, changelog-in-code, restating the obvious) with
+- **`references/05-comment-style.md`** — Comment discipline: four comment
+  smell classes (doc-refs, changelog-in-code, restating the obvious,
+  reporting your own work to the human) with
   ❌/✅, the allowlist, and borderline cases (external standards,
   versioned-API docs). Normative source — every other mention points here.
   Tracking-id (`FEAT-XXXX`) enforced separately by `sdlc`.
