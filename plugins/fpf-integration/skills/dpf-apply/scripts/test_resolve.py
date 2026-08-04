@@ -269,6 +269,15 @@ def test_non_utf8_dpf_md_does_not_crash_and_reports_unreadable():
         assert "unreadable DPF.md" in cli.stderr, cli.stderr
 
 
+def test_cli_missing_local_exits_1_without_traceback():
+    with tempfile.TemporaryDirectory() as project:
+        missing = run_cli(project, "--verify", "DPF-NOPE", "--scope", "local")
+
+        assert missing.returncode == 1, missing.stderr + missing.stdout
+        assert "Traceback" not in missing.stderr, missing.stderr
+        assert "verify: FAIL — not found: DPF-NOPE" in missing.stdout
+
+
 def test_cli_bank_pass_and_fail():
     with tempfile.TemporaryDirectory() as project:
         fw = os.path.join(project, ".claude", "frameworks")

@@ -121,7 +121,7 @@ REQUIRED_FIELDS = ("dpf_id", "kind", "status", "review_due", "owner")
 # Гейтящие проверки по области: local-авторинг пропускает свежесть/вердикт;
 # bank fail-closed гейтит всё. Ключ используют и run_verify, и печать финала.
 GATING = {
-    "local": ("structure", "kind"),
+    "local": ("resolve", "structure", "kind"),
     "bank": ("resolve", "structure", "kind", "freshness", "conformance"),
 }
 
