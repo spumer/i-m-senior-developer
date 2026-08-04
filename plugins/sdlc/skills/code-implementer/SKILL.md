@@ -161,6 +161,25 @@ in one place: `functional-clarity:functional-clarity` →
 `references/05-comment-style.md`. This section is a reminder, not a copy;
 when in doubt, read the reference.
 
+## Boundary vocabulary — the owner's words
+
+The ARCH document fixes contract names, but the implementer authors the
+rest: method and parameter names, event payload fields, docstrings on ports
+and adapters. When declaring anything that lives on a context boundary —
+a layer, a module, a service, a published schema — phrase it in the
+declaring context's own facts — never the counterpart's action, mechanism,
+or tuning knobs (no `queue=`, `retry=` parameters in an abstract port; no
+docstring pointing into the subscriber's internals). Translation between
+vocabularies happens on the dependent side, in its adapter — not in the
+owner's names. Quick check — the substitution test: would the name,
+signature, and docstring stay accurate if the counterpart were replaced or
+a second one added? Names internal to one context are out of scope. The
+normative text — leak channels, per-scale examples, leak classes with
+❌/✅, false-positive cases — lives in one place:
+`functional-clarity:functional-clarity` →
+`references/06-boundary-vocabulary.md`. This section is a reminder, not a
+copy; when in doubt, read the reference.
+
 ## Verification beyond the suite (FPF A.10)
 
 A passing test suite proves the tests pass — not that the system works.

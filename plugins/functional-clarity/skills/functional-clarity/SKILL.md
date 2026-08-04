@@ -135,6 +135,16 @@ except Exception:
   ❌/✅, the allowlist, and borderline cases (external standards,
   versioned-API docs). Normative source — every other mention points here.
   Tracking-id (`FEAT-XXXX`) enforced separately by `sdlc`.
+- **`references/06-boundary-vocabulary.md`** — Boundary vocabulary: what a
+  context declares on its boundary it names in its own language — and the
+  rule is the same at every scale (layer, module, service, cross-team
+  system). The ownership rule, the three leak channels (name,
+  type/signature, prose), the substitution test (objective criterion), the
+  translation duty (the dependent side translates, in its own adapter), a
+  worked module-level case with ❌/✅, and false-positive guards
+  (context-internal names, presentation-layer copy). Normative source —
+  every other mention points here. Design-time check owned by
+  `sdlc:architect`, review category by `sdlc:code-reviewer`.
 
 ## Reference Loading Order
 
@@ -146,6 +156,7 @@ except Exception:
 6. IF writing bash scripts → read `references/04-bash-instructions.md`
 7. IF writing Python code → read `references/frameworks/python.md`
 8. IF writing or reviewing code comments → read `references/05-comment-style.md`
+9. IF designing, implementing, or reviewing elements declared on a context boundary at any scale — layer, module, service, published schema; especially under dependency inversion → read `references/06-boundary-vocabulary.md`
 
 ## Integration
 

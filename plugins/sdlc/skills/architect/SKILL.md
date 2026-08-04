@@ -47,7 +47,7 @@ Outputs the architect skill does **not** produce: source code, test files, migra
 
 5. **Explicit hand-offs.**
 
-   Every cross-context call must have a named contract: input shape, output shape, and error mode. An implicit hand-off ("the implementer will figure it out") is a design defect. If the contract is unclear at design time, it will be invented independently by the backend and the frontend — producing two incompatible inventions that collide at integration time.
+   Every cross-context call must have a named contract: input shape, output shape, and error mode. An implicit hand-off ("the implementer will figure it out") is a design defect. If the contract is unclear at design time, it will be invented independently by the backend and the frontend — producing two incompatible inventions that collide at integration time. The contract's vocabulary belongs to the context that declares it — see §Boundary vocabulary.
 
 6. **Apply Functional Clarity.**
 
@@ -125,9 +125,9 @@ Write the following template to `<feature-dir>/ARCH-NN.md`. Every section is req
   - <sub-boundary if needed>: <one-sentence purpose>
 
 ## Hand-off contracts
-| Caller | Callee | Input shape | Output shape | Error mode |
-|---|---|---|---|---|
-| <context-A> | <context-B> | <type or pseudocode> | <type or pseudocode> | <exception / HTTP status / empty> |
+| Caller | Callee | Input shape | Output shape | Error mode | Vocabulary |
+|---|---|---|---|---|---|
+| <context-A> | <context-B> | <type or pseudocode> | <type or pseudocode> | <exception / HTTP status / empty> | <declaring context — whose language names this contract> |
 
 ## Data flow
 <diagram in ASCII or prose; one paragraph per major flow>
@@ -171,7 +171,7 @@ code comments and identifiers.
 
 **Bounded contexts** — One bullet per context. Name it. State its single responsibility in one sentence. Name the module, app, or path where it lives. A context may have named sub-boundaries (e.g. a service layer within a Django app, a repository layer within a FastAPI service); add a nested bullet for each sub-boundary worth naming. Rule: if you cannot state the context's responsibility in one sentence, the context is not yet bounded — it is two contexts fused together.
 
-**Hand-off contracts** — One row per cross-context call. Input and output shapes must be named types or brief inline pseudocode — not prose like "sends the user data". Error mode: what concretely happens on failure (exception class, HTTP status code, empty result, dead-letter queue). If the error mode is "unknown at design time", that belongs in Open Questions, not in this table.
+**Hand-off contracts** — One row per cross-context call. Input and output shapes must be named types or brief inline pseudocode — not prose like "sends the user data". Error mode: what concretely happens on failure (exception class, HTTP status code, empty result, dead-letter queue). If the error mode is "unknown at design time", that belongs in Open Questions, not in this table. Vocabulary: name the context whose language the contract speaks — the answer must be the declaring context. Fill it for every row; on rows created by dependency inversion (the port is declared in one context, implemented in another) run the substitution test before accepting the names — see §Boundary vocabulary.
 
 **Data flow** — ASCII diagram or prose. One paragraph per major flow. Separate async flows from sync flows — they have different failure modes and different monitoring requirements. This section is where "just CRUD" hides its real complexity: cache invalidation on update, event emission to downstream consumers, optimistic locking to prevent concurrent overwrites, audit trail writes, webhook fan-out. Capture all of these explicitly, even if implementation of some is deferred to a later phase.
 
@@ -184,6 +184,18 @@ code comments and identifiers.
 **Out of scope** — Explicitly names things the architecture consciously excludes with a one-line reason. Prevents scope creep during implementation. When in doubt, add a line — an explicit "out of scope" is better than silence that the implementer interprets as "in scope".
 
 **Hand-off** — Always present as the last section. Names the next agent, the artifact path, and reminds the next agent to activate `tdd-master:tdd-master` before writing production code.
+
+## Boundary vocabulary
+
+A context boundary has two layers: structure (imports, cycles, dependency direction — covered by the sections above) and vocabulary. **What a context declares on its boundary it names in its own language.** The rule is scale-free — it holds for a layer inside an app, a module in a monolith, a service, a schema published to another team. Everything declared in context A — port names, method names, parameter names and types, event names, schema fields, docstrings — is phrased in A's own facts and needs. The counterpart's actions, mechanisms, and domain terms must not enter A's vocabulary through any channel: not as a name, not as a signature/type, not as prose. Translating between vocabularies is the dependent side's duty, on its own territory (adapter, anticorruption layer) — the owner never pre-names things "conveniently" for a consumer.
+
+This matters most under dependency inversion: when B depends on A, the contract is declared in A and implemented in B — precisely then nothing structural stops B's vocabulary from leaking into A's names (imports stay clean, the type checker stays happy), so the check must be explicit at design time, where the boundary names are born.
+
+**Substitution test** (objective criterion): mentally replace the implementation/subscriber with a different one — another channel, another mechanism, a second consumer alongside the first. Do the name, the signature, and the docstring stay accurate? If anything would need editing, the element carries foreign vocabulary — a boundary defect, not taste.
+
+Applying it in the architecture document: fill the Vocabulary column of the Hand-off contracts table for every row; the answer must be the declaring context. Signatures pass only the owner's facts (ids, transactional context) — never the subscriber's tuning knobs (queue names, retry counts, channel selectors). Event names state the owner's fact (`user_registered`), not the expected reaction (`trigger_welcome_email`).
+
+Scope guard: the rule applies to elements declared on a boundary between contexts — not to names internal to one context, and not to presentation-layer copy (button labels, operator-facing texts). The normative text — leak channels, per-scale examples, leak classes with ❌/✅, false-positive cases — lives in one place: `functional-clarity:functional-clarity` → `references/06-boundary-vocabulary.md`. This section is a reminder, not a copy; when in doubt, read the reference. If the plugin is not installed, apply the rule as stated here.
 
 ## Design-only rule
 
@@ -203,6 +215,7 @@ Headlines below; full explanations in `references/design-conventions.md`.
 6. **Implementer raising design questions at runtime** — "which serializer? error shape for 422? idempotent?" is a design defect; revise `ARCH-NN.md` and add the missing contract row.
 7. **Unknown stack treated as no-op** — still produce a full architecture with universal principles; mark `stack: unknown`. No stack reference ≠ a shorter architecture.
 8. **Partial state space** — enumerate every discrete state, transition, prerequisite reachability, and identity-slot occupancy; an unreachable / missing-transition / doubly-occupiable state is a design defect found now, not a runtime bug later.
+9. **Vocabulary leak across the boundary** — a port/event declared in context A named with the subscriber's action or mechanism (`InvoiceEmailQueuePort.enqueue_email`); imports are clean, so structural checks stay silent. Run the substitution test on every inverted-dependency contract row (§Boundary vocabulary).
 
 ## Integration with other plugins
 

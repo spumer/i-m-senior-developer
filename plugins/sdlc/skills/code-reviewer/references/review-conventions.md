@@ -44,6 +44,20 @@ first record is committed (partial state) — fix direction: wrap lines 47-52 in
 can fetch any order by changing the ID — fix direction: add `.filter(user=request.user)` before .get()
 ```
 
+**Well-formed finding (major, vocabulary leak across a context boundary):**
+
+```
+`billing/ports.py:14` — vocabulary leak across a context boundary — evidence: port declared in
+`billing` is named `InvoiceEmailQueuePort.enqueue_email(invoice_id, queue="notifications")`:
+"email" is the subscriber's action, "queue" its mechanism, the `queue` parameter its tuning knob;
+substitution test fails — swapping the subscriber to a push channel makes the name and signature
+inaccurate although nothing in `billing` changes behavior — fix direction: rename to the owner's
+fact (e.g. `InvoiceObserverPort.invoice_created(invoice_id)`) and drop the subscriber parameters
+```
+
+Note the evidence: it is the failed substitution test, not "I dislike the name" — that is what
+moves the finding out of taste and into the system-issues section.
+
 ## Security-framing rationale
 
 `references/security.md` is the always-active checklist covering: OWASP Top 10 (current edition), secrets/credentials in code, auth/authz (IDOR, missing decorators, JWT pitfalls, session handling), injection vectors (SQL, template, shell, path traversal), CSRF/CORS/CSP, and SSRF. It loads regardless of stack, diff size, or apparent scope ("it's just a refactor" is the most common context for accidental secret exposure).
