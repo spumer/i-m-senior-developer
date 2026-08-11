@@ -1,9 +1,9 @@
 {
   "name": "planner",
-  "version": "0.2.2",
-  "description": "Meta-dispatcher plugin for the full feature pipeline: requirements (/plan-feat, /plan-jira), architecture/execution planning (/plan), implementation orchestration (/plan-do), post-task reflection (/plan-reflect). Detects agent-catalog gaps, learns from past sessions.",
+  "version": "1.0.0",
+  "description": "File-backed feature pipeline: requirements, ready architecture, version-linked execution plans, guarded implementation orchestration, and post-task reflection.",
   "author": {
     "name": "Svyatoslav Posokhin"
   },
-  "keywords": ["planner", "orchestration", "meta-agent", "feature-planning", "agent-catalog", "reflection"]
+  "keywords": ["planner", "orchestration", "file-backed-planning", "feature-planning", "agent-catalog", "reflection"]
 }

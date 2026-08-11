@@ -1,118 +1,83 @@
 ---
-argument-hint: [feature directory or description]
-description: Orchestrate feature implementation with architecture, coding, and review phases
+argument-hint: [feature directory, README, architecture, or execution plan]
+description: Execute a current planner execution file through implementation and review.
+allowed-tools: ["Read", "Grep", "Glob", "Bash(python3:*)", "Agent", "Write"]
 ---
 
 # Task
 
-You are orchestrating implementation for: $ARGUMENTS
+Orchestrate implementation for: $ARGUMENTS
 
-## Stage 0 — Planner (опциональный, рекомендуется для L-фич)
+## 1. Resolve the plan files
 
-Перед запуском architect-фазы:
+Resolve the feature directory from the supplied directory or file. The execution artifact is `PLANNER_EXECUTION.md` in that directory.
 
-1. Если в директории фичи (путь — см. `planner-context.md`) нет
-   `PLANNER_OUTPUT.md` ИЛИ фича визуально крупная (несколько модулей,
-   миграции, cross-stack) — вызови агента `planner` в режиме
-   **architecture planning** (или slash-команду `/plan`).
-   - При первом запуске в проекте planner выполнит bootstrap: создаст
-     `<project-root>/.claude/planner-context.md` с каталогами агентов,
-     команд, skills и путей хранения фич.
-2. Оркестратор читает `PLANNER_OUTPUT.md` и исполняет architect-фазу по
-   нему (одного архитектора или N параллельных, модель и skills — из плана).
-3. Перед implementation-фазой снова вызови `planner` в режиме **execution
-   planning** — на входе готовый архитектурный план. Он обновит
-   `PLANNER_OUTPUT.md`.
+Fail before starting any agent when:
 
-**Когда пропустить planner:**
-- Маленькая фича (S: 1 модуль, <200 LOC, нет миграций).
-- Bugfix в одной функции.
-- Пользователь явно сказал «без planner» / «быстро».
+- the argument does not resolve to a readable path;
+- `PLANNER_EXECUTION.md` is missing or unreadable;
+- the execution header does not point to a readable architecture document;
+- the architecture and execution paths resolve to the same file.
 
-Planner — оптимизатор, а не обязательный гейт.
+For a missing execution plan, tell the user to run:
 
-## Workflow
-
-Мульти-агентный конвейер с чётким разделением ответственности. Конкретные
-имена агентов проекта — в `<project-root>/.claude/planner-context.md` §1.
-Абстрактные роли ниже — маппинг на реальные имена делает оркестратор.
-
-1. **architect** — проектирует архитектуру, модели данных, контракты. БЕЗ КОДА.
-2. **implementer** — пишет код по плану. Может запускаться параллельно для
-   независимых частей плана.
-3. **reviewer** — запускает тесты, линтеры, находит проблемы, создаёт
-   review-файлы.
-4. **keeper** (после завершения фичи) — извлекает стабильные решения в
-   проектную документацию.
-
-## Implementation Loop
-
-Для каждого стейджа:
-
-### Step 1: Architecture
-Запусти **architect** — создаёт/обновляет архитектурный план.
-
-### Step 2: Implementation
-Запусти **implementer** по плану. Можно несколько **implementer**-ов в
-параллель для НЕЗАВИСИМЫХ частей плана (см. PLANNER_OUTPUT.md, если есть).
-
-### Step 3: Review
-Запусти **reviewer** — тесты, линтеры, проверка кода.
-
-### Step 4: Fix or Complete
-- Если reviewer нашёл проблемы → возврат к Step 1 с review-файлами.
-- Если проблем нет → стейдж завершён.
-
-### Step 5 (после завершения фичи): Documentation
-Запусти **keeper** — обновление проектной документации стабильными
-решениями (конкретные файлы — из `planner-context.md` §5).
-
-### Step 6 (после завершения фичи): Reflect
-Опционально предложи пользователю запустить `/plan-reflect` — пост-задачная
-рефлексия с обновлением `planner-context.md` (gap-fill, model-strength,
-user-corrections, cost-calibration). Особенно полезно после L-фич.
-
-## Directory Structure
-
-Конкретный путь к директории фич — в `planner-context.md` §5. Типовые
-варианты:
-
-```
-<features-root>/
-  FEAT-[0-9]{4}-<slug>/
-    README.md                       # Requirements (из /plan-feat)
-    FEAT-XXXX-PLAN-0N.md            # Architecture plan
-    PLANNER_OUTPUT.md               # Planner output (optional)
-    review-request-changes/         # Review findings
-      FEAT-XXXX-ISSUE-0NN.md
-      FEAT-XXXX-ISSUE-0NN_solved.md
-    .test-output/                   # Test results
+```text
+/planner:plan <path-to-architecture>
 ```
 
-Если проект использует другой паттерн — следуй тому, что записано в
-`planner-context.md`.
+Do not treat a legacy `PLANNER_OUTPUT.md` as the current execution plan.
 
-## Critical Rules
+## 2. Check freshness before every Agent call
 
-- **Separation of Concerns:** каждый агент имеет одну ответственность.
-  - architect = design only (no code, no tests)
-  - implementer = code only (no tests)
-  - reviewer = test & review only
-  - keeper = docs only (no code, no features)
-- **Artifact Storage:** все файлы в директории фичи.
-- **Loop Until Clean:** продолжать до тех пор, пока reviewer не перестанет
-  находить проблемы.
-- **Agent Knowledge:** каждый агент знает свои обязанности из своего .md.
-  Имена и соответствия — в `planner-context.md` §1.
-- **Проектные контекстные файлы** (UI guidelines, testing guide, project
-  overview) используй, только если они перечислены в `planner-context.md`
-  §5. Не придумывай несуществующие пути.
-- **FEAT-id — только в именах файлов-артефактов.** `FEAT-XXXX` — соглашение
-  об именовании файлов внутри директории фичи (README, PLAN, ISSUE), а не
-  текстовая метка. Ему НЕ место в коде проекта: ни в комментариях, ни в
-  докстрингах, ни в именах тестов и идентификаторах, ни в проектной
-  документации за пределами директории фичи. «Какой тикет это просил» —
-  ответ даёт `git blame` и директория фичи, а не комментарий. Включай этот
-  запрет в промпт КАЖДОГО диспатчируемого агента (architect, implementer,
-  reviewer, keeper) — независимо от того, на какие конкретные агенты
-  проекта смаплены роли.
+Run the state helper before starting any working phase:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" check <path-to-PLANNER_EXECUTION.md>
+```
+
+Interpret its exit status:
+
+- `0` — the plan is current; continue;
+- `2` — the plan is stale; stop before Agent;
+- `3` — the plan is invalid or unreadable; stop before Agent;
+- `64` — the helper invocation is invalid; fix the invocation and rerun it before Agent.
+
+When the plan is stale, report `reason`, the recorded architecture version, and the current architecture version from the helper output. The reason is required even when both versions are equal. Then give the exact rebuild command:
+
+```text
+/planner:plan <resolved-architecture-path>
+```
+
+Confirmation from the user does not bypass this gate. Re-run the same check immediately before each later Agent call; a long implementation session must not continue after the architecture changes underneath it.
+
+## 3. Execute `PLANNER_EXECUTION.md`
+
+Read the execution plan and map its abstract roles to agents from `.claude/planner-context.md` §1. Do not invent agent names.
+
+For each implementation phase:
+
+1. Start the named **implementer** with the phase inputs and outputs.
+2. Include this guard in every dispatched prompt: the feature identifier belongs only in artifact filenames inside the feature directory; never place it in code, comments, docstrings, test names, identifiers, or project documentation outside that directory.
+3. After implementation, start the named **reviewer**. The reviewer runs tests and linters, inspects the diff, and writes one issue file per confirmed finding under `review-request-changes/`.
+4. If the reviewer finds an implementation defect, dispatch the implementer with the issue files, then repeat review.
+5. If the reviewer finds a design defect, dispatch the architect to update the architecture. After that update, stop: the execution plan must be rebuilt before implementation continues.
+6. Complete the phase only when review is clean.
+
+Independent phases may run in parallel only when `PLANNER_EXECUTION.md` marks them independent. Keep dependent phases serial.
+
+## 4. Documentation
+
+After all implementation phases are clean, dispatch the documentation keeper named in `.claude/planner-context.md`. It may update only the project documentation paths listed there. Apply the same identifier guard to its prompt.
+
+If no active documentation keeper exists, update only the explicitly listed documentation files yourself; do not invent new project-context files.
+
+## 5. Completion report
+
+Report:
+
+- files changed;
+- tests and validation commands actually run, with their outcomes;
+- review rounds and remaining limitations;
+- whether project documentation changed.
+
+Do not claim a check ran when it was skipped or blocked. Do not commit, tag, push, delete, or publish unless the user separately asks.

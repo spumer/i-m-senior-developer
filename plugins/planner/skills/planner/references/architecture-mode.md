@@ -1,49 +1,101 @@
-# Mode 1 — Architecture planning
+# Mode 1 — Architecture
 
-Detailed mechanics for the architecture-planning mode of the planner skill. `SKILL.md` ("Mode 1 — architecture planning") routes here when the input is a feature README that does not yet have an architecture document.
+Load this reference when the input is a feature `README.md`, a feature directory containing one, or free text with no readable path.
 
-## 1. When to load
+## Result
 
-Load this reference when the planner is invoked with a feature `README.md` as input and no `*-PLAN-*.md` / `*-DESIGN-*.md` / `ARCHITECTURE.md` exists yet inside the feature directory. Architecture mode answers a single question: **how should the architecture pass be conducted to be efficient and rentable?**
+Produce a ready architecture document, not a plan for running an architect later.
 
-If an architecture document already exists, do **not** load this reference — load `execution-mode.md` instead.
+- Feature input → `<feature-dir>/ARCHITECTURE.md`.
+- Free text → `<project-root>/.claude/plans/<task-slug>/ARCHITECTURE.md`.
 
-## 2. Inputs and exit criterion
+Prepare the body in the transient file required by the main skill. The state helper atomically stores that body with its synchronized YAML header.
 
-- **Input:** `<feature-dir>/README.md` (the feature spec). The feature-directory pattern comes from `planner-context.md` §5.
-- **Exit:** a written `<feature-dir>/PLANNER_OUTPUT.md` that proposes how to run the architecture phase. If no feature directory was found (e.g. `/plan` was invoked with free-text task description), the output goes to chat instead — see `SKILL.md` ("Where to write").
+## Inputs
 
-The exit criterion is a **plan**, not architecture. This reference does not produce architecture itself; it picks the agents / models / parallelism for the phase that will produce architecture.
+Read:
 
-## 3. Option matrix
+1. the requirements or free-text task;
+2. the existing `ARCHITECTURE.md`, if present;
+3. the neighboring `PLANNER_EXECUTION.md`, if present;
+4. project conventions named in `.claude/planner-context.md`.
 
-Pick one of the four options below. They are mutually exclusive within a single feature, although different features can use different options.
+A legacy `PLANNER_OUTPUT.md` may provide historical context, but it is never the current architecture or execution plan. Preserve it unchanged.
 
-1. **Single architect on Opus.** Choose when the feature is monolithic with strong coupling between modules — e.g. a refactor that touches one core domain end-to-end, or an algorithmic redesign where every decision affects every module. Opus's deeper reasoning earns its cost when the integration surface is wide.
-2. **N parallel sub-architects on Sonnet (N ≤ 4).** Choose when the feature splits cleanly into weakly coupled domains — e.g. backend / frontend / DB / security tracks for a CRUD feature. The integration cost between sub-architects is low because each owns a separate slice; LIFT-COT caps N at 4 to keep the integration phase manageable. Default model is Sonnet (sufficient for routine domain work) unless one sub-track is itself security-critical (then that sub-track gets Opus).
-3. **Single quick-pass on Haiku.** Choose when the feature is small: <200 LOC impact, single module, no DB migrations, no new endpoints, no new dependencies. Haiku's speed and cost win when the work is bounded; Sonnet would be overkill.
-4. **Separate security sub-plan.** Choose **in addition to** options 1-3 (it is an add-on, not a substitute) when the feature touches authentication, authorization, PII, secrets, or data-export paths. The security sub-plan runs as its own phase with explicit review gates — it is never an inline "and also" item inside another architect's phase.
+If the input lacks a goal, affected user, or acceptance criteria, stop and name the missing information. Do not fill the gap with guesses.
 
-## 4. Decision rules
+## Complete architecture file format
 
-- **Default = single Sonnet architect.** Do not escalate to Opus or split into N agents on a guess. Per FPF A.11 (Ontological Parsimony), add only what you cannot subtract. The default covers ~80% of architecture work.
-- **Escalate to Opus only with evidence.** Evidence for "Opus needed" looks like: the feature touches a security-sensitive core, the feature requires a non-standard algorithm or data structure, or the team has historical lessons (logged in `planner-context.md` §6 by `/plan-reflect`) that Sonnet was weak on this kind of task in this project.
-- **Split into N sub-architects only with evidence of decoupling.** Evidence for "decoupled enough to parallelize" looks like: distinct domains with clear interface contracts already drafted in the README, separate code-ownership areas, no shared mutable state across the proposed slices. If you have to invent the boundaries to parallelize — don't parallelize.
-- **Down-shift to Haiku only with concrete bounds.** "<200 LOC impact, 1 module, no migrations" is a hard threshold, not a vibe — count the files in the README. If the README is ambiguous about scope, default to Sonnet, not Haiku.
+The saved `ARCHITECTURE.md` is the following YAML header and Markdown body concatenated in this order, without the code fences. The planner writes only the body to `ARCHITECTURE.md.prepared`; `plan_state.py` fills the dynamic header values and atomically assembles the saved file.
 
-## 5. Output mapping
+### YAML header template
 
-The chosen option fills the "Phase X" blocks of `PLANNER_OUTPUT.md` per the template in `SKILL.md` ("Output format"). Specifically:
+```yaml
+---
+plan_type: architecture
+version: 1
+status: current
+content_sha256: <SHA-256 of the body>
+---
+```
 
-- **Option 1 (single Opus architect):** one phase, one agent line, model `opus`, focus = "produce architecture document".
-- **Option 2 (N parallel Sonnet sub-architects):** one phase tagged `parallel`, N agent lines (N ≤ 4), each with its domain in `Focus`. Add a follow-up phase tagged `serial, depends on Phase 1` for integration / consolidation of the sub-architectures into a single document.
-- **Option 3 (single Haiku quick-pass):** one phase, one agent line, model `haiku`, focus = "lightweight architecture pass for small feature".
-- **Option 4 (security sub-plan add-on):** an additional phase with the security-focused agent, model usually `opus` (security-core gets the better model — see legacy boundaries about the rentability ↔ reliability conflict). Place this phase **before** the integration phase so security findings can shape the consolidated architecture.
+`version` is the helper-managed non-negative integer for the current semantic revision. Architecture status is always `current`. `content_sha256` is the 64-character hexadecimal fingerprint of the normalized body and excludes this header.
 
-The Cost-estimate row of `PLANNER_OUTPUT.md` should compare the chosen option against a naive `/plan-do` baseline (which would default-pick Sonnet for everything serially).
+### Markdown body template
 
-## 6. Common pitfalls
+Use this body structure unless the project has a stronger architecture convention:
 
-- **Over-parallelizing a tightly coupled domain.** When sub-architects work on overlapping concerns, the integration phase ends up rewriting their outputs — the savings from parallelism are eaten by the coordination cost. If the README does not draw clean boundaries, do not invent them.
-- **Picking Opus "to be safe".** Opus on routine architecture is rent-negative (≈5× Sonnet cost for ≤1.2× quality on routine work). The boundaries section of the legacy planner is explicit: every Opus pick must be justified by evidence, not anxiety.
-- **Folding security into another track as an "and also".** Security review demands its own attention budget. If auth / PII / secrets are in scope, they get an explicit phase with named review gates — the cost of a mis-handled security item dwarfs the cost of one extra phase.
+```markdown
+# <task name> — Architecture
+
+## Context and scope
+<what changes and what stays outside the task>
+
+## Bounded contexts
+<each context, its responsibility, and its boundary>
+
+## Contracts
+<input, output, side effects, and explicit error behavior for each hand-off>
+
+## Data flow
+<ordered flows through the contexts>
+
+## Decisions
+<committed decisions and their evidence>
+
+## Verification boundaries
+<observable or machine contracts that implementation must prove>
+
+## Risks
+<risk and concrete mitigation>
+
+## Open questions
+<unresolved decision and its owner, or an explicit statement that none remain>
+
+## Hand-off
+<input expected by execution planning>
+```
+
+A directory tree alone is not architecture. Name responsibilities and contracts before listing files.
+
+## Update rules
+
+1. Compare the new body with the existing body.
+2. Pass `--semantic-change yes` when decisions, contracts, data flow, scope, or verification boundaries changed.
+3. Pass `--semantic-change no` when the result is unchanged or only wording/formatting changed.
+4. Never increment a version manually. The state helper applies the decision.
+5. After synchronization, check the neighboring execution plan with `--mark-stale`.
+
+If the architecture was previously a headerless legacy document and this run actually updates it, it becomes version 1. Merely reading that document for execution planning leaves it unchanged at version 0.
+
+## Completion
+
+Successful chat output names:
+
+- `ARCHITECTURE.md` path;
+- current version;
+- two to four decisions or boundaries;
+- whether `PLANNER_EXECUTION.md` became stale;
+- the exact execution-planning command when a rebuild is needed.
+
+Do not paste the architecture body into chat after a successful write.

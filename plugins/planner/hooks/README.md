@@ -1,6 +1,6 @@
 # Hooks (placeholder)
 
-No hooks ship with `planner` v0.1.0.
+No hooks ship with `planner`.
 This directory exists as a drop-in slot so users who want auto-reflect on session end can add their own `hooks.json` and `session-end.sh` here without forking the plugin.
 The shape below is documentation only, not a recipe to copy verbatim — the script body is intentionally not provided.
 
@@ -12,7 +12,7 @@ The intended (but not shipped) shape consists of two files:
   The entry is a `command`-type hook.
   Its `command` field invokes `${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh`.
   The `timeout` field is set to 10 seconds.
-- `session-end.sh` — a one-liner shell script that detects whether `<feature-dir>/PLANNER_OUTPUT.md` was modified during the current session, and if so emits a `systemMessage` reminding Claude to invoke `/plan-reflect`.
+- `session-end.sh` — a one-liner shell script that detects whether `<feature-dir>/PLANNER_EXECUTION.md` was modified during the current session, and if so emits a `systemMessage` reminding Claude to invoke `/plan-reflect`.
   The script does NOT call `/plan-reflect` itself — invocation stays a human (or orchestrator) decision, so the hook is a nudge, not an action.
 
 ## Why opt-in

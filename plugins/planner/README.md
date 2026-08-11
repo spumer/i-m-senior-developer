@@ -1,148 +1,188 @@
 # planner
 
-Claude Code plugin: end-to-end feature pipeline. Replaces the legacy `~/.claude/agents/planner.md` meta-dispatcher and the legacy `~/.claude/commands/plan-{feat,do,jira}.md` command set. Adds project-aware bootstrap with agent-catalog gap detection, two planning modes (architecture and execution), cost-aware parallel-phase grouping, and a `/plan-reflect` learning loop that updates `planner-context.md` after each session.
+Claude Code plugin for file-backed feature planning and implementation orchestration.
+
+It separates three artifacts:
+
+- `README.md` — requirements and user-visible behavior;
+- `ARCHITECTURE.md` — ready technical design;
+- `PLANNER_EXECUTION.md` — implementation phases tied to one architecture version.
+
+The full planning result lives in a file. A successful `/plan` prints only the path, version, and two to four main outcomes.
 
 ## What it does
 
-- **Requirements gathering** — `/plan-feat` and `/plan-jira` facilitate user-journey + DoD discovery; output a `features/FEAT-XXXX/README.md` (or a Jira-Markdown brief)
-- **Bootstrap** — scans agents, slash-commands, skills, and stack markers in the project; flags gaps where a stack is detected but no agent covers it; writes `planner-context.md`
-- **Architecture mode** (`/plan` on a feature `README.md`) — picks among single Opus architect, N parallel Sonnet sub-architects, Haiku quick-pass, or a separate security sub-plan
-- **Execution mode** (`/plan` on an existing `*-PLAN-*.md`) — turns the architecture document into a dependency graph with parallel phases (≤7 agents per phase) and per-stage model selection
-- **Implementation orchestration** (`/plan-do`) — runs the architect → implementer → reviewer → keeper pipeline, looping until reviewer is clean
-- **Cost estimation** — tokens, wall-clock, and relative $-cost vs naive `/plan-do`
-- **Post-task learning** (`/plan-reflect`) — compares plan vs reality, extracts lessons, writes them back into `planner-context.md` (gap-fills, model-strength signals, user-correction patterns, cost-calibration deltas)
-- `planner-context.md` is the project source of truth — manual edits are preserved across re-scans
+- **Requirements gathering** — `/plan-feat` and `/plan-jira` facilitate user journey and Definition of Done discovery.
+- **Project bootstrap** — scans available agents, commands, skills, stack markers, and feature-directory conventions into `.claude/planner-context.md`.
+- **Architecture mode** — `/plan` on a feature README or free-text task writes a complete `ARCHITECTURE.md`.
+- **Execution mode** — `/plan` on architecture writes a separate `PLANNER_EXECUTION.md` with phases, dependencies, models, and review gates.
+- **Freshness guard** — architecture and execution plans carry versions and SHA-256 body fingerprints. Direct architecture edits make the execution plan stale even when its visible version was not updated manually.
+- **Implementation orchestration** — `/plan-do` checks freshness before any agent, then runs implementation and review phases until clean.
+- **Post-task learning** — `/plan-reflect` writes stable lessons back to `.claude/planner-context.md`.
 
 ## Structure
 
-```
+```text
 plugins/planner/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── agents/
-│   └── planner.md                           # thin wrapper (~30 lines)
+│   └── planner.md
+├── commands/
+│   ├── plan-feat.md
+│   ├── plan-jira.md
+│   ├── plan.md
+│   ├── plan-do.md
+│   └── plan-reflect.md
 ├── skills/
 │   ├── planner/
-│   │   ├── SKILL.md                         # core workflow
+│   │   ├── SKILL.md
+│   │   ├── assets/
+│   │   │   ├── plan_state.py
+│   │   │   └── test_plan_state.py
 │   │   └── references/
-│   │       ├── bootstrap.md                 # scan + gap-detection
-│   │       ├── architecture-mode.md         # Mode 1 detail
-│   │       ├── execution-mode.md            # Mode 2 detail
-│   │       └── template-context.md          # planner-context.md template
+│   │       ├── bootstrap.md
+│   │       ├── architecture-mode.md
+│   │       ├── execution-mode.md
+│   │       └── template-context.md
 │   └── planner-reflect/
-│       └── SKILL.md                         # post-task learning
-├── commands/
-│   ├── plan-feat.md                        # requirements gathering → README.md
-│   ├── plan-jira.md                        # requirements gathering → Jira brief
-│   ├── plan.md                             # architecture / execution planning
-│   ├── plan-do.md                          # implementation orchestration
-│   └── plan-reflect.md                     # post-task learning
-├── hooks/
-│   └── README.md                            # opt-in placeholder
+│       └── SKILL.md
 └── README.md
 ```
 
 ## Installation
 
-Add this marketplace to your Claude Code config and install the plugin from `i-m-senior-developer`:
+Add this marketplace to Claude Code and install the plugin:
 
-```
+```text
 /plugin marketplace add spumer/i-m-senior-developer
 /plugin install planner@i-m-senior-developer
 ```
 
-## Migration from legacy `planner.md` and `plan-*` commands
+## Typical feature flow
 
-If you used the legacy `~/.claude/agents/planner.md` (290-line agent) and/or the legacy `~/.claude/commands/plan-{feat,do,jira}.md` files, follow this migration:
-
-```
-# 1. Install plugin from marketplace (after publication)
-
-# 2. Remove legacy agent
-rm -f ~/.claude/agents/planner.md
-rm -f <project>/.claude/agents/planner.md  # if present
-
-# 3. Remove legacy commands (now shipped by the plugin)
-rm -f ~/.claude/commands/plan-feat.md
-rm -f ~/.claude/commands/plan-do.md
-rm -f ~/.claude/commands/plan-jira.md
-
-# 4. Verify project planner-context.md isn't broken
-#    (plugin will offer to update structure on first run)
-
-# 5. Run /plan on any feature — bootstrap should pass cleanly
+```text
+/plan-feat "bookmarks for items"
+        ↓ writes features/example/README.md
+/plan features/example/README.md
+        ↓ writes features/example/ARCHITECTURE.md
+/plan features/example/ARCHITECTURE.md
+        ↓ writes features/example/PLANNER_EXECUTION.md
+/plan-do features/example/
+        ↓ checks freshness, implements, reviews, updates documentation
+/plan-reflect features/example/
+        ↓ records stable lessons in planner-context.md
 ```
 
-Sanity checks after migration:
+The namespaced forms (`/planner:plan`, `/planner:plan-do`, and others) are available when a local command has the same bare name.
 
-1. Confirm `~/.claude/agents/planner.md` is gone
-2. Confirm `~/.claude/commands/plan-{feat,do,jira}.md` are gone
-3. Confirm `/plan`, `/plan-do`, `/plan-feat`, `/plan-jira`, `/plan-reflect` resolve to the plugin in `/help` (look for `(plugin:planner)` label)
-4. Run `/plan` on any feature to trigger fresh bootstrap
+## Planning modes
 
-For full transcript-based learning, run `/plan-reflect` **in the same session** as the work it reflects on — cross-session transcript availability is not guaranteed in v0.2.0.
+### Architecture
 
-## Modes
+Inputs:
 
-- **Architecture mode** — input is a feature `README.md`, output is a `PLANNER_OUTPUT.md` describing how to run the architectural pass (one architect vs parallel sub-architects vs quick-pass). Example: `/plan features/FEAT-0042-billing/`.
-- **Execution mode** — input is an existing `FEAT-XXXX-PLAN-0N.md`, output is a dependency-graph + parallel-phase plan with cost estimate. Example: `/plan features/FEAT-0042-billing/FEAT-0042-PLAN-01.md`.
+- feature `README.md`;
+- feature directory containing `README.md`;
+- free-text task with no filesystem path.
 
-Detail lives in the skill references — `skills/planner/references/architecture-mode.md` and `skills/planner/references/execution-mode.md`.
+Outputs:
 
-## Examples
+- feature input → `ARCHITECTURE.md` beside the README;
+- free text → `.claude/plans/<task-slug>/ARCHITECTURE.md`.
 
-**First-time bootstrap in a new project:**
+Architecture mode writes the complete design. It does not leave a separate file of instructions for a future architect run.
 
+### Execution
+
+Input: an existing architecture document, including an explicitly supplied legacy `*-PLAN-*.md` or `*-DESIGN-*.md`.
+
+Output: `PLANNER_EXECUTION.md` beside the architecture.
+
+The execution header records:
+
+- its own version and status;
+- its own body fingerprint;
+- the architecture path, version, and body fingerprint.
+
+## Freshness and versions
+
+New architecture:
+
+```yaml
+---
+plan_type: architecture
+version: 1
+status: current
+content_sha256: <body fingerprint>
+---
 ```
-/plan refactor billing module
-```
-→ Plugin scans `.claude/agents/`, `.claude/skills/`, `.claude/commands/`, detects stack markers, writes `<project>/.claude/planner-context.md`, then builds the plan.
 
-**Architecture planning from a feature README:**
+New execution plan:
 
+```yaml
+---
+plan_type: execution
+version: 1
+status: current
+content_sha256: <body fingerprint>
+architecture:
+  path: "./ARCHITECTURE.md"
+  version: 1
+  content_sha256: <architecture body fingerprint>
+---
 ```
-/plan features/FEAT-0042-billing/
-```
-→ Reads `features/FEAT-0042-billing/README.md`, picks an architecture option (single Opus / parallel Sonnet / Haiku quick-pass), writes `PLANNER_OUTPUT.md` next to it.
 
-**Post-session reflection:**
+Rules:
 
+- a semantic body change increments that document's version;
+- wording or formatting without a semantic change preserves the version;
+- changing only `current` to `stale` preserves the execution version and body;
+- architecture without supported frontmatter is read as version 0 and is not rewritten merely for migration;
+- direct body changes are detected by the fingerprint;
+- Git owns history, so the plugin rewrites current files instead of creating numbered copies.
+
+## `/plan-do` guard
+
+`/plan-do` runs the state helper before every Agent call. It stops when:
+
+- the execution file is missing or invalid;
+- the architecture path is missing or invalid;
+- recorded and current architecture versions differ;
+- the architecture fingerprint differs;
+- the execution plan is already marked `stale`.
+
+The guard cannot be bypassed by confirmation. Rebuild the plan with:
+
+```text
+/plan <path-to-current-architecture>
 ```
-/plan-reflect features/FEAT-0042-billing/
-```
-→ Compares `PLANNER_OUTPUT.md` against `git log`, review files, and session messages; writes lessons into `planner-context.md` and emits a "Lessons learned" section in chat.
+
+## Chat output
+
+After a successful write, `/plan` prints only:
+
+- result kind;
+- path and version;
+- two to four main outcomes;
+- next command, when needed.
+
+If writing or metadata synchronization fails, the command says the file was not saved and returns the complete prepared document in chat as a fallback.
+
+## Legacy `PLANNER_OUTPUT.md`
+
+An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it and do not treat it as the current architecture or execution plan.
 
 ## Commands
 
-The plugin ships five commands, covering the full feature pipeline:
-
-| Command | Stage | Purpose |
-|---|---|---|
-| `/plan-feat` (or `/planner:plan-feat`) | requirements | Facilitate user-journey + DoD discovery; output `features/FEAT-XXXX-<slug>/README.md` |
-| `/plan-jira` (or `/planner:plan-jira`) | requirements | Same facilitation, output a Jira-Markdown brief instead of a feature directory |
-| `/plan` (or `/planner:plan`) | planning | Build an architecture or execution plan; activates the `planner` skill |
-| `/plan-do` (or `/planner:plan-do`) | implementation | Orchestrate the architect → implementer → reviewer → keeper pipeline |
-| `/plan-reflect` (or `/planner:plan-reflect`) | learning | Compare plan vs reality; update `planner-context.md` |
-
-The bare forms work by default. The namespaced `planner:` forms are the disambiguation fallback if you have your own collision — Claude Code shows them in `/help` automatically.
-
-**Typical pipeline:**
-
-```
-/plan-feat "bookmarks for items"
-        ↓ (writes features/FEAT-0001-bookmarks/README.md)
-/plan features/FEAT-0001-bookmarks/
-        ↓ (writes PLANNER_OUTPUT.md)
-/plan-do features/FEAT-0001-bookmarks/
-        ↓ (orchestrates implementation, writes PLAN/review/test artifacts)
-/plan-reflect features/FEAT-0001-bookmarks/
-        ↓ (writes lessons into planner-context.md)
-```
+| Command | Purpose |
+|---|---|
+| `/plan-feat` | Gather requirements and write a feature README |
+| `/plan-jira` | Gather requirements from a Jira description |
+| `/plan` | Write architecture or execution planning to a file |
+| `/plan-do` | Check freshness, implement, review, and document |
+| `/plan-reflect` | Record stable project-specific lessons |
 
 ## Configuration
 
-Project-specific configuration lives in `<project>/.claude/planner-context.md`. The file is created on first bootstrap and contains the project's agent catalog, slash-command catalog, skill catalog, model table, feature-directory conventions, and naming rules. Manual edits are preserved on re-scan — the plugin only adds new auto-discovered rows (tagged `<!-- auto-added YYYY-MM-DD -->`) and marks missing-since-last-scan rows as stale instead of deleting them.
-
-## Requirements
-
-- Claude Code with plugin marketplaces support
+Project-specific agent mappings, model guidance, and artifact paths live in `.claude/planner-context.md`. Bootstrap creates it on first use. A rescan appends auto-discovered entries and marks missing entries stale without overwriting manual decisions.

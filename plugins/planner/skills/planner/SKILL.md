@@ -1,132 +1,221 @@
 ---
 name: planner
 description: >
-  This skill should be used when the user asks to "plan a task",
-  "build an execution plan", "split this work", "make this faster/cheaper",
-  or in russian «план», «разбей задачу», «распредели»,
-  «оптимизируй процесс», «как сделать быстрее/дешевле».
-  Also activates when a feature README is presented before /plan-do,
-  when an architecture session is starting, or when an existing PLAN
-  document is about to be executed.
-  Provides two modes: architecture planning (from a feature README)
-  and execution planning (from an architecture document).
+  Builds and saves architecture or execution plans. Use when the user asks to
+  plan a task, split implementation work, prepare a feature README for
+  implementation, or turn an architecture document into executable phases.
 ---
 
-# Planner — meta-dispatcher
+# Planner — file-backed planning
 
-Designs **how** other agents should execute a task: which agents to call, on which model (Opus / Sonnet / Haiku), which skills to activate, what can run in parallel. The planner does not write code and does not run agents itself — it produces a plan; the orchestrator dispatches.
+The planner produces one complete file per activation:
 
-The single artifact of a planner activation is a `PLANNER_OUTPUT.md` file (or, if no feature directory exists, the same content emitted to chat). The exception: on first run in a project, the planner also writes `<project-root>/.claude/planner-context.md` via the bootstrap procedure described in the Bootstrap pointer section below.
+- **architecture mode** writes or updates `ARCHITECTURE.md`;
+- **execution mode** writes or updates `PLANNER_EXECUTION.md`.
+
+A successful activation never emits the full document to chat. It reports the path, kind, version, and two to four main outcomes. Full chat output is reserved for a failed write or failed metadata synchronization.
+
+The planner writes plans; it does not execute implementation phases and does not invoke working agents.
 
 ## Principles
 
-1. **План, а не работа.** Планнер не читает код ради исправлений — только ради оценки объёма и типа задачи. Exit-criterion работы — валидный `PLANNER_OUTPUT.md` (или вывод в чат, если нет директории фичи).
-2. **Рентабельность.** Каждый план должен быть либо быстрее, либо дешевле, либо надёжнее naive-подхода `/plan-do`. Если оптимизировать нечего — так и напиши: «naive-подход оптимален, planner overhead не оправдан».
-3. **Evidence, не догадки (FPF A.10).** Размер задачи оцениваешь по артефактам: количеству файлов в README, затрагиваемым модулям (grep), длине существующих PLAN-документов. Не придумывай цифры.
-4. **Минимальная достаточность (FPF A.11).** Не предлагай параллелизм ради параллелизма. Если задача — один файл на 30 строк, один agent достаточен.
-5. **Fail-fast на входе.** Если контекст неполон (нет README, нет ARCH-плана в execution-режиме) — явно напиши, чего не хватает, и не строй план на догадках.
-6. **Bounded context (FPF A.1.1).** Глобальная логика планнера — универсальна. Проектная специфика (имена агентов, пути фич, соглашения) живёт в `planner-context.md` проекта. Не хардкодь проектные данные в выводе.
+1. **Ready result.** Architecture mode produces architecture itself, not instructions for a future architect session.
+2. **Separate roles.** Requirements, architecture, and execution planning live in different files. Never write architecture and execution content to the same path.
+3. **File first.** A run is successful only after the full document and its metadata are stored.
+4. **Evidence.** Read the actual input and existing neighboring plans before deciding mode, version, or staleness.
+5. **Minimal change.** Rewrite the current target in place. Do not create numbered history files; Git owns history.
+6. **Fail fast.** Missing, unreadable, ambiguous, or colliding paths stop the run before planning.
+7. **No information loss.** A stale execution plan keeps its body. A legacy `PLANNER_OUTPUT.md` is not deleted.
 
 ## Workflow
 
-The four-step pipeline below runs on every planner activation. Steps 1 and 4 always execute; steps 2-3 branch on input type.
+### 1. Read project context
 
-1. **Check `planner-context.md`.** Read `<project-root>/.claude/planner-context.md`. If the file is missing, stale, or the user explicitly asks for a re-scan, follow `references/bootstrap.md` to populate it, then return here.
-2. **Classify the task.** Decide mode by inspecting the input: a feature `README.md` → architecture mode; an existing architecture document (`*-PLAN-*.md`, `*-DESIGN-*.md`, `ARCHITECTURE.md`) → execution mode; free text with no path → architecture mode with chat output.
-3. **Load the matching reference.** Architecture mode → `references/architecture-mode.md`. Execution mode → `references/execution-mode.md`. Do not load both; the chosen reference carries the option matrix and decision rules for that mode.
-4. **Emit `PLANNER_OUTPUT.md`.** Write to `<feature-dir>/PLANNER_OUTPUT.md` if a feature directory exists; otherwise output the plan to chat. Use the template in the Output format section below.
+Read `<project-root>/.claude/planner-context.md`. If it is missing, stale, or the user explicitly requests a rescan, follow `references/bootstrap.md`, then return here.
 
-## Bootstrap pointer
+The state helper is:
 
-If `<project-root>/.claude/planner-context.md` is missing, stale, or the user explicitly asks for a re-scan, follow `references/bootstrap.md`. Do not inline bootstrap logic here — bootstrap runs once per project, and inlining its details (the scanning algorithm, the stack→signal heuristic table, the gap-detection format) would bloat context on every planner activation that does not need them.
-
-The canonical empty-shell template that bootstrap writes lives at `references/template-context.md`. After bootstrap completes, `planner-context.md` becomes the project source of truth — manual edits inside it are honored on every subsequent run (re-scan only appends rows tagged `<!-- auto-added ... -->` and never overwrites cells the user touched).
-
-## Mode 1 — architecture planning (summary)
-
-Input: a feature `README.md`. Question: how to run the architecture phase efficiently? Pick one of four options — single Opus architect (monolithic feature), N parallel Sonnet sub-architects (weakly coupled domains, N ≤ 4), single Haiku quick-pass (<200 LOC impact, single module, no migrations), or add a separate security sub-plan (when auth / authz / PII is in scope). Default is single Sonnet architect; escalate or split only with evidence. Full option matrix, decision rules, and pitfalls live in `references/architecture-mode.md`.
-
-## Mode 2 — execution planning (summary)
-
-Input: an existing architecture document (`*-PLAN-*.md`, `*-DESIGN-*.md`, `ARCHITECTURE.md`, etc.). Question: how to execute the plan cheaper / faster / more reliably than naive `/plan-do`? Build a dependency graph of stages, group independent stages into parallel phases (≤ 7 agents per phase per LIFT-COT), pick a model per stage from `planner-context.md` §4, decide review placement (per-phase for security/core, once-at-end for small edits). Full algorithm, master model table, and the agent-name resolution / gap-fallback hook live in `references/execution-mode.md`.
-
-## Task analysis (Type / Size / Criticality / Parallelism / Risk gates)
-
-The "Task summary" section of `PLANNER_OUTPUT.md` is filled by these five categorizations:
-
-1. **Тип:** feature / bugfix / refactor / doc / research / mixed.
-2. **Размер:**
-   - S: 1 модуль, <200 LOC impact, нет миграций.
-   - M: 2-4 модуля, 200-800 LOC, ≤1 миграция.
-   - L: 5+ модулей, >800 LOC, multi-миграции, cross-stack.
-3. **Критичность:** normal / security-sensitive / data-migration / breaking-API / UX-critical.
-4. **Параллелизм:** поиск **независимых осей**. Если всё строго последовательно — параллелизм = 1.
-5. **Risk gates:** где обязателен review / human-in-the-loop?
-
-Each categorization is **evidence-based** (FPF A.10): size comes from counting modules / LOC in the README, criticality from explicit signals in the README (auth, PII, migrations), parallelism from looking at module dependencies. Do not guess; if the README is ambiguous, mark the categorization as `unknown — needs user confirmation` and surface the question in the plan's Risks section.
-
-## Output format
-
-Write to `<feature-dir>/PLANNER_OUTPUT.md` if a feature directory exists; otherwise output to chat. The template:
-
-```markdown
-# Planner Output — <feature-id or task-name>
-
-**Mode:** architecture | execution
-**Generated:** <ISO-date>
-**Inputs read:** <список файлов>
-**Planner-context version:** <last auto-scan date from §7>
-
-## Task summary
-- Type: feature | bugfix | refactor | doc | research | mixed
-- Size: S | M | L (обоснование: N модулей, ~LOC, миграции)
-- Criticality: normal | security | data-migration | breaking-API | ux-critical
-- Parallelism axis: <что независимо> / <что последовательно>
-
-## Execution plan
-
-### Phase 1 — <название> (parallel | serial)
-- Agent: <имя из planner-context §1> | Model: <opus|sonnet|haiku> | Skills: <список из §3 | —>
-  - Focus: <что делает>
-  - Inputs: <какие файлы читает>
-  - Outputs: <какие файлы/артефакты создаёт>
-  - Est. tokens: ~N | Est. wall-clock: ~M min
-
-### Phase 2 — <название> (serial, depends on Phase 1)
-- ...
-
-## Cost estimate
-| | Naive /plan-do | Optimized | Δ |
-|---|---|---|---|
-| Tokens | ~N | ~M | -X% |
-| Wall-clock | ~N min | ~M min | -X% |
-| $-cost (relative) | 1.0 | 0.Y | -X% |
-
-Обоснование экономии: <в двух предложениях>.
-
-## Risks & human-in-the-loop gates
-- <риск> → <митигация | кого спросить>
-
-## Fallback
-Если <условие> не выполнено — переключись на <план B>.
+```text
+${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py
 ```
 
-If there is nothing to optimize, **still fill the template** and write in Cost estimate: «naive-подход оптимален → рекомендация: сразу `/plan-do` без planner'а». A plan that recommends skipping the planner is a valid output, not a failure — the force-function of always emitting the template surfaces the decision explicitly so the orchestrator and the user see it.
+Run it with `python3`. Do not reproduce its parsing or hashing logic in the prompt.
 
-## Where to write
+### 2. Classify the input
 
-Two writeable paths, no others:
+- Feature `README.md`, or a feature directory containing one → architecture mode in that directory.
+- Existing architecture path (`ARCHITECTURE.md`, `*-PLAN-*.md`, `*-DESIGN-*.md`, or an explicitly supplied equivalent) → execution mode beside that file.
+- Free text with no readable filesystem path → architecture mode under `.claude/plans/<task-slug>/`.
 
-1. `<project-root>/.claude/planner-context.md` — only during bootstrap, or when a re-scan adds rows tagged `<!-- auto-added YYYY-MM-DD -->` / `<!-- stale, last seen YYYY-MM-DD -->` per `references/bootstrap.md` §7.
-2. `<feature-dir>/PLANNER_OUTPUT.md` — the plan output.
+A supplied path that does not exist or cannot be read is an error. Do not reinterpret a path-looking argument as free text.
 
-If no feature directory exists (e.g. `/plan` was invoked with free-text task description), output the full plan to chat using the same template from the Output format section above. Do not create `PLANNER_OUTPUT.md` somewhere else; the only acceptable location is inside the feature directory.
+For free text, create a short kebab-case slug. Before reusing an existing directory, read its plan files. If it belongs to another task or remains ambiguous, append the smallest available numeric suffix. After the final slug is selected, create that one directory with `mkdir` before validating the target path.
 
-The agent wrapper (`agents/planner.md`) repeats this constraint as a hard boundary, and the slash-command (`/plan`) inherits the same `allowed-tools` set so the constraint is enforced by least-privilege.
+### 3. Validate the target and load one mode reference
+
+Resolve the target directory and run the matching check before preparing the document.
+
+Architecture mode:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  validate-architecture-target <architecture-path> \
+  --directory <target-directory> [--source <README-path>]
+```
+
+Omit `--source` only for free-text input. Execution mode:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  validate-execution-target <execution-path> \
+  --architecture <architecture-path> --directory <target-directory>
+```
+
+Exit status `3` or `64` stops the run before the mode reference is loaded and before the document body is prepared. The checks reject wrong names, paths outside the selected directory, symbolic links, hard links, overlap with a protected input, and an execution target that is not beside its architecture.
+
+After the check succeeds, load exactly one reference:
+
+- Architecture mode → `references/architecture-mode.md`.
+- Execution mode → `references/execution-mode.md`.
+
+### 4. Prepare the complete body
+
+Read the existing target without changing it. Prepare the complete new body without YAML frontmatter and keep that body in the current context until synchronization succeeds.
+
+Decide whether the new body changes meaning:
+
+- `yes` when decisions, contracts, phases, dependencies, risks, or expected behavior changed;
+- `no` when the body is unchanged or only formatting and wording changed without changing its instructions.
+
+This decision is explicit input to the helper. The helper owns metadata consistency; it does not judge prose.
+
+### 5. Write the prepared body and synchronize
+
+`Write` must never change the target plan directly. Write the body to the exact transient path `<target-name>.prepared` beside the target. Do not use another neighboring file, a symbolic link, or a hard link.
+
+#### Architecture
+
+Write `<target-dir>/ARCHITECTURE.md.prepared`, then run:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  sync-architecture <architecture-path> \
+  --body-file <target-dir>/ARCHITECTURE.md.prepared \
+  --semantic-change <yes|no>
+```
+
+The helper reads and removes the prepared file before atomically replacing the complete target. If `PLANNER_EXECUTION.md` exists beside it, immediately run:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  check <execution-path> --mark-stale
+```
+
+Exit status `2` here is an expected stale result, not a helper failure. Keep the execution body and report that it must be rebuilt.
+
+#### Execution plan
+
+Inspect the supplied architecture after the target check from step 3:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  inspect <architecture-path>
+```
+
+An architecture without supported planner frontmatter is reported as version `0` and must not be modified merely for migration. This includes ordinary Markdown that starts with a `---` horizontal separator.
+
+Write `<target-dir>/PLANNER_EXECUTION.md.prepared`, then run:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" \
+  sync-execution <execution-path> \
+  --body-file <target-dir>/PLANNER_EXECUTION.md.prepared \
+  --architecture <architecture-path> --semantic-change <yes|no>
+```
+
+The helper requires the exact prepared-file name, removes that file after reading it, then validates the architecture and atomically writes body and metadata together. A later validation error leaves the target unchanged and does not leave a prepared file behind.
+
+### 6. Handle failures
+
+A prepared-file `Write` error or helper exit status `3`/`64` means the new plan was not saved successfully. The existing target remains the current file result.
+
+1. State the target path and the concrete error.
+2. Say that the new file result is unavailable and whether an older target remains.
+3. Emit the complete prepared document from the current context to chat as the fallback result.
+4. Do not emit a success summary and do not write the body directly to the target as a recovery attempt.
+
+Do not catch the error and continue with stale metadata.
+
+### 7. Emit only a short success summary
+
+After a successful write, output:
+
+```text
+<Kind> saved: <path>
+Version: <N> — <current|stale>
+Summary:
+- <main outcome 1>
+- <main outcome 2>
+- <optional outcome 3>
+- <optional outcome 4>
+Next: <command, if needed>
+```
+
+Never include the full plan after this summary. If a legacy `PLANNER_OUTPUT.md` remains beside the new files, add one concise note that it was preserved and ignored as the current plan.
+
+## Exact YAML header templates
+
+These are the exact field sets and nesting used in saved plan files. Dynamic values are computed by `plan_state.py`, not authored in the prepared body. The complete saved-file templates, including their Markdown bodies, are in `references/architecture-mode.md` and `references/execution-mode.md`.
+
+### Architecture
+
+```yaml
+---
+plan_type: architecture
+version: 1
+status: current
+content_sha256: <body fingerprint>
+---
+```
+
+### Execution plan
+
+```yaml
+---
+plan_type: execution
+version: 1
+status: current
+content_sha256: <body fingerprint>
+architecture:
+  path: "./ARCHITECTURE.md"
+  version: 1
+  content_sha256: <architecture body fingerprint>
+---
+```
+
+Rules:
+
+- New documents start at version 1.
+- A semantic body change increments that document's version.
+- A non-semantic rewrite preserves the version and refreshes the fingerprint.
+- Changing only execution status from `current` to `stale` preserves its version and body.
+- Architecture without a supported header is version 0 and stays untouched during `inspect`.
+- The helper computes fingerprints from the body, excluding frontmatter.
+- Direct body changes are detected even when a person forgets to update `version`.
+
+## Write boundary
+
+The planner may write only:
+
+1. `<project-root>/.claude/planner-context.md` during bootstrap or explicit rescan;
+2. architecture and execution targets under the resolved feature directory or `.claude/plans/<task-slug>/`;
+3. one transient `<target-name>.prepared` file beside the selected target.
+
+`Write` may create the transient prepared file but must not overwrite a target plan. The state helper validates the paths, consumes the prepared file, and is the only writer of the target architecture or execution file. Use Bash only to create the selected plan directory and invoke this helper. Do not use shell redirection or another command to bypass the write boundary.
 
 ## Reference index
 
-- `references/bootstrap.md` — load when `planner-context.md` is missing, stale, or a re-scan is requested. Contains the scanning algorithm, the stack→signal heuristic table (9 stacks shipped), the gap-output format, unknown-stack handling, and re-scan rules.
-- `references/template-context.md` — load when bootstrap needs the canonical empty-shell template for `planner-context.md` (8 sections, including the new §8 `Unknown markers`).
-- `references/architecture-mode.md` — load when input is a feature README and no architecture document exists yet. Contains the 4-option matrix, decision rules, output mapping, and common pitfalls.
-- `references/execution-mode.md` — load when input is an existing architecture document. Contains the dependency-graph procedure, parallel-phase grouping rules, the master model table, code-review placement, and the agent-name resolution / gap-fallback hook.
+- `references/bootstrap.md` — project scan and `planner-context.md` creation.
+- `references/template-context.md` — canonical bootstrap template.
+- `references/architecture-mode.md` — architecture body requirements and update rules.
+- `references/execution-mode.md` — dependency graph, phase grouping, model choice, and execution body requirements.

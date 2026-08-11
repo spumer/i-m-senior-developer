@@ -16,9 +16,9 @@ Three meta-rules govern every edit of this file:
 2. **Stale rows.** When a re-scan does **not** find an agent / skill / command that existed in the previous bootstrap, the planner does not delete the row — it tags it `<!-- stale, last seen YYYY-MM-DD -->`. The user decides whether the entity was renamed, moved, or genuinely removed.
 3. **Manual edits are sources of truth.** Anything the user wrote by hand (refined "Когда звать" notes, model overrides in §4, lessons-learned in §6, etc.) is **never** overwritten. The planner only adds, annotates with `<!-- ... -->` markers, or appends new sections.
 
-These rules come from the legacy planner (`~/.claude/agents/planner.md` lines 109-113) plus the FEAT-0001 edge-case requirements (rows 3-4 of the README table).
+These rules preserve the legacy planner's handling of manual edits and make re-scan behavior explicit.
 
-The `/plan-reflect` skill writes its findings with the marker `<!-- learned YYYY-MM-DD from FEAT-XXXX -->` so lessons are auditable and traceable to the session that produced them.
+The `/plan-reflect` skill writes its findings with the marker `<!-- learned YYYY-MM-DD -->` so lessons are auditable and traceable to the session that produced them.
 
 ## 3. The template
 
@@ -35,7 +35,7 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 > перезаписывает ручные правки, только дополняет новыми автосканированными
 > строками с меткой `<!-- auto-added YYYY-MM-DD -->` и помечает исчезнувшие
 > элементы `<!-- stale, last seen YYYY-MM-DD -->`. Уроки из `/plan-reflect`
-> приходят с меткой `<!-- learned YYYY-MM-DD from FEAT-XXXX -->`.
+> приходят с меткой `<!-- learned YYYY-MM-DD -->`.
 
 ## 1. Каталог агентов
 
@@ -60,8 +60,8 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 
 | Модель | Сила | Слабость | $/time | Применять для |
 |---|---|---|---|---|
-| Opus 4.7 | Глубокие рассуждения, сложная архитектура, нестандартные алгоритмы | Дорого, медленно | ≈5× Sonnet | Security-core, новая незнакомая область, спорные ADR |
-| Sonnet 4.6 | Баланс: контекст + надёжный код | Теряется в очень сложных цепочках | baseline | 80% задач: CRUD, компоненты, миграции, обычная архитектура |
+| Opus 5 | Глубокие рассуждения, сложная архитектура, нестандартные алгоритмы | Дорого, медленно | ≈5× Sonnet | Security-core, новая незнакомая область, спорные ADR |
+| Sonnet 5 | Баланс: контекст + надёжный код | Теряется в очень сложных цепочках | baseline | 80% задач: CRUD, компоненты, миграции, обычная архитектура |
 | Haiku 4.5 | Быстрый, дешёвый | Слабее на нюансах | ≈0.2× Sonnet | Тривиальные правки, форматирование, проверка импортов |
 
 ## 5. Хранение артефактов фич
@@ -70,11 +70,12 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 - **Паттерн имени:** `FEAT-XXXX-<slug>/` (уточни по факту)
 - **Артефакты внутри фичи:**
   - `README.md` — требования
-  - `FEAT-XXXX-DESIGN-0N.md` — UI/UX (если применимо)
-  - `FEAT-XXXX-PLAN-0N.md` — архитектурный план
-  - `PLANNER_OUTPUT.md` — вывод планнера
+  - `ARCHITECTURE.md` — готовая архитектура с версией и отпечатком тела
+  - `PLANNER_EXECUTION.md` — план выполнения со ссылкой на архитектуру
+  - `PLANNER_OUTPUT.md` — сохранённый legacy-артефакт; новые запуски его не используют
   - `review-request-changes/FEAT-XXXX-ISSUE-0NN.md` — находки review
   - `screenshots/`, `test_cases/`
+- **Свободные задачи:** `.claude/plans/<task-slug>/`
 - **Контекстные файлы проекта** (если есть):
   - `<путь-или-пусто>` — UI guidelines
   - `<путь-или-пусто>` — testing guide
@@ -101,4 +102,4 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 - <marker>: <discovered location> — TODO: assign stack
 ```
 
-The 8 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) is **new** per FEAT-0001 README §61 and the edge-case "unknown stack" row.
+The 8 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) records file markers that the stack table cannot classify.

@@ -36,13 +36,13 @@ Run the four scans below in order. Use `Glob` for path matching and `Read` for f
 
 If the scans in §2 find **no** project agents / commands / skills (e.g. a brand-new project, or a project that never used Claude Code primitives), do **not** invent entries to fill the template. Write empty tables and tag them `TODO: fill manually` in `planner-context.md` §1, §2, §3. The planner will then operate with global-only catalog plus the gap-detection table from §4 of this reference, and the user can fill the project tables when they add their first project agent.
 
-This rule comes from legacy `~/.claude/agents/planner.md` lines 99-101 and FEAT-0001 README edge-case row 1.
+This rule preserves the legacy planner's empty-catalog behavior without inventing project capabilities.
 
 ## 4. Stack gap-detection — heuristic table
 
 The agent catalog tells you who exists; the stack table tells you who **should** exist. After §2 scans complete, walk the project root looking for these markers. For each detected stack, check whether §1 of `planner-context.md` lists an agent that covers it. If not — that stack is a gap.
 
-The stack table is the FEAT-0001 P1 capability (per README §27). It is **new content**: the legacy planner did not have it.
+The stack table extends the legacy planner with explicit capability-gap detection.
 
 | Stack key | Required markers (any one matches) | Common variants signal |
 |---|---|---|
@@ -58,7 +58,7 @@ The stack table is the FEAT-0001 P1 capability (per README §27). It is **new co
 
 **Detection-order rule.** Run the checks in this order: **Python before Node before Frontend.** Frontend often coexists with a backend (a `package.json` may live next to `pyproject.toml`); detecting Python first prevents misclassifying a full-stack repo as a pure-frontend one. For a true monorepo with multiple stacks, list **all** detected stacks; gaps are flagged per-stack.
 
-The table above is the minimum (FEAT-0001 README §87 mandates 6+ base stacks). It is extensible — when a project repeatedly hits the unknown-stack path (§6), the user or a future re-scan can extend the table by adding rows.
+The table above is the minimum supported set. It is extensible — when a project repeatedly hits the unknown-stack path (§6), the user or a future re-scan can extend the table by adding rows.
 
 ## 5. Gap output format
 
@@ -74,7 +74,7 @@ Concrete examples:
 - `❌ GAP (mobile-android, Kotlin) — fallback: general-purpose`
 - `❌ GAP (infra, terraform) — fallback: general-purpose`
 
-This is the visible signal that lets the orchestrator route to the built-in `general-purpose` Task tool instead of "creatively picking" a wrong agent or sliding into DIY mode (the fail-mode the whole feature was designed to fix — see FEAT-0001 README Problem Statement). The format aligns with FEAT-0001 README §27 + §130.
+This visible result lets the orchestrator route to the built-in `general-purpose` Task tool instead of choosing an unrelated agent or silently doing the work itself.
 
 ## 6. Unknown-stack handling
 
@@ -84,7 +84,7 @@ If the project has file markers that do not match **any** row in §4 — for exa
 2. Tag the entry `unknown stack`.
 3. In the chat summary that follows the bootstrap Write call, ask the user to either describe the stack in §6 of `planner-context.md` or extend the table in §4 of this reference for future runs.
 
-This rule comes from FEAT-0001 README edge-case row 2 + §61.
+This rule preserves unknown markers instead of forcing an unsupported classification.
 
 ## 7. Re-scan rules
 
@@ -94,7 +94,7 @@ When `planner-context.md` already exists and the user (or the planner skill) req
 - **Newly discovered entries.** If §2 finds an agent / skill / command that is not yet in `planner-context.md`, append a row tagged `<!-- auto-added YYYY-MM-DD -->` (use today's ISO date).
 - **Missing-since-last-scan entries.** If a row in `planner-context.md` references an agent / skill / command that §2 no longer finds, do **not** delete the row. Tag it `<!-- stale, last seen YYYY-MM-DD -->`. The user decides whether the entity was renamed, moved, or genuinely removed; the row stays as evidence either way.
 
-These rules come from legacy `~/.claude/agents/planner.md` lines 109-113 plus FEAT-0001 README edge-case rows 3-4. They are also documented in `template-context.md` §2.
+These rules preserve manual project knowledge across repeated scans. They are also documented in `template-context.md` §2.
 
 ## 8. Output
 
