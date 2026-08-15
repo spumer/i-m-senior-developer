@@ -1,5 +1,5 @@
 export const meta = {
-  name: 'dpf-authoring-pipeline', // двигатель; парадная дверь — скилл dpf-authoring (../SKILL.md)
+  name: 'dpf-authoring-pipeline', // двигатель; парадная дверь — скилл dpf-authoring (../skills/dpf-authoring/SKILL.md)
   description: 'Авторинг DPF по методу DPF-AUTHORING (E.4.DPF × G.2, ред. FPF f7c7e93f): SoTA→тезисы/анти-тезисы→source-pack→сборка→критик (CC-DPF.1–9 + оценка пакета E.4.DPF.DA). Роли фаз — встроенные в скилл пакеты компетенций формата dpf-apply (Bridge/Critic ← frameworks/DPF-ADVERSARIAL-REVIEW, Source-pack/Assemble ← frameworks/DPF-KNOWLEDGE-CURATION) — зависимостей от .claude/agents проекта нет. Все артефакты передаются ТОЛЬКО через файлы. Список компетенций — ТОЛЬКО явный args.competencies (fail-fast при пустом: массового bootstrap-фолбэка нет — инцидент 2026-07-04, прогон всех 29 вместо 5).',
   phases: [
     { title: 'SoTA Harvest' },
@@ -57,7 +57,7 @@ if (!competencies.length) {
   throw new Error(
     'FAIL-FAST: args.competencies пуст или не дошёл (проверь, что args передан объектом, а не забыт). ' +
     'Массовый bootstrap из competency-map.md удалён намеренно (2026-07-04: фолбэк запустил все 29 DPF вместо 5). ' +
-    'Передай явный список: Workflow({name:"dpf-authoring-pipeline", args:{repoRoot, skillDir, competencies:[{id,name,kind,owner,bounded_context,status},...]}}). ' +
+    'Передай явный список: Workflow({name:"fpf-integration:dpf-authoring-pipeline", args:{repoRoot, skillDir, competencies:[{id,name,kind,owner,bounded_context,status},...]}}). ' +
     'Формат — SKILL.md скилла dpf-authoring.'
   )
 }

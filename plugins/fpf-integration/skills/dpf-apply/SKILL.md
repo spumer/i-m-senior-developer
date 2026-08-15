@@ -1,6 +1,14 @@
 ---
 name: dpf-apply
-description: This skill should be used when the user asks to "apply competency", "dpf-apply", "framework-apply" (alias), "примени компетенцию", "прогони по своду", "resolve framework", "какие компетенции есть", or mentions a DPF-* or LPF-* id (e.g. "DPF-COUPLING-GENERALIZATION", "LPF-SIMPLIFICATION-REVIEW"). Универсальный резолвер и исполнитель пакетов компетенций (Domain/Local Practice Frameworks, FPF E.4.DPF): находит пакет по уровням project→user→plugin, проверяет свежесть (E.4.DPF.DA), затем либо читает свод в контекст (ground), либо спаунит агента по assets/apply-prompt.md (apply).
+description: >-
+  This skill should be used when the user asks to "apply competency",
+  "dpf-apply", "framework-apply" (alias), "примени компетенцию", "прогони по
+  своду", "resolve framework", "какие компетенции есть", or mentions a DPF-*
+  or LPF-* id (e.g. "DPF-COUPLING-GENERALIZATION",
+  "LPF-SIMPLIFICATION-REVIEW"). Универсальный резолвер и исполнитель пакетов
+  компетенций (Domain/Local Practice Frameworks, FPF E.4.DPF): находит пакет по
+  уровням project→user→plugin, проверяет свежесть (E.4.DPF.DA), затем либо читает
+  свод в контекст (ground), либо спаунит агента по assets/apply-prompt.md (apply).
 version: 2.0.0
 ---
 

@@ -1,19 +1,19 @@
 ---
 name: dpf-authoring
 description: This skill should be used when the user asks to "создай DPF", "доавтори DPF", "авторинг DPF", "собери DPF для компетенции", "обнови DPF", "переоцени DPF", "переоцени пакет по E.4.DPF.DA", "отремонтируй DPF", "прогони dpf-authoring", "author a DPF", or mentions DPF-компетенции со статусом стаб/seedOnly, требующие доавторинга. Самодостаточный access-carrier метода DPF-AUTHORING (FPF E.4.DPF × G.2, редакция f7c7e93f); работает из любого проекта, DPF пишутся в явно указанный repoRoot.
-version: 2.4.0
+version: 2.5.0
 ---
 
 # DPF-Authoring — авторинг сводов принципов (DPF) по FPF
 
-Скилл самодостаточен: метод, шаблоны и конвейер лежат внутри (пути в этом файле — относительно каталога скилла). Для работы не нужен никакой конкретный проект и никакие конкретные пути машины — DPF пишутся в тот проект, который явно указан в `args.repoRoot`; каталог самого скилла передаётся конвейеру явным `args.skillDir`.
+Плагин самодостаточен: скилл содержит метод, шаблоны и пакеты ролей, а нативный workflow плагина запускает конвейер. Для работы не нужен никакой конкретный проект и никакие конкретные пути машины — DPF пишутся в тот проект, который явно указан в `args.repoRoot`; каталог самого скилла передаётся конвейеру явным `args.skillDir`.
 
 **Состав скилла:**
 
 - `references/method.md` — **канон метода** (6 фаз, гейты, канонический скелет, паттерны, типовые ошибки). Прочитать перед любым режимом ниже.
 - `references/lifecycle.md` — **задача-ориентированный маршрут** поверх канона: создать/дополнить DPF, создать/обновить LPF, петля worked-evidence, гейт банка. Для того, кто хочет «с чего начать» под конкретную задачу, а не читать метод целиком.
-- `assets/dpf-authoring.workflow.js` — конвейер `dpf-authoring-pipeline` (6 фаз, файловый handoff).
-- `assets/template-dpf.md` — скелет нового DPF; `assets/template-source-pack.md` — образец provenance-реестра.
+- `../../workflows/dpf-authoring-pipeline.js` — нативный workflow плагина: конвейер из 6 фаз с передачей результатов через файлы.
+- `assets/template-dpf.md` — скелет нового DPF; `assets/template-source-pack.md` — образец реестра происхождения.
 - `frameworks/DPF-ADVERSARIAL-REVIEW/`, `frameworks/DPF-KNOWLEDGE-CURATION/` — **встроенные пакеты ролей** конвейера (формат dpf-apply: `DPF.md` + `assets/apply-prompt.md`).
 
 **Привязка к редакции:** FPF `ailev/FPF@f7c7e93f` (E.4.DPF spine, CC-DPF.1–9, E.4.DPF.DA) — см. `fpf_edition` во frontmatter `references/method.md`. Агенты фаз читают FPF по приоритету источника: **сначала FPF-справочник через MCP** (`fpf_reference`: `search_fpf` / `read_fpf_doc` / `query_fpf_spec`), если он подключён — точные ID и цитаты; **иначе локальная копия** `~/.claude/knowledge/fpf/FPF-Spec.md`. Метод запинен на редакцию выше — если MCP отдаёт другую (`get_fpf_index_status`), агент фазы обязан явно отметить расхождение в `references/`, а не работать молча по чужой редакции (edition-пин E.4.DPF.DA). **Нет ни MCP, ни локальной копии — фаза не авторит по памяти, а падает громко** (FAIL-FAST, A.10): нужен хотя бы один источник FPF. Свежесть локальной копии — зона скилла `fpf-integration`, не этого; переход на текущую редакцию спеки — отдельная задача.
@@ -31,15 +31,15 @@ version: 2.4.0
 
 ## Запуск конвейера
 
-Обязательные внешние параметры — два: `repoRoot` (абсолютный путь ТЕКУЩЕГО проекта; каталоги DPF пишутся в `<repoRoot>/project/frameworks/`, переопределяется `frameworksDir`) и `skillDir` (абсолютный путь каталога этого скилла — тот же, что в `scriptPath`; из него конвейер читает метод, шаблоны и пакеты ролей). Тихих дефолтов нет — без любого из них конвейер падает сразу.
+Обязательные внешние параметры — два: `repoRoot` (абсолютный путь ТЕКУЩЕГО проекта; каталоги DPF пишутся в `<repoRoot>/project/frameworks/`, переопределяется `frameworksDir`) и `skillDir` (абсолютный путь каталога этого скилла; из него конвейер читает метод, шаблоны и пакеты ролей). Тихих дефолтов нет — без любого из них конвейер падает сразу.
 
 ```
 Workflow({
-  scriptPath: '<каталог этого скилла>/assets/dpf-authoring.workflow.js',  // абс. путь каталога, из которого прочитан этот SKILL.md (при установке из плагина — plugins/fpf-integration/skills/dpf-authoring)
+  name: 'fpf-integration:dpf-authoring-pipeline',
   args: {
     date: '<сегодня>',                 // в workflow-скриптах нет Date.now
     repoRoot: '<абс. путь текущего проекта>',   // ОБЯЗАТЕЛЕН
-    skillDir: '<каталог этого скилла>',         // ОБЯЗАТЕЛЕН — тот же каталог, что в scriptPath
+    skillDir: '<каталог этого скилла>',         // ОБЯЗАТЕЛЕН — каталог, из которого прочитан этот SKILL.md
     competencies: [{ id: 'DPF-…', name: '…',
                      kind: 'Domain Principle Framework' | 'Local Practice Framework',
                      owner: '<роль/владелец>', status: 'active',
@@ -50,8 +50,6 @@ Workflow({
   },
 })
 ```
-
-(В проекте, где есть ссылка в `.claude/workflows/`, работает и `Workflow({ name: 'dpf-authoring-pipeline', args: {...} })` — `skillDir` обязателен и там.)
 
 Если в целевом проекте есть `project/domain.md` и `project/decisions/` — агенты используют их как локальный контекст; их отсутствие прогон не ломает, но обедняет инстанциации.
 

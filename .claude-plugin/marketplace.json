@@ -34,7 +34,7 @@
     },
     {
       "name": "planner",
-      "description": "End-to-end feature pipeline: requirements (/plan-feat, /plan-jira), planning (/plan), implementation orchestration (/plan-do), post-task reflection (/plan-reflect). Detects agent-catalog gaps and learns from past sessions.",
+      "description": "File-backed feature pipeline: requirements (/plan-feat, /plan-jira), ready architecture and version-linked execution plans (/plan), guarded implementation orchestration (/plan-do), and post-task reflection (/plan-reflect).",
       "author": {
         "name": "Svyatoslav Posokhin"
       },
@@ -52,7 +52,7 @@
     },
     {
       "name": "clarity-language",
-      "description": "Clarity of language: three skills against AI-synthetic text. clarity-validator (12 meaning-level antipatterns in technical docs, FPF-grounded), ai-prose-detector (fiction prose style across 6 methods), russian-style (natural Russian without calques, empty antitheses, or bureaucratese).",
+      "description": "Clarity of language: three skills against AI-synthetic text. clarity-validator (12 meaning-level antipatterns in technical docs, FPF-grounded), ai-prose-detector (fiction prose style across 6 methods), russian-style (natural Russian without calques, made-up Russian translations of established loanwords, empty antitheses, or bureaucratese).",
       "author": {
         "name": "Svyatoslav Posokhin"
       },

@@ -168,7 +168,7 @@ Purpose, pattern split, dependency boundary, must-NOT-land; имена (F.18 →
 - **Refresh — триггеры:** изменение FPF-Spec; 3+ DPF с одинаковым отклонением → улучшить шаблон/скилл; обратная связь ролей. Уже-conformant DPF (проверены по CC-DPF.1–7 старой редакции) переоцениваются по E.4.DPF.DA при своём review_due, не немедленно. История конкретных рефрешей (что и когда сработало) — `<комната>/references/quality-record-2026-07-06.md`.
 
 ## Артефакты
-- **В скилле (нужны для прогонов):** этот файл (канон метода) · `../assets/template-dpf.md` (скелет нового DPF) · `../assets/template-source-pack.md` (образец provenance-реестра) · `../assets/dpf-authoring.workflow.js` (конвейер).
+- **В плагине (нужны для прогонов):** этот файл (канон метода) · `../assets/template-dpf.md` (скелет нового DPF) · `../assets/template-source-pack.md` (образец provenance-реестра) · `../../../workflows/dpf-authoring-pipeline.js` (нативный workflow плагина).
 - **В комнате (происхождение и качество метода, для прогонов не нужны):** `references/source-pack.md` (provenance) · `references/sota-research.md` (собственный SoTA-харвест) · `references/theses-antitheses.md` (bridge) · `references/package-adequacy-2026-07-06.md` (оценка E.4.DPF.DA + повторная проверка, итог `admissibleForDeclaredDPFUse`) · `references/quality-record-2026-07-06.md` (вынесенное процессное состояние, PFM7).
 - FPF-разделы — **не храним выжимки**; читаем живьём (Grep по `~/.claude/knowledge/fpf/FPF-Spec.md` или FPF MCP).
 
@@ -181,7 +181,7 @@ Purpose, pattern split, dependency boundary, must-NOT-land; имена (F.18 →
 ## Access carriers и зависимости (PFM10, E.4.PFR)
 У метода два канала доступа (по E.4.DPF — **access carrier**: способ вызвать метод, а не сам метод; архитектура и качество живут в этом файле и комнате, не в манифестах каналов):
 - **Скилл `dpf-authoring`** (`../SKILL.md` — самодостаточный, без машинных путей; решение Founder 2026-07-06) — парадная дверь: четыре режима (полный авторинг / переоценка пакета по E.4.DPF.DA / ремонт / точечная правка), инварианты метода. Запуск из любого проекта: обязательный `args.repoRoot` = целевой проект.
-- **Воркфлоу `dpf-authoring-pipeline`** (`../assets/dpf-authoring.workflow.js`) — двигатель: исполняемый 6-фазный конвейер.
+- **Workflow `fpf-integration:dpf-authoring-pipeline`** (`../../../workflows/dpf-authoring-pipeline.js`) — двигатель: исполняемый 6-фазный конвейер, который Claude Code обнаруживает в нативном каталоге плагина `workflows/`.
 
 Роли конвейера (E.4.PFR, relationFunction: dependency, governedUse: роли фаз): `DPF-ADVERSARIAL-REVIEW@2026-07-06` (Bridge, Critic) и `DPF-KNOWLEDGE-CURATION@2026-07-06` (Source-pack, Assemble) — **встроены в скилл** (`../frameworks/<ID>/`, формат dpf-apply, чем и резолвятся при использовании вне конвейера); нечитаемый пакет = громкий отказ фазы, обратной зависимости пакетов от метода нет (E.5.3).
 

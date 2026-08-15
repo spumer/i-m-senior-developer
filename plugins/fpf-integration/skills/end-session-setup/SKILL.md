@@ -1,6 +1,15 @@
 ---
 name: end-session-setup
-description: This skill should be used when the user asks to "поставь end-session", "установи ритуал end-session", "настрой worked-evidence", "зафиксируй применение сводов", "поставь шаг worked-evidence", "set up end-session ritual", "install worked-evidence step", or wants session results recorded against DPF/LPF framework packages. Устанавливает в целевой проект ритуал end-session с шагом worked-evidence (журнал подтверждения сводов практикой) — тремя режимами: вшить шаг в существующий протокол (merge), поставить полный протокол (install-full) или лёгкий (install-light). НЕ исполняет сам ритуал — только ставит его.
+description: >-
+  This skill should be used when the user asks to "поставь end-session",
+  "установи ритуал end-session", "настрой worked-evidence", "зафиксируй
+  применение сводов", "поставь шаг worked-evidence", "set up end-session
+  ritual", "install worked-evidence step", or wants session results recorded
+  against DPF/LPF framework packages. Устанавливает в целевой проект ритуал
+  end-session с шагом worked-evidence (журнал подтверждения сводов практикой) —
+  тремя режимами: вшить шаг в существующий протокол (merge), поставить полный
+  протокол (install-full) или лёгкий (install-light). НЕ исполняет сам ритуал —
+  только ставит его.
 version: 1.0.1
 ---
 
