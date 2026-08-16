@@ -31,6 +31,7 @@ Run the five scans below in order. Use `Glob` for path matching and `Read` for f
    - `Read` (if present) `README.md`, `CLAUDE.md`, `AGENTS.md`.
    - `Glob` `agents/context/*.md` and `project/*.md` for additional context files.
    - Detect the feature-directory pattern: `Glob` `agents/features/FEAT-*/`, `features/FEAT-*/`, or any other `FEAT-*` shape — record what the project actually uses.
+   - Detect the product-document roots the same way and record them in §5: `Glob` `ideas/IDEA-*.md` (or any other `IDEA-*` shape) for the idea root; `Glob` `epics/EPIC-*/` (or any other `EPIC-*` shape) for the epic root. A project with neither root yet still gets the §5 rows — fill them with the default `ideas/` and `epics/` beside the feature root.
    - Read 1-2 existing feature directories to extract the artifact-naming convention (`DESIGN-01`, `PLAN-01`, `ISSUE-001`, etc.).
 
 5. **Capabilities matrix (planner-context.md §9).** Derive rows from the results of scans 1–3; this step discovers nothing on its own. The capability set, per-kind requirements, provider-selection order and stopping rules live in `product-discovery/references/routing.md` — do not duplicate or contradict them here. The rules that govern filling:

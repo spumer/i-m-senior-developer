@@ -2,8 +2,9 @@
 name: planner
 description: >
   Builds and saves architecture or execution plans. Use when the user asks to
-  plan a task, split implementation work, prepare a feature README for
-  implementation, or turn an architecture document into executable phases.
+  plan a task, split implementation work, turn ready feature requirements
+  (a feature README produced by product-discovery) into architecture, or an
+  architecture document into executable phases.
 ---
 
 # Planner — file-backed planning

@@ -259,3 +259,9 @@ An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it 
 Project-specific agent mappings, model guidance, and artifact paths live in `.claude/planner-context.md`. Bootstrap creates it on first use. A rescan appends auto-discovered entries and marks missing entries stale without overwriting manual decisions.
 
 Section `§9` of the same file is the machine-readable capability matrix used by product discovery: bootstrap fills it from discovered plugin agents, and product commands stop rather than substitute an unavailable pinned provider.
+
+## Evaluation
+
+`EVALUATION.md` documents how to check this plugin with `claude plugin eval` — case formats, the six grader types and their traps, ablation, scoring, and the sandbox.
+
+It also states plainly what the product commands cannot be evaluated with. All four ask the human through `AskUserQuestion`, and an eval case cannot script those answers; behaviour that depends on an answer is checked by replaying a recorded transcript through `context.history_file` instead. The helper and provider routing need no eval at all — they are covered by ordinary tests beside the code.

@@ -43,9 +43,10 @@ features/
 ## Метод проработки
 
 Диалог ведётся по `references/dialogue.md`: вопросы порциями, выслушать,
-нейтрально подытожить, синтезирующий вопрос. Все вопросы человеку задаются
-через `AskUserQuestion` — это обязательный инструмент режима, вопросы сплошным
-текстом не задаются.
+нейтрально подытожить, синтезирующий вопрос. Информационные вопросы режима
+открытые — они задаются прозой порциями по два–четыре. `AskUserQuestion`
+применяется для выбора из нескольких вариантов и значимых решений по
+протоколу значимого решения, а не для открытых вопросов.
 
 ### 1. Начни с намерения
 
@@ -251,7 +252,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py"
 
 ```text
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py" \
-  sync feature <path> --body-file README.md.prepared \
+  sync feature <path> --body-file <path>.prepared \
   --semantic-change <yes|no> --readiness <draft|ready> [--parent <path>]
 ```
 

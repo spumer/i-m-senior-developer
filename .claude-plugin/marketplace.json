@@ -34,7 +34,7 @@
     },
     {
       "name": "planner",
-      "description": "File-backed feature pipeline: requirements (/plan-feat, /plan-jira), ready architecture and version-linked execution plans (/plan), guarded implementation orchestration (/plan-do), and post-task reflection (/plan-reflect).",
+      "description": "File-backed feature pipeline with a product-discovery layer: /plan-idea (optional idea shaping), /plan-epic (shared hypothesis), /plan-roadmap (slice ordering) and /plan-feat, /plan-jira (slice requirements) write versioned product documents — an idea is not required to start. /plan then builds ready architecture and version-linked execution plans; /plan-do orchestrates implementation; /plan-reflect captures post-task lessons.",
       "author": {
         "name": "Svyatoslav Posokhin"
       },

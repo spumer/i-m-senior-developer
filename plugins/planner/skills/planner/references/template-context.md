@@ -67,6 +67,8 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 ## 5. Хранение артефактов фич
 
 - **Корень фич:** `<обнаруженный-путь>` (например `agents/features/` или `features/`)
+- **Корень замыслов:** `<обнаруженный-путь>` (например `ideas/`)
+- **Корень общих гипотез:** `<обнаруженный-путь>` (например `epics/`)
 - **Паттерн имени:** `FEAT-XXXX-<slug>/` (уточни по факту)
 - **Артефакты внутри фичи:**
   - `README.md` — требования
@@ -126,4 +128,4 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 «Основание» — отдельная строка внутри таблицы ломает машинный разбор.
 ```
 
-The 8 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) records file markers that the stack table cannot classify. Section §9 (`Способности и поставщики`) has no legacy counterpart: it is the machine-readable capability matrix of the `product-discovery` skill, and its exact table format is owned by the `parse-capabilities` subcommand of `product_state.py` — if the two ever diverge, fix this template, not the helper.
+The 9 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) records file markers that the stack table cannot classify. Section §9 (`Способности и поставщики`) has no legacy counterpart: it is the machine-readable capability matrix of the `product-discovery` skill, and its exact table format is owned by the `parse-capabilities` subcommand of `product_state.py` — if the two ever diverge, fix this template, not the helper.

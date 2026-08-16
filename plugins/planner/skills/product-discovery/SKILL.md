@@ -60,7 +60,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py"
 
 ### 1. Определить вид и прочитать контекст проекта
 
-Прочитай `<project-root>/.claude/planner-context.md`. Корни продуктовых документов (`ideas/`, `epics/`, `features/` или проектные варианты) записаны в его §5. Если файла нет — следуй `plugins/planner/skills/planner/references/bootstrap.md`, затем вернись сюда.
+Прочитай `<project-root>/.claude/planner-context.md`. Корни продуктовых документов (`ideas/`, `epics/`, `features/` или проектные варианты) записаны в его §5. Если файла нет — следуй `plugins/planner/skills/planner/references/bootstrap.md`, затем вернись сюда. Если §5 не содержит корней продуктовых документов, используются `ideas/` и `epics/` рядом с корнем фич, и это дописывается в §5.
 
 При работе с существующим документом сначала посмотри его состояние:
 
@@ -80,7 +80,12 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py"
   route <planner-context.md> --for <kind>
 ```
 
-Код `3` — остановка: закреплённый поставщик недоступен или обязательная способность не покрыта. Правила разбора матрицы, остановки и следа выбора — в `routing.md`. Подмены закреплённого поставщика нет.
+Код `3` — два разных случая, различай их по сообщению помощника в stderr:
+
+- раздел §9 отсутствует или не разбирается (сообщение про секцию §9 или формат таблицы) — файл контекста отстал от формата: выполни повторное сканирование по `plugins/planner/skills/planner/references/bootstrap.md`, затем повтори `route`;
+- обязательная способность не покрыта или закреплённый поставщик недоступен — остановка с сообщением человеку: назови непокрытую способность или поставщика и предложи добавить строку в §9.
+
+Правила разбора матрицы, остановки и следа выбора — в `routing.md`. Подмены закреплённого поставщика нет.
 
 ### 3. Диалог
 
@@ -129,23 +134,15 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py"
 
 ### 9. Синхронизировать
 
+Общая форма — флаги, не зависящие от вида:
+
 ```text
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py" \
-  sync idea <path> --body-file <path>.prepared --semantic-change <yes|no> \
-  --stage <exploring|resolved> --outcome <значение> [--target <path>]
-
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py" \
-  sync epic <path> --body-file <path>.prepared --semantic-change <yes|no> \
-  --stage <shaping|active|closed|superseded> [--parent <idea-path>]
-
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py" \
-  sync roadmap <path> --body-file <path>.prepared --semantic-change <yes|no> \
-  --state <active|paused|completed|cancelled> --parent <EPIC.md-path>
-
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/product-discovery/assets/product_state.py" \
-  sync feature <path> --body-file <path>.prepared --semantic-change <yes|no> \
-  --readiness <draft|ready> [--parent <epic-or-idea-path>]
+  sync <kind> <path> --body-file <path>.prepared --semantic-change <yes|no> \
+  <повидовые флаги>
 ```
+
+Повидовые флаги и точные вызовы каждого вида — в режимном справочнике выбранного вида; здесь они не повторяются.
 
 Помощник читает и удаляет подготовленный файл, проверяет значения полей и их связи, при `--parent` фиксирует версию и отпечаток родителя, затем атомарно записывает метаданные и тело вместе. Новому документу присваивается версия `1`, смысловое изменение её увеличивает.
 
@@ -205,6 +202,13 @@ Bash используется только для вызова помощник�
 4. Не выводи успешный итог и не пытайся записать тело в цель как восстановление.
 
 Не глотай ошибку и не продолжай с устаревшими метаданными.
+
+## Чего скилл не делает
+
+- Не строит архитектуру и не реализует: это работа `/plan` и `/plan-do` по готовым требованиям среза.
+- Не выполняет следующую команду сам: итог её называет, запуск остаётся за человеком.
+- Не меняет порядок срезов вне вида `roadmap`.
+- Не оценивает качество поставщика: выбор идёт по покрытию и доступности из матрицы §9 по правилам `routing.md`, а не по качеству его ответа.
 
 ## Индекс справочников
 

@@ -2,7 +2,7 @@
 name: planner
 model: sonnet
 color: cyan
-tools: ["Read", "Grep", "Glob", "Write", "Bash(python3:*)", "Bash(mkdir:*)"]
+tools: ["Read", "Grep", "Glob", "Write", "Bash"]
 description: |
   Builds a complete architecture document from requirements or a complete
   execution plan from architecture. Saves the full result to a file and returns
