@@ -1,18 +1,28 @@
 # planner
 
-Claude Code plugin for file-backed feature planning and implementation orchestration.
+Claude Code plugin for file-backed product discovery, feature planning, and implementation orchestration.
 
-It separates three artifacts:
+Work happens in two layers.
+
+The product layer shapes intent before anything technical exists:
+
+- `ideas/IDEA-NNNN-<slug>.md` — a discovery record: problem, evidence, critical unknown, explicit outcome;
+- `epics/EPIC-NNNN-<slug>/EPIC.md` — one shared hypothesis for an outcome delivered by several slices;
+- `epics/EPIC-NNNN-<slug>/ROADMAP.md` — slice order across Now/Next/Later horizons.
+
+The technical layer separates three artifacts per feature:
 
 - `README.md` — requirements and user-visible behavior;
 - `ARCHITECTURE.md` — ready technical design;
 - `PLANNER_EXECUTION.md` — implementation phases tied to one architecture version.
 
-The full planning result lives in a file. A successful `/plan` prints only the path, version, and two to four main outcomes.
+The full result lives in a file. A successful run prints only the path, version, and two to four main outcomes.
 
 ## What it does
 
-- **Requirements gathering** — `/plan-feat` and `/plan-jira` facilitate user journey and Definition of Done discovery.
+- **Product discovery** — `/plan-idea`, `/plan-epic`, `/plan-roadmap`, and `/plan-feat` facilitate problem framing, a shared hypothesis, slice ordering, and slice requirements, each ending in a versioned file.
+- **Capability routing** — product work goes to the most capable available provider from the `§9` matrix in `.claude/planner-context.md`; the built-in `product-baseline` skill is a limited last resort.
+- **Requirements gathering** — `/plan-jira` formats requirements from a Jira description into a task brief.
 - **Project bootstrap** — scans available agents, commands, skills, stack markers, and feature-directory conventions into `.claude/planner-context.md`.
 - **Architecture mode** — `/plan` on a feature README or free-text task writes a complete `ARCHITECTURE.md`.
 - **Execution mode** — `/plan` on architecture writes a separate `PLANNER_EXECUTION.md` with phases, dependencies, models, and review gates.
@@ -29,6 +39,9 @@ plugins/planner/
 ├── agents/
 │   └── planner.md
 ├── commands/
+│   ├── plan-idea.md
+│   ├── plan-epic.md
+│   ├── plan-roadmap.md
 │   ├── plan-feat.md
 │   ├── plan-jira.md
 │   ├── plan.md
@@ -45,6 +58,21 @@ plugins/planner/
 │   │       ├── architecture-mode.md
 │   │       ├── execution-mode.md
 │   │       └── template-context.md
+│   ├── product-discovery/
+│   │   ├── SKILL.md
+│   │   ├── assets/
+│   │   │   ├── product_state.py
+│   │   │   └── test_product_state.py
+│   │   └── references/
+│   │       ├── routing.md
+│   │       ├── dialogue.md
+│   │       ├── pov-review.md
+│   │       ├── idea-mode.md
+│   │       ├── epic-mode.md
+│   │       ├── roadmap-mode.md
+│   │       └── feature-mode.md
+│   ├── product-baseline/
+│   │   └── SKILL.md
 │   └── planner-reflect/
 │       └── SKILL.md
 └── README.md
@@ -59,22 +87,62 @@ Add this marketplace to Claude Code and install the plugin:
 /plugin install planner@i-m-senior-developer
 ```
 
-## Typical feature flow
+## Typical flow
+
+The product layer, when used:
 
 ```text
-/plan-feat "bookmarks for items"
-        ↓ writes features/example/README.md
-/plan features/example/README.md
-        ↓ writes features/example/ARCHITECTURE.md
-/plan features/example/ARCHITECTURE.md
-        ↓ writes features/example/PLANNER_EXECUTION.md
-/plan-do features/example/
+/plan-idea "save items users keep losing"
+        ↓ writes ideas/IDEA-0001-<slug>.md, ends with an explicit outcome
+/plan-epic ideas/IDEA-0001-<slug>.md
+        ↓ writes epics/EPIC-0001-<slug>/EPIC.md — one shared hypothesis
+/plan-roadmap epics/EPIC-0001-<slug>/EPIC.md
+        ↓ writes epics/EPIC-0001-<slug>/ROADMAP.md — slices across Now/Next/Later
+```
+
+The technical chain, starting from a slice:
+
+```text
+/plan-feat "bookmarks for items"        ← a roadmap item or a resolved idea works too
+        ↓ writes features/FEAT-0001-<slug>/README.md
+/plan features/FEAT-0001-<slug>/README.md
+        ↓ writes features/FEAT-0001-<slug>/ARCHITECTURE.md
+/plan features/FEAT-0001-<slug>/ARCHITECTURE.md
+        ↓ writes features/FEAT-0001-<slug>/PLANNER_EXECUTION.md
+/plan-do features/FEAT-0001-<slug>/
         ↓ checks freshness, implements, reviews, updates documentation
-/plan-reflect features/example/
+/plan-reflect features/FEAT-0001-<slug>/
         ↓ records stable lessons in planner-context.md
 ```
 
+The product layer is optional: `/plan-feat` accepts a slice description directly, and the technical chain works as before.
+
 The namespaced forms (`/planner:plan`, `/planner:plan-do`, and others) are available when a local command has the same bare name.
+
+## Product discovery
+
+Four commands cover the layer before architecture: one facilitated dialogue each, one versioned document each, no implementation design.
+
+| Command | Writes |
+|---|---|
+| `/plan-idea` | `ideas/IDEA-NNNN-<slug>.md` — problem, evidence, critical unknown, and an explicit outcome |
+| `/plan-epic` | `epics/EPIC-NNNN-<slug>/EPIC.md` — one shared hypothesis for an outcome delivered by several slices |
+| `/plan-roadmap` | `epics/EPIC-NNNN-<slug>/ROADMAP.md` — slice order across Now/Next/Later |
+| `/plan-feat` | `features/FEAT-NNNN-<slug>/README.md` — requirements of one deliverable slice |
+
+An idea must end in an explicit outcome — `feature` or `epic` — and either outcome feeds the next command. `/plan-feat` also accepts a slice description, a roadmap item, or an existing feature path directly. Existing requirement files are read as version 0 and are not rewritten for migration.
+
+Product documents follow the same version discipline as plan documents: a semantic change increments the version, wording does not. Updating an epic marks a sibling `ROADMAP.md` stale by fingerprint, without rewriting its body.
+
+### Capability routing
+
+Product work is routed to a capability provider rather than done by the command alone. The capabilities required for the document kind are matched against the `§9 Способности и поставщики` matrix in `.claude/planner-context.md`, and the most capable available provider is selected for each: `full` coverage before `partial`, and `configured` before `project`, `plugin`, or built-in priority. A matching name alone proves nothing — coverage requires an evidence path. A pinned provider that is unavailable stops the run instead of being silently replaced.
+
+When no external provider covers a required capability, the built-in `product-baseline` skill is the last resort. It orders and phrases what the input already carries, states its limitations in every response, and never writes files.
+
+### Write boundary
+
+The canonical document is written only by the `product_state.py` helper. The model prepares the document body in a temporary `.prepared` file and calls the helper, which allocates numbered directories, assigns versions, records the parent's version and fingerprint, and writes or refuses. Providers never write files; neither does the model write the canonical file directly.
 
 ## Planning modes
 
@@ -160,7 +228,7 @@ The guard cannot be bypassed by confirmation. Rebuild the plan with:
 
 ## Chat output
 
-After a successful write, `/plan` prints only:
+After a successful write, `/plan` and the product commands print only:
 
 - result kind;
 - path and version;
@@ -177,7 +245,10 @@ An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it 
 
 | Command | Purpose |
 |---|---|
-| `/plan-feat` | Gather requirements and write a feature README |
+| `/plan-idea` | Facilitate idea discovery — problem, evidence, critical unknown, explicit outcome |
+| `/plan-epic` | Facilitate a shared hypothesis for one outcome delivered by several slices |
+| `/plan-roadmap` | Order the slices of one shared hypothesis across Now/Next/Later |
+| `/plan-feat` | Gather requirements for one deliverable slice and write a feature README |
 | `/plan-jira` | Gather requirements from a Jira description |
 | `/plan` | Write architecture or execution planning to a file |
 | `/plan-do` | Check freshness, implement, review, and document |
@@ -186,3 +257,5 @@ An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it 
 ## Configuration
 
 Project-specific agent mappings, model guidance, and artifact paths live in `.claude/planner-context.md`. Bootstrap creates it on first use. A rescan appends auto-discovered entries and marks missing entries stale without overwriting manual decisions.
+
+Section `§9` of the same file is the machine-readable capability matrix used by product discovery: bootstrap fills it from discovered plugin agents, and product commands stop rather than substitute an unavailable pinned provider.

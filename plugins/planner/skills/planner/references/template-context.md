@@ -100,6 +100,30 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
 вариант, либо удали строку, если маркер нерелевантен.
 
 - <marker>: <discovered location> — TODO: assign stack
+
+## §9 Способности и поставщики
+
+| Способность | Нужна для | Поставщик | Источник | Доступность | Покрытие | Основание | Ограничения | Приоритет |
+|---|---|---|---|---|---|---|---|---|
+| problem_outcome_framing | idea, epic, feature | planner:product-baseline | builtin | available | partial | plugins/planner/skills/product-baseline/SKILL.md | нет данных о пользователях; ограниченный режим | builtin |
+| product_synthesis | idea, epic, roadmap | planner:product-baseline | builtin | available | partial | plugins/planner/skills/product-baseline/SKILL.md | нет данных о пользователях; ограниченный режим | builtin |
+| decision_dialogue | idea, epic, roadmap, feature | planner:product-baseline | builtin | available | partial | plugins/planner/skills/product-baseline/SKILL.md | нет независимой многоролевой проверки; ограниченный режим | builtin |
+
+Машинный раздел: его разбирает помощник `product_state.py` скилла
+`product-discovery` (подкоманда `parse-capabilities`); правила выбора
+поставщика и остановки — в `product-discovery/references/routing.md`.
+Заголовок таблицы и порядок девяти колонок — дословно, менять нельзя; первая
+непустая строка после заголовка раздела обязана быть заголовком таблицы,
+проза допускается только после пустой строки за таблицей. Закрытые значения,
+дословно: Доступность — `available`, `stale`, `error`, `not-surfaced`;
+Покрытие — `full`, `partial`, `unknown`, `none`; Приоритет — `configured`,
+`project`, `plugin`, `builtin`. «Нужна для» — виды документов через запятую:
+`idea`, `epic`, `roadmap`, `feature`. «Основание» — конкретный путь или
+запись обнаружения; пустое основание принудительно переводит покрытие в
+`unknown`. Совпадение имени поставщика со способностью основанием не
+является. Новые строки помечаются датой обнаружения, исчезнувшие не
+удаляются, а помечаются; метки `<!-- ... -->` пишутся внутри ячейки
+«Основание» — отдельная строка внутри таблицы ломает машинный разбор.
 ```
 
-The 8 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) records file markers that the stack table cannot classify.
+The 8 sections of the template map to legacy `~/.claude/agents/planner.md` as follows: §1 → lines 128-132, §2 → lines 134-138, §3 → lines 140-144, §4 → lines 146-152, §5 → lines 154-168, §6 → lines 170-172, §7 → lines 174-179. Section §8 (`Unknown markers`) records file markers that the stack table cannot classify. Section §9 (`Способности и поставщики`) has no legacy counterpart: it is the machine-readable capability matrix of the `product-discovery` skill, and its exact table format is owned by the `parse-capabilities` subcommand of `product_state.py` — if the two ever diverge, fix this template, not the helper.
