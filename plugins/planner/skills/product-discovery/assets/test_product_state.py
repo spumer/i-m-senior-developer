@@ -344,6 +344,38 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertEqual(document.body, expected_body)
         return document
 
+    def response_draft(self, kind: str, **overrides: object) -> Path:
+        draft: dict[str, object] = {
+            "problem": "владелец теряет сохранённые элементы после массового удаления",
+            "outcome": "удалённый элемент возвращается за один шаг",
+            "actors": "владелец элемента",
+            "scope_in": "возврат последнего удалённого элемента",
+            "scope_out": "полная история версий",
+            "assumptions": ["потеря происходит при массовом удалении"],
+            "unknowns": ["как часто владелец замечает потерю"],
+            "limitations": ["нет данных о пользователях"],
+        }
+        by_kind: dict[str, dict[str, object]] = {
+            "idea": {"recommended_outcome": "feature"},
+            "epic": {"candidate_slices": ["возврат последнего элемента"]},
+            "roadmap": {"candidate_slices": ["возврат последнего элемента"]},
+            "feature": {},
+        }
+        draft.update(by_kind.get(kind, {}))
+        for field, value in overrides.items():
+            if value is _OMIT:
+                draft.pop(field, None)
+            else:
+                draft[field] = value
+        path = self.root / "provider-response.json"
+        path.write_text(json.dumps(draft, ensure_ascii=False))
+        return path
+
+    def check_response(
+        self, kind: str, path: Path
+    ) -> subprocess.CompletedProcess[str]:
+        return self.run_cli("check-response", str(path), "--for", kind)
+
     def context_path(
         self,
         *,
@@ -816,6 +848,112 @@ class ProductStateCliTest(unittest.TestCase):
         context = self.context_path()
 
         result = self.run_cli("route", str(context), "--for", "initiative")
+
+        self.assertEqual(result.returncode, 64)
+        self.assertIn("invalid choice", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test__check_response__complete_draft_for_each_kind__accepts_with_limitations(
+        self,
+    ) -> None:
+        for kind in ("idea", "epic", "roadmap", "feature"):
+            with self.subTest(kind=kind):
+                draft = self.response_draft(kind)
+
+                result = self.check_response(kind, draft)
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["accepted"], True)
+                self.assertEqual(payload["for"], kind)
+                self.assertEqual(
+                    payload["limitations"], ["нет данных о пользователях"]
+                )
+
+    def test__check_response__missing_or_empty_required_field__returns_invalid(
+        self,
+    ) -> None:
+        cases = (
+            ("problem absent", {"problem": _OMIT}, "problem"),
+            ("problem blank", {"problem": "   "}, "problem"),
+            ("outcome absent", {"outcome": _OMIT}, "outcome"),
+            ("outcome blank", {"outcome": ""}, "outcome"),
+            ("limitations absent", {"limitations": _OMIT}, "limitations"),
+            ("limitations empty list", {"limitations": []}, "limitations"),
+            ("limitations blank item", {"limitations": ["  "]}, "limitations"),
+        )
+
+        for name, overrides, expected_field in cases:
+            with self.subTest(case=name):
+                draft = self.response_draft("idea", **overrides)
+
+                result = self.check_response("idea", draft)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(expected_field, result.stderr)
+
+    def test__check_response__field_from_another_kind__returns_invalid(self) -> None:
+        cases = (
+            ("epic", {"recommended_outcome": "feature"}, "recommended_outcome"),
+            ("roadmap", {"recommended_outcome": "epic"}, "recommended_outcome"),
+            ("idea", {"candidate_slices": ["один срез"]}, "candidate_slices"),
+            ("feature", {"candidate_slices": ["один срез"]}, "candidate_slices"),
+        )
+
+        for kind, overrides, unexpected_field in cases:
+            with self.subTest(kind=kind, field=unexpected_field):
+                draft = self.response_draft(kind, **overrides)
+
+                result = self.check_response(kind, draft)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(unexpected_field, result.stderr)
+
+    def test__check_response__unknown_field_or_wrong_type__returns_invalid(
+        self,
+    ) -> None:
+        cases = (
+            ("unknown field", {"confidence": "high"}, "confidence"),
+            ("scalar as list", {"problem": ["две части"]}, "problem"),
+            ("list as scalar", {"limitations": "одно ограничение"}, "limitations"),
+            ("list item not text", {"unknowns": [42]}, "unknowns"),
+        )
+
+        for name, overrides, expected_field in cases:
+            with self.subTest(case=name):
+                draft = self.response_draft("idea", **overrides)
+
+                result = self.check_response("idea", draft)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(expected_field, result.stderr)
+
+    def test__check_response__unusable_input__returns_invalid(self) -> None:
+        malformed = self.root / "malformed.json"
+        malformed.write_text("problem: нет\n")
+        sequence = self.root / "sequence.json"
+        sequence.write_text(json.dumps(["problem"]))
+        cases = (
+            ("not json", malformed),
+            ("json array", sequence),
+            ("missing file", self.root / "absent.json"),
+        )
+
+        for name, path in cases:
+            with self.subTest(case=name):
+                result = self.check_response("idea", path)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertNotEqual(result.stderr, "")
+
+    def test__check_response__unknown_product_kind__returns_usage_error(self) -> None:
+        draft = self.response_draft("idea")
+
+        result = self.check_response("initiative", draft)
 
         self.assertEqual(result.returncode, 64)
         self.assertIn("invalid choice", result.stderr)

@@ -42,6 +42,29 @@ _SYNC_FIELDS_BY_KIND = {
     "roadmap": {"parent", "state"},
     "feature": {"parent", "readiness"},
 }
+_RESPONSE_SHARED_FIELDS = {
+    "problem",
+    "outcome",
+    "actors",
+    "scope_in",
+    "scope_out",
+    "assumptions",
+    "unknowns",
+    "limitations",
+}
+_RESPONSE_FIELDS_BY_KIND = {
+    "idea": {"recommended_outcome"},
+    "epic": {"candidate_slices"},
+    "roadmap": {"candidate_slices"},
+    "feature": set[str](),
+}
+_RESPONSE_LIST_FIELDS = {
+    "assumptions",
+    "unknowns",
+    "candidate_slices",
+    "limitations",
+}
+_RESPONSE_REQUIRED_FIELDS = ("problem", "outcome", "limitations")
 _SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 _IDEA_NAME_PATTERN = re.compile(
     r"IDEA-[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\Z"
@@ -1095,6 +1118,90 @@ def inspect_document(path: Path) -> int:
     return 0
 
 
+def read_response_draft(path: Path) -> dict[str, Any]:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise ProductStateError(f"{path}: {error}") from error
+    try:
+        draft = json.loads(text)
+    except json.JSONDecodeError as error:
+        raise ProductStateError(
+            f"{path}: provider response is not valid JSON: {error}"
+        ) from error
+    if not isinstance(draft, dict):
+        raise ProductStateError(f"{path}: provider response must be a JSON object")
+    return draft
+
+
+def validate_response_field_names(
+    draft: dict[str, Any], kind: str, path: Path
+) -> None:
+    accepted = _RESPONSE_SHARED_FIELDS | _RESPONSE_FIELDS_BY_KIND[kind]
+    known = _RESPONSE_SHARED_FIELDS.union(*_RESPONSE_FIELDS_BY_KIND.values())
+    unknown = sorted(set(draft) - known)
+    if unknown:
+        raise ProductStateError(
+            f"{path}: provider response has fields outside the contract: {unknown}"
+        )
+    foreign = sorted(set(draft) - accepted)
+    if foreign:
+        raise ProductStateError(
+            f"{path}: provider response for {kind} carries fields of another "
+            f"kind: {foreign}"
+        )
+
+
+def validate_response_field_types(draft: dict[str, Any], path: Path) -> None:
+    for field, value in sorted(draft.items()):
+        if field in _RESPONSE_LIST_FIELDS:
+            if not isinstance(value, list) or not all(
+                isinstance(item, str) for item in value
+            ):
+                raise ProductStateError(
+                    f"{path}: {field} must be a list of text values"
+                )
+        elif not isinstance(value, str):
+            raise ProductStateError(f"{path}: {field} must be a text value")
+
+
+def response_field_content(value: str | list[str]) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value.strip() else []
+    return [item for item in value if item.strip()]
+
+
+def validate_response_completeness(draft: dict[str, Any], path: Path) -> None:
+    empty = [
+        field
+        for field in _RESPONSE_REQUIRED_FIELDS
+        if not response_field_content(draft.get(field, ""))
+    ]
+    if empty:
+        raise ProductStateError(
+            f"{path}: provider response is rejected, required fields are "
+            f"missing or empty: {empty}"
+        )
+
+
+def check_response(path: Path, kind: str) -> int:
+    resolved = absolute_path(path)
+    draft = read_response_draft(resolved)
+    validate_response_field_names(draft, kind, resolved)
+    validate_response_field_types(draft, resolved)
+    validate_response_completeness(draft, resolved)
+    print_payload(
+        {
+            "accepted": True,
+            "fields": sorted(draft),
+            "for": kind,
+            "limitations": response_field_content(draft["limitations"]),
+            "path": str(resolved),
+        }
+    )
+    return 0
+
+
 def build_parser() -> CliParser:
     parser = CliParser(prog="product_state.py")
     commands = parser.add_subparsers(
@@ -1135,6 +1242,15 @@ def build_parser() -> CliParser:
     check_command = commands.add_parser("check")
     check_command.add_argument("path", type=Path)
     check_command.add_argument("--mark-stale", action="store_true")
+
+    response_command = commands.add_parser("check-response")
+    response_command.add_argument("path", type=Path)
+    response_command.add_argument(
+        "--for",
+        dest="product_kind",
+        choices=("idea", "epic", "roadmap", "feature"),
+        required=True,
+    )
 
     sync_command = commands.add_parser("sync")
     sync_command.add_argument(
@@ -1178,6 +1294,8 @@ def run(arguments: list[str] | None = None) -> int:
         )
     if options.command == "check":
         return check_document(options.path, options.mark_stale)
+    if options.command == "check-response":
+        return check_response(options.path, options.product_kind)
     if options.command == "parse-capabilities":
         return parse_capabilities(options.context_path)
     if options.command == "route":
