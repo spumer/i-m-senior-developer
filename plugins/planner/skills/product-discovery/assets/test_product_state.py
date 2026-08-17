@@ -236,6 +236,32 @@ def capability_context(
     )
 
 
+def make_symbolic_link(node: Path, source: Path) -> None:
+    source.write_text("# Draft\n")
+    node.symlink_to(source)
+
+
+def make_hard_link(node: Path, source: Path) -> None:
+    source.write_text("# Draft\n")
+    os.link(source, node)
+
+
+def make_named_pipe(node: Path, source: Path) -> None:
+    os.mkfifo(node)
+
+
+def make_directory(node: Path, source: Path) -> None:
+    node.mkdir()
+
+
+_UNSUITABLE_FILE_NODES = (
+    ("symbolic link", make_symbolic_link, "symbolic link"),
+    ("hard link", make_hard_link, "hard link"),
+    ("directory", make_directory, "regular file"),
+    ("named pipe", make_named_pipe, "regular file"),
+)
+
+
 class ProductStateCliTest(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -1458,29 +1484,22 @@ class ProductStateCliTest(unittest.TestCase):
 
         self.assertEqual(source.read_text(), "# Draft\n")
 
-    def test__consume_prepared_body__symbolic_link__returns_invalid(self) -> None:
-        target = self.idea_path()
-        source = self.ideas / "draft.md"
-        source.write_text("# Draft\n")
-        prepared = target.with_name(f"{target.name}.prepared")
-        prepared.symlink_to(source)
+    def test__consume_prepared_body__unsuitable_file_node__returns_invalid(
+        self,
+    ) -> None:
+        for case, make_node, expected in _UNSUITABLE_FILE_NODES:
+            with self.subTest(case=case):
+                target = self.ideas / f"IDEA-0001-{case.replace(' ', '-')}.md"
+                prepared = target.with_name(f"{target.name}.prepared")
+                make_node(prepared, self.ideas / f"source-{case[0]}.md")
 
-        with self.assertRaisesRegex(product_state.ProductStateError, "symbolic link"):
-            product_state.consume_prepared_body(prepared, target)
+                with self.assertRaisesRegex(
+                    product_state.ProductStateError, expected
+                ):
+                    product_state.consume_prepared_body(prepared, target)
 
-        self.assertTrue(prepared.is_symlink())
-
-    def test__consume_prepared_body__hard_link__returns_invalid(self) -> None:
-        target = self.idea_path()
-        source = self.ideas / "draft.md"
-        source.write_text("# Draft\n")
-        prepared = target.with_name(f"{target.name}.prepared")
-        os.link(source, prepared)
-
-        with self.assertRaisesRegex(product_state.ProductStateError, "hard link"):
-            product_state.consume_prepared_body(prepared, target)
-
-        self.assertTrue(prepared.exists())
+                self.assertTrue(prepared.exists() or prepared.is_symlink())
+                self.assertFalse(target.exists())
 
     def test__sync__field_from_another_kind__returns_invalid_before_consuming_body(
         self,
@@ -1845,6 +1864,128 @@ class ProductStateCliTest(unittest.TestCase):
             {path.name for path in epic_directory.iterdir()}, {epic.name, roadmap.name}
         )
         self.assertEqual(list(self.features.iterdir()), [])
+
+    def linked_pair(self, slug: str) -> tuple[Path, Path]:
+        epic_directory = self.allocate_product("epic", self.epics, slug)
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        roadmap = epic_directory / "ROADMAP.md"
+        self.sync_product(
+            "roadmap", roadmap, "# Roadmap\n", parent=epic, state="active"
+        )
+        return epic, roadmap
+
+    def test__check__non_current_document__names_the_reason(self) -> None:
+        def break_parent_body(epic: Path, roadmap: Path) -> None:
+            epic.write_text(epic.read_text() + "Правка мимо метаданных.\n")
+
+        def raise_parent_version(epic: Path, roadmap: Path) -> None:
+            epic.write_text(epic.read_text().replace("version: 1", "version: 2", 1))
+
+        def rewrite_parent_body_without_meaning(epic: Path, roadmap: Path) -> None:
+            self.sync_product(
+                "epic", epic, "# Epic, иначе\n", semantic_change="no", stage="shaping"
+            )
+
+        def mark_child_stale(epic: Path, roadmap: Path) -> None:
+            roadmap.write_text(
+                roadmap.read_text().replace("status: current", "status: stale", 1)
+            )
+
+        cases = (
+            ("parent body edited beside metadata", break_parent_body,
+             "epic content hash does not match its body"),
+            ("recorded version behind", raise_parent_version,
+             "epic version mismatch"),
+            ("recorded hash behind", rewrite_parent_body_without_meaning,
+             "epic content hash mismatch"),
+            ("child marked stale", mark_child_stale, "document status is stale"),
+        )
+
+        for index, (case, prepare, expected_reason) in enumerate(cases):
+            with self.subTest(case=case):
+                epic, roadmap = self.linked_pair(f"reason-{index}")
+                prepare(epic, roadmap)
+
+                result = self.run_cli("check", str(roadmap))
+
+                self.assertEqual(result.returncode, 2, result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["status"], "stale")
+                self.assertEqual(payload["reason"], expected_reason)
+
+    def test__check__own_body_changed_beside_metadata__returns_invalid(self) -> None:
+        idea = self.allocate_product("idea", self.ideas, "own-hash")
+        self.sync_product(
+            "idea", idea, "# Idea\n", stage="exploring", outcome="open"
+        )
+        idea.write_text(idea.read_text() + "Правка мимо метаданных.\n")
+        changed = idea.read_bytes()
+
+        result = self.run_cli("check", str(idea))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("content hash mismatch", result.stderr)
+        self.assertEqual(idea.read_bytes(), changed)
+
+    def test__sync__inconsistent_parent__rejects_and_writes_nothing(self) -> None:
+        epic_directory = self.allocate_product("epic", self.epics, "broken-parent")
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        epic.write_text(epic.read_text() + "Правка мимо метаданных.\n")
+        roadmap = epic_directory / "ROADMAP.md"
+        prepared = self.prepared_body(roadmap, "# Roadmap\n")
+
+        result = self.run_cli(
+            "sync", "roadmap", str(roadmap),
+            "--body-file", str(prepared),
+            "--semantic-change", "yes",
+            "--parent", str(epic),
+            "--state", "active",
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("does not match its body", result.stderr)
+        self.assertTrue(prepared.exists())
+        self.assertFalse(roadmap.exists())
+
+    def test__sync__roadmap_parent_not_epic_beside_target__returns_invalid(
+        self,
+    ) -> None:
+        own_directory = self.allocate_product("epic", self.epics, "own-hypothesis")
+        own_epic = own_directory / "EPIC.md"
+        self.sync_product("epic", own_epic, "# Epic\n", stage="shaping")
+        other_directory = self.allocate_product("epic", self.epics, "other-hypothesis")
+        other_epic = other_directory / "EPIC.md"
+        self.sync_product("epic", other_epic, "# Other epic\n", stage="shaping")
+        misnamed = own_directory / "HYPOTHESIS.md"
+        misnamed.write_text(own_epic.read_text())
+        cases = (
+            ("parent in another directory", other_epic),
+            ("parent not named EPIC.md", misnamed),
+        )
+
+        for case, parent in cases:
+            with self.subTest(case=case):
+                roadmap = own_directory / "ROADMAP.md"
+                prepared = self.prepared_body(roadmap, "# Roadmap\n")
+
+                result = self.run_cli(
+                    "sync", "roadmap", str(roadmap),
+                    "--body-file", str(prepared),
+                    "--semantic-change", "yes",
+                    "--parent", str(parent),
+                    "--state", "active",
+                )
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("same directory", result.stderr)
+                self.assertTrue(prepared.exists())
+                self.assertFalse(roadmap.exists())
+                prepared.unlink()
 
     def test__lifecycle__epic_body_changes__roadmap_becomes_stale_and_keeps_body(
         self,

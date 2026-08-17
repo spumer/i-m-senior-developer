@@ -632,6 +632,10 @@ def sync_linked_document(
                 validation_parent = resolve_parent(document, reference)
 
     target = resolve_target(kind, target_path, target_path.parent, validation_parent)
+    reference_field = _REFERENCE_FIELD_BY_KIND[kind]
+    parent_reference = (
+        parent_snapshot(target, parent) if parent is not None else None
+    )
     body = consume_prepared_body(body_path, target)
     if document is None:
         document = read_optional_document(target)
@@ -648,9 +652,8 @@ def sync_linked_document(
         "content_sha256": content_hash,
         value_field: field_value,
     }
-    reference_field = _REFERENCE_FIELD_BY_KIND[kind]
-    if parent is not None:
-        metadata[reference_field] = parent_snapshot(target, parent)
+    if parent_reference is not None:
+        metadata[reference_field] = parent_reference
     elif document.has_frontmatter and reference_field in document.metadata:
         metadata[reference_field] = dict(document.metadata[reference_field])
     _VALIDATORS[kind](metadata, target)
@@ -673,7 +676,7 @@ def parent_stale_reason(
     parent_state: dict[str, Any],
 ) -> str | None:
     if parent.metadata["content_sha256"] != parent_state["content_sha256"]:
-        return f"{reference_field} content hash mismatch"
+        return f"{reference_field} content hash does not match its body"
     if reference["version"] != parent_state["version"]:
         return f"{reference_field} version mismatch"
     if reference["content_sha256"] != parent_state["content_sha256"]:
