@@ -1,5 +1,6 @@
 ---
-argument-hint: [feature directory, README, architecture, or execution plan]
+name: plan-do
+argument-hint: "[feature directory, README, architecture, or execution plan]"
 description: Execute a current planner execution file through implementation and review.
 allowed-tools: ["Read", "Grep", "Glob", "Bash(python3:*)", "Agent", "Write"]
 ---

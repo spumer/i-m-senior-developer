@@ -75,6 +75,12 @@ plugins/planner/
 │   │   └── SKILL.md
 │   └── planner-reflect/
 │       └── SKILL.md
+├── evals/
+│   ├── README.md
+│   ├── idea-routing/
+│   ├── multi-step-input/
+│   └── baseline-provider-limits/
+├── EVALUATION.md
 └── README.md
 ```
 
@@ -139,6 +145,8 @@ Product documents follow the same version discipline as plan documents: a semant
 Product work is routed to a capability provider rather than done by the command alone. The capabilities required for the document kind are matched against the `§9 Способности и поставщики` matrix in `.claude/planner-context.md`, and the most capable available provider is selected for each: `full` coverage before `partial`, and `configured` before `project`, `plugin`, or built-in priority. A matching name alone proves nothing — coverage requires an evidence path. A pinned provider that is unavailable stops the run instead of being silently replaced.
 
 When no external provider covers a required capability, the built-in `product-baseline` skill is the last resort. It orders and phrases what the input already carries, states its limitations in every response, and never writes files.
+
+A provider draft is accepted only after the helper checks its shape: `check-response` rejects a draft missing `problem`, `outcome`, or `limitations`, and rejects fields belonging to another document kind instead of dropping them silently. Two parts of the same contract stay a judgement the skill makes — a provider reporting a file write, and a provider claiming user research, real human feedback, independent multi-role review, or a confirmed hypothesis.
 
 ### Write boundary
 
@@ -262,6 +270,8 @@ Section `§9` of the same file is the machine-readable capability matrix used by
 
 ## Evaluation
 
-`EVALUATION.md` documents how to check this plugin with `claude plugin eval` — case formats, the six grader types and their traps, ablation, scoring, and the sandbox.
+`EVALUATION.md` documents how to check this plugin with `claude plugin eval` — case formats, the six grader types and their traps, ablation, scoring, and the sandbox. `evals/` holds the cases themselves, and `evals/README.md` records what they cover.
 
-It also states plainly what the product commands cannot be evaluated with. All four ask the human through `AskUserQuestion`, and an eval case cannot script those answers; behaviour that depends on an answer is checked by replaying a recorded transcript through `context.history_file` instead. The helper and provider routing need no eval at all — they are covered by ordinary tests beside the code.
+Three cases check what is observable without a dialogue: a raw idea reaching discovery instead of slice requirements, a multi-outcome input not collapsing into one slice, and the built-in provider naming its limitations while writing no file. None of them has ever run — `plugin eval` is behind an early-access gate here — so their rubrics are uncalibrated.
+
+What no case can cover is stated plainly. All four product commands ask the human through `AskUserQuestion`, and an eval case cannot script those answers; behaviour that depends on an answer needs a recorded transcript replayed through `context.history_file`. The helper and provider routing need no eval at all — they are covered by ordinary tests beside the code.

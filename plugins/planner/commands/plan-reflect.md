@@ -2,7 +2,7 @@
 name: plan-reflect
 description: "Reflect on the just-completed plan: compare plan vs reality, update planner-context.md, emit Lessons learned."
 argument-hint: "[feature-dir or empty for current session]"
-allowed-tools: Read, Grep, Glob, Write, Bash(git:*)
+allowed-tools: ["Read", "Grep", "Glob", "Write", "Bash(git:*)"]
 ---
 
 Activate the `planner-reflect` skill and follow its workflow.

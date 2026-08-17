@@ -1,6 +1,8 @@
 ---
-argument-hint: [feature description]
+name: plan-jira
+argument-hint: "[feature description]"
 description: Format a feature description as a Jira task brief in valid Jira Markdown.
+allowed-tools: ["Read", "Grep", "Glob", "AskUserQuestion"]
 ---
 
 # Feature Design Guide — User Journey & Requirements (Jira output)
