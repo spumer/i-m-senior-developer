@@ -10,16 +10,16 @@
 | `/plan-idea` | текст или путь к `IDEA-*.md` | `ideas/IDEA-NNNN-<slug>.md` |
 | `/plan-epic` | замысел с исходом `epic`, `EPIC.md` или текст | `epics/EPIC-NNNN-<slug>/EPIC.md` |
 | `/plan-roadmap` | `EPIC.md` или каталог гипотезы | `epics/EPIC-NNNN-<slug>/ROADMAP.md` |
-| `/plan-feat` | текст, замысел, элемент `ROADMAP.md`, путь к срезу | `features/FEAT-NNNN-<slug>/README.md` |
-| `/plan-jira` | описание среза | бриф в разметке Jira, в чат |
-| `/plan` | `README.md` среза | `ARCHITECTURE.md` |
+| `/plan-feat` | текст, замысел, элемент `ROADMAP.md`, путь к фиче | `features/FEAT-NNNN-<slug>/README.md` |
+| `/plan-jira` | описание фичи | бриф в разметке Jira, в чат |
+| `/plan` | `README.md` фичи | `ARCHITECTURE.md` |
 | `/plan` | архитектурный документ | `PLANNER_EXECUTION.md` |
-| `/plan-do` | каталог среза или план выполнения | изменения в коде, `review-request-changes/REVIEW-NN.md` |
-| `/plan-reflect` | каталог среза или ничего | дописывает `.claude/planner-context.md` |
+| `/plan-do` | каталог фичи или план выполнения | изменения в коде, `review-request-changes/REVIEW-NN.md` |
+| `/plan-reflect` | каталог фичи или ничего | дописывает `.claude/planner-context.md` |
 
 Команда называет следующую в итоге, но не запускает её.
 
-## Порядок для одного среза
+## Порядок для одной фичи
 
 ```text
 /plan-feat  оплата картой в мобильном приложении
@@ -29,7 +29,7 @@
 /plan-reflect features/FEAT-0042-card-payment/
 ```
 
-Замысел, гипотеза и порядок срезов — необязательные шаги перед `/plan-feat`.
+Замысел, гипотеза и порядок фич — необязательные шаги перед `/plan-feat`.
 
 ## Артефакты
 
@@ -94,12 +94,12 @@ planner: 1. Кого затрагивает — новых пользовате�
 planner: Услышал: проблема у новых, основание — логи, порог 80% по доле
          дошедших до второго шага.
          80% — на текущем потоке или после его переделки? От этого зависит,
-         один это срез или несколько.
+         одна это фича или несколько.
 
 вы:      после переделки, там три экрана
 
 planner: [AskUserQuestion] Исход замысла?
-         epic     — три экрана дают минимум два независимо полезных среза
+         epic     — три экрана дают минимум две независимо полезные фичи
          feature  — сузить до одного экрана
          research — сначала выяснить, на каком экране теряются
 
@@ -155,7 +155,7 @@ planner: Замысел сохранён: ideas/IDEA-0004-onboarding-dropoff.md
 
 Договор ответа поставщика: `problem`, `outcome`, `limitations` обязательны;
 `recommended_outcome` только для замысла, `candidate_slices` — для гипотезы и
-порядка срезов. Состав проверяет `product_state.py check-response`; отклонённый
+порядка фич. Состав проверяет `product_state.py check-response`; отклонённый
 ответ заменяется ограниченным режимом с пометкой.
 
 Заявления, по которым ответ отклоняется: исследование пользователей, отзыв

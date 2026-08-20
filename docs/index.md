@@ -7,7 +7,7 @@
 
 | Плагин | Что делает | Команды |
 |---|---|---|
-| [planner](plugins/planner.md) | планирование: замысел, требования среза, архитектура, план, исполнение | 8 |
+| [planner](plugins/planner.md) | планирование: замысел, требования фичи, архитектура, план, исполнение | 8 |
 | [sdlc](plugins/sdlc.md) | агенты `architect`, `code-implementer`, `code-reviewer` | — |
 | [tdd-master](plugins/tdd-master.md) | цикл красный–зелёный–рефакторинг | — |
 | [functional-clarity](plugins/functional-clarity.md) | 22 принципа кода, дисциплина изменения чужого кода | — |

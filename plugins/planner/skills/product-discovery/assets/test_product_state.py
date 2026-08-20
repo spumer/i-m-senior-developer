@@ -923,8 +923,8 @@ class ProductStateCliTest(unittest.TestCase):
         cases = (
             ("epic", {"recommended_outcome": "feature"}, "recommended_outcome"),
             ("roadmap", {"recommended_outcome": "epic"}, "recommended_outcome"),
-            ("idea", {"candidate_slices": ["один срез"]}, "candidate_slices"),
-            ("feature", {"candidate_slices": ["один срез"]}, "candidate_slices"),
+            ("idea", {"candidate_slices": ["одна фича"]}, "candidate_slices"),
+            ("feature", {"candidate_slices": ["одна фича"]}, "candidate_slices"),
         )
 
         for kind, overrides, unexpected_field in cases:
