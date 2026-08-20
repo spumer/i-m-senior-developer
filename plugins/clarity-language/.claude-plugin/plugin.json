@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "Ясность языка: три скилла против AI-синтетики в текстах. clarity-validator (12 смысловых паттернов в тех-доках с FPF-обоснованием), ai-prose-detector (стилистика художественной прозы по 6 методам), russian-style (естественный русский без кальки и придуманных русских переводов устоявшихся заимствований, без пустых антитез и канцелярита).",
   "author": {
-    "name": "Svyatoslav Posokhin"
+    "name": "spumer"
   },
   "keywords": ["clarity", "text-quality", "ai-slop", "russian", "prose", "fpf", "documentation", "writing"]
 }

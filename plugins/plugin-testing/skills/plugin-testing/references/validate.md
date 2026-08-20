@@ -14,7 +14,7 @@ claude plugin validate <plugin>/skills --strict
 claude plugin validate <plugin>/agents --strict
 ```
 
-Витрина проверяется своим манифестом:
+Маркетплейс проверяется своим манифестом:
 
 ```bash
 claude plugin validate .claude-plugin/marketplace.json --strict
