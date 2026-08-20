@@ -3,6 +3,8 @@
 
 # Local planning artifacts (per-developer, not shipped with marketplace)
 features/
+ideas/
+epics/
 
 # Python bytecode cache
 __pycache__/
