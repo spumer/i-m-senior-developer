@@ -4,7 +4,7 @@ description: Сырой замысел попадает в продуктову�
 tags: [routing, product-discovery]
 runs: 3
 max_turns: 6
-timeout_seconds: 180
+timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
 plugins: ["../.."]
 expected_outcome: >

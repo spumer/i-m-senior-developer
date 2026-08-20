@@ -1,0 +1,8 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command",
+        "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/product_intake_hint.py" } ] }
+    ]
+  }
+}

@@ -1,15 +1,15 @@
 ---
 name: product-discovery
 description: >
-  Product discovery for the planner pipeline: turns a raw idea, a shared
-  hypothesis, slice ordering, or a single slice's requirements into one of four
-  versioned documents (IDEA, EPIC, ROADMAP, feature README) written by the
-  product_state.py helper. Use when the user asks to проработать замысел или
-  идею, сформулировать общую гипотезу (EPIC), задать порядок срезов (ROADMAP),
-  подготовить требования среза или feature brief, or invokes /plan-idea,
-  /plan-epic, /plan-roadmap, /plan-feat. Runs a Socratic dialogue, routes work
-  to a capability provider, and keeps the write boundary: only the helper
-  writes the canonical file.
+  Этот скилл нужно вызвать до ответа, когда человек приносит сырой продуктовый
+  замысел, проблему людей, желаемый исход или список желаемых возможностей и
+  спрашивает, с чего начать: «есть мысль — обсудим?», «есть идея», «хотим…»,
+  «надо сделать X, Y и Z — с чего начнём?». Перечень функций к разработке — это
+  тоже продуктовый вход: сначала нужны общая гипотеза, границы и порядок срезов,
+  а не техническое решение. Не отвечай на такие запросы напрямую и не переходи к
+  проектированию. Используй также для /plan-idea, /plan-epic, /plan-roadmap и
+  /plan-feat. Не используй, когда продуктовые решения уже приняты: точечный
+  технический вопрос, исправление бага, реализация по готовой архитектуре.
 ---
 
 # Product discovery — проработка замысла до документа

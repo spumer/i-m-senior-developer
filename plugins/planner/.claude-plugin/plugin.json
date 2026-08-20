@@ -5,5 +5,6 @@
   "author": {
     "name": "Svyatoslav Posokhin"
   },
+  "hooks": "./hooks/hooks.json",
   "keywords": ["planner", "orchestration", "file-backed-planning", "product-discovery", "feature-planning", "agent-catalog", "reflection"]
 }
