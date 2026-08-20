@@ -37,6 +37,8 @@
 
 - [docs/index.md](docs/index.md): системное представление, что за что отвечает
 - [docs/plugins/index.md](docs/plugins/index.md): страница на каждый плагин — что это, для чего, как пользоваться, когда не пользоваться
+- [docs/plugins/planner.md](docs/plugins/planner.md): этапы конвейера, примеры разговора, подключение внешнего продуктового поставщика через §9
+- [docs/plugins/planner-commands.md](docs/plugins/planner-commands.md): восемь команд planner — входы, артефакты, стадии, исходы, коды остановки
 - [docs/plugins/relations.md](docs/plugins/relations.md): объявленные зависимости, операционные ссылки, роли по договорённости
 - [docs/decisions.md](docs/decisions.md): принятые решения по спорным вопросам с основаниями
 - [docs/testing/index.md](docs/testing/index.md): два вида проверки плагинов и границы каждого
