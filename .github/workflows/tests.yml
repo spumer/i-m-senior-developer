@@ -49,12 +49,23 @@ jobs:
 
   manifests:
     runs-on: ubuntu-latest
+    env:
+      DISABLE_UPDATES: "1"
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: install pinned Claude Code
+        run: |
+          npm install --global @anthropic-ai/claude-code@2.1.234
+          test "$(claude --version | cut -d' ' -f1)" = "2.1.234"
 
       # Каждый plugin.json и marketplace-манифест — валидный JSON.
       - name: plugin.json + marketplace manifests are valid JSON
@@ -64,4 +75,19 @@ jobs:
             [ -f "$f" ] || continue
             echo "== $f"
             python3 -c "import json,sys; json.load(open('$f'))"
+          done
+
+      # Корень плагина проверяет манифест; frontmatter компонентов проверяется
+      # только при отдельной передаче каталогов commands, skills и agents.
+      - name: plugin structure and component frontmatter
+        run: |
+          set -euo pipefail
+          claude plugin validate .claude-plugin/marketplace.json --strict
+          for manifest in plugins/*/.claude-plugin/plugin.json; do
+            plugin=${manifest%/.claude-plugin/plugin.json}
+            claude plugin validate "$plugin" --strict
+            for components in commands skills agents; do
+              [ ! -d "$plugin/$components" ] || \
+                claude plugin validate "$plugin/$components" --strict
+            done
           done
