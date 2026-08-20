@@ -1,0 +1,9 @@
+{
+  "name": "plugin-testing",
+  "version": "0.1.0",
+  "description": "Behavioural testing for Claude Code plugins: author eval cases and graders, run the suite through a verifying wrapper, read failures without weakening the gate, and keep per-plugin test reports.",
+  "author": {
+    "name": "Svyatoslav Posokhin"
+  },
+  "keywords": ["plugin-eval", "testing", "graders", "plugin-validate", "release-gate", "reports"]
+}

@@ -76,6 +76,15 @@
       },
       "source": "./plugins/fpf-competency-bank",
       "category": "development"
+    },
+    {
+      "name": "plugin-testing",
+      "description": "Behavioural testing for Claude Code plugins: author eval cases and graders, run the suite through a verifying wrapper, read a red run without weakening the gate, and keep per-plugin test reports.",
+      "author": {
+        "name": "Svyatoslav Posokhin"
+      },
+      "source": "./plugins/plugin-testing",
+      "category": "development"
     }
   ]
 }
