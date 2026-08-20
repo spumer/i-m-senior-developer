@@ -89,13 +89,15 @@ Seven-step pipeline. Run steps in order; do not skip.
    - GREEN — write the minimum production code to make it pass.
    - REFACTOR — clean up without changing test outcomes.
 
-6. **Run the full test suite.** Not just the new test. After every
-   GREEN phase, run all tests. A regression invisible to the new test
-   is still a regression.
+6. **Run the full test suite and the linters.** Not just the new test.
+   After every GREEN phase, run all tests. A regression invisible to the
+   new test is still a regression. Record the exact commands and their
+   outcomes: review reads that record and does not run the suite itself,
+   so a bare "tests pass" leaves the phase unproven.
 
 7. **Hand off.** Emit the implementation report (see Output format
-   section) and name `sdlc:code-reviewer` as the next agent with the
-   diff scope.
+   section), including the commands from step 6, and name
+   `sdlc:code-reviewer` as the next agent with the diff scope.
 
 ## TDD pointer
 

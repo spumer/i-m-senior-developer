@@ -88,7 +88,7 @@ Based on step 2:
 
 **Step 4 — Produce the architecture document.**
 
-Use the output format template below. Write to `<feature-dir>/ARCH-NN.md` (or `DESIGN-NN.md` — naming convention comes from `planner-context.md` §5 if present). Every section in the template is required; use `— none identified yet` rather than omitting a section entirely.
+Use the output format template below. Resolve the target path in this order: the document named by the orchestrator (under `/plan-do` this is the `ARCHITECTURE.md` referenced in the execution plan header) → the project's convention from `planner-context.md` §5 → `<feature-dir>/ARCH-NN.md`. Update that document in place; never add a second architecture file beside it, because the execution plan's freshness gate tracks one path only. Every section in the template is required; use `— none identified yet` rather than omitting a section entirely.
 
 Work through the template in order:
 - Start with Bounded Contexts — name all contexts before filling hand-off contracts.

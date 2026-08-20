@@ -75,7 +75,7 @@ Copy the content of the fenced block below verbatim into `<project-root>/.claude
   - `ARCHITECTURE.md` — готовая архитектура с версией и отпечатком тела
   - `PLANNER_EXECUTION.md` — план выполнения со ссылкой на архитектуру
   - `PLANNER_OUTPUT.md` — сохранённый legacy-артефакт; новые запуски его не используют
-  - `review-request-changes/FEAT-XXXX-ISSUE-0NN.md` — находки review
+  - `review-request-changes/REVIEW-NN.md` — отчёт ревью за один раунд
   - `screenshots/`, `test_cases/`
 - **Свободные задачи:** `.claude/plans/<task-slug>/`
 - **Контекстные файлы проекта** (если есть):

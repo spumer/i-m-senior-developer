@@ -282,8 +282,10 @@ If no feature directory exists (e.g. reviewer was invoked on an ad-hoc diff), ou
 
 The reviewer does **not** write to:
 - The reviewed source files (reviewer reads, not edits).
-- `<feature-dir>/PLANNER_OUTPUT.md` (that is the planner's artifact).
-- `<feature-dir>/ARCH-NN.md` (that is the architect's artifact).
+- `<feature-dir>/PLANNER_EXECUTION.md` (that is the planner's artifact).
+- The architecture document — `ARCHITECTURE.md`, `ARCH-NN.md`, or the project's own name from `planner-context.md` §5 (that is the architect's artifact).
+
+One report per review round, not one file per finding: the `## Security` and `## Certification boundary` sections are properties of the round, and splitting the report loses them. The bullet format inside the report is what makes each finding an independent work item.
 
 ## Reference index
 

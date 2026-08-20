@@ -59,10 +59,11 @@ For each implementation phase:
 
 1. Start the named **implementer** with the phase inputs and outputs.
 2. Include this guard in every dispatched prompt: the feature identifier belongs only in artifact filenames inside the feature directory; never place it in code, comments, docstrings, test names, identifiers, or project documentation outside that directory.
-3. After implementation, start the named **reviewer**. The reviewer runs tests and linters, inspects the diff, and writes one issue file per confirmed finding under `review-request-changes/`.
-4. If the reviewer finds an implementation defect, dispatch the implementer with the issue files, then repeat review.
-5. If the reviewer finds a design defect, dispatch the architect to update the architecture. After that update, stop: the execution plan must be rebuilt before implementation continues.
-6. Complete the phase only when review is clean.
+3. Require the implementer to run the project's tests and linters and to report the exact commands with their outcomes. A bare "tests pass" without the command and its output is not an outcome; return the phase to the implementer for the missing run.
+4. After implementation, start the named **reviewer** with the diff scope and that run report. The reviewer inspects the diff and does not run the suite itself; it writes one report per round to `<feature-dir>/review-request-changes/REVIEW-NN.md`. A finding that needs a run stays marked unverified for the implementer to reproduce.
+5. If the reviewer finds an implementation defect, dispatch the implementer with that report, then repeat review.
+6. If the reviewer finds a design defect, dispatch the architect to update the architecture document named in the execution plan header. The architect updates that document; it does not create a second one. After the update, stop: the execution plan must be rebuilt before implementation continues.
+7. Complete the phase only when review is clean.
 
 Independent phases may run in parallel only when `PLANNER_EXECUTION.md` marks them independent. Keep dependent phases serial.
 
