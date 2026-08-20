@@ -1,61 +1,43 @@
 # Плагины
 
-Маркетплейс подключается одной командой, плагины ставятся по отдельности.
-Исключение — два случая объявленных зависимостей, они подтягиваются сами:
-[Связи между плагинами](relations.md).
-
 ```text
 /plugin marketplace add spumer/i-m-senior-developer
 /plugin install <плагин>@i-m-senior-developer
 ```
 
-## Состав
-
-| Плагин | Версия | Что забирает у человека | Команды | Скиллы | Агенты |
+| Плагин | Версия | Команды | Скиллы | Агенты | Хуки |
 |---|---|---|---|---|---|
-| [planner](planner.md) | 1.1.0 | путь от замысла до исполнения, с файлом на каждом шаге | 8 | 4 | 1 |
-| [sdlc](sdlc.md) | 0.3.0 | разделение полномочий: проектирование, реализация, ревью | — | 3 | 3 |
-| [tdd-master](tdd-master.md) | 0.1.0 | решение, когда писать тест | — | 1 | 1 |
-| [functional-clarity](functional-clarity.md) | 1.1.0 | решение, как писать и менять код | — | 1 | — |
-| [clarity-language](clarity-language.md) | 0.3.0 | вычитку текстов от синтетики и кальки | — | 3 | — |
-| [plugin-testing](plugin-testing.md) | 0.1.0 | доказательство, что плагин меняет поведение | — | 1 | — |
-| [llms-keeper](llms-keeper.md) | 0.1.0 | поддержку контекста проекта для ИИ-инструментов | 1 | 1 | 1 |
-| [fpf-integration](fpf-integration.md) | 0.6.0 | работу со сводами принципов и компетенций | — | 4 | 1 |
-| [fpf-competency-bank](fpf-competency-bank.md) | 0.1.0 | сами своды — как данные | — | — | — |
+| [planner](planner.md) | 1.1.0 | 8 | 4 | 1 | `UserPromptSubmit` |
+| [sdlc](sdlc.md) | 0.3.0 | — | 3 | 3 | — |
+| [tdd-master](tdd-master.md) | 0.1.0 | — | 1 | 1 | `SessionStart` |
+| [functional-clarity](functional-clarity.md) | 1.1.0 | — | 1 | — | `SessionStart` |
+| [clarity-language](clarity-language.md) | 0.3.0 | — | 3 | — | `SessionStart` |
+| [plugin-testing](plugin-testing.md) | 0.1.0 | — | 1 | — | — |
+| [llms-keeper](llms-keeper.md) | 0.1.0 | 1 | 1 | 1 | `SessionStart` |
+| [fpf-integration](fpf-integration.md) | 0.6.0 | — | 4 | 1 | `SessionStart`, `UserPromptSubmit` |
+| [fpf-competency-bank](fpf-competency-bank.md) | 0.1.0 | — | — | — | — |
 
-Версии в таблице — состояние в репозитории. Плагин выпускается общим тегом
-маркетплейса `vX.Y.Z`, а его собственная версия поднимается один раз при выпуске.
+Версия в таблице — состояние в репозитории. Выпуск идёт общим тегом `vX.Y.Z`,
+версия плагина поднимается один раз при выпуске.
 
-## С чего начать
+## Наборы
 
-**Нужен порядок в разработке фич.** Поставьте `planner` и `sdlc`. Второй
-подтянет `tdd-master` и `functional-clarity`. Дальше конвейер работает от
-замысла до ревью.
+| Задача | Установить |
+|---|---|
+| разработка фич от требований до ревью | `planner`, `sdlc` (подтянет `tdd-master` и `functional-clarity`) |
+| только принципы кода | `functional-clarity` |
+| только цикл тестов | `tdd-master` |
+| проверка текстов | `clarity-language` |
+| разработка своих плагинов | `plugin-testing` |
+| работа со сводами компетенций | `fpf-competency-bank` (подтянет `fpf-integration`) |
 
-**Нужны только принципы кода.** `functional-clarity` — он загружается при старте
-сессии и не требует команд.
+`fpf-competency-bank` дополнительно требует записи пути в
+`~/.claude/frameworks.paths`.
 
-**Нужна дисциплина тестов.** `tdd-master` отдельно, без остального конвейера.
+## Локальный запуск без установки
 
-**Нужно вычитать тексты.** `clarity-language` — три независимых скилла, никаких
-зависимостей.
+```bash
+claude --plugin-dir plugins/planner --plugin-dir plugins/sdlc
+```
 
-**Пишете свой плагин.** `plugin-testing` — как доказать, что он действительно
-влияет на поведение модели, а не только валидно устроен.
-
-## Одна страница на компонент
-
-Страницы построены одинаково: что это, для чего, как пользоваться, когда НЕ
-пользоваться. Применённый не по адресу плагин добавляет шум и подрывает доверие
-ко всему набору, поэтому границы описаны так же подробно, как возможности.
-
-- [planner](planner.md) — продуктовый и планировочный контур, этапы и примеры
-  разговора; отдельно [справочник по командам](planner-commands.md)
-- [sdlc](sdlc.md) — три роли разработки
-- [tdd-master](tdd-master.md) — цикл красный–зелёный–рефакторинг
-- [functional-clarity](functional-clarity.md) — принципы надёжного простого кода
-- [clarity-language](clarity-language.md) — ясность текстов и естественный русский
-- [plugin-testing](plugin-testing.md) — поведенческая проверка плагинов
-- [llms-keeper](llms-keeper.md) — `llms.txt` и `llms-full.txt`
-- [fpf-integration](fpf-integration.md) — первопринципы, аудит решений, своды компетенций
-- [fpf-competency-bank](fpf-competency-bank.md) — эталонный банк сводов
+Связи между плагинами — [отдельная страница](relations.md).
