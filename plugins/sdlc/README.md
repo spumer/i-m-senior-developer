@@ -2,6 +2,9 @@
 
 Claude Code plugin: full SDLC pipeline for feature development. Replaces the legacy `~/.claude/agents/python-implementer.md`, `django-architect.md`, and `code-reviewer.md` with 3 namespaced, distributable, stack-aware agents. Instead of duplicating TDD workflow and Functional Clarity principles, the plugin integrates with `tdd-master` and `functional-clarity` by reference — keeping each agent lean and the overall system DRY. Works as a standalone pipeline or as the execution layer under `/plan-do` from the `planner` plugin.
 
+Роль плагина в системе, границы трёх ролей и случаи, когда их лучше не звать:
+[`docs/plugins/sdlc.md`](../../docs/plugins/sdlc.md).
+
 ## What it does
 
 - **`sdlc:architect`** — designs systems: bounded contexts, data flow, contracts, hand-off documents. Model: opus. Never writes implementation code.
@@ -11,7 +14,20 @@ Claude Code plugin: full SDLC pipeline for feature development. Replaces the leg
 - **TDD enforced** — `sdlc:code-implementer` activates `tdd-master:tdd-master` before writing any production code (RED phase is mandatory).
 - **FPF principles enforced** — `functional-clarity:functional-clarity` is referenced in both implementer and reviewer skills.
 - **Visual design** — `document-skills:frontend-design` available for frontend deliverables via graceful integration.
-- **Orchestration-ready** — all 3 agents are dispatched by `/plan-do` (from the `planner` plugin) in the architect → implementer → reviewer pipeline.
+- **Orchestration-ready** — `/plan-do` (from the `planner` plugin) fills its abstract roles — implementer, reviewer, architect, documentation keeper — from `.claude/planner-context.md`; these three agents are what fills the first three. `/plan-do` does not hardcode them.
+
+## What it is NOT for
+
+- **Not an orchestrator.** The plugin ships no command and no hook, so it never
+  runs the design → implement → review sequence by itself. A human or `/plan-do`
+  supplies the order.
+- **Not a planning layer.** Requirements, roadmap, and slice scope belong to
+  `planner`; the architect starts from a written slice, not from a raw idea.
+- **Not for a one-line fix.** Three role hand-offs cost more than a typo is
+  worth. Use the roles when the change has a contract, a boundary, or a
+  security surface.
+- **Not a substitute for running the tests.** The reviewer reads the diff; the
+  implementer runs the suite and reports the exact commands.
 
 ## Structure
 
@@ -82,14 +98,14 @@ rm -f ~/.claude/agents/code-reviewer.md
 # 5. Update each project's planner-context.md §1
 #    Option A (manual): replace rows for python-implementer / django-architect / code-reviewer
 #                       with sdlc:architect / sdlc:code-implementer / sdlc:code-reviewer.
-#    Option B (automatic): run `/plan-reflect` in a session with PLANNER_OUTPUT.md present
-#                          — the planner-reflect skill detects the catalog change and
-#                          appends auto-added rows. Manual-edit cells are preserved
-#                          (per planner FEAT-0001 re-scan rules).
+#    Option B (automatic): run `/plan-reflect` in a session with PLANNER_EXECUTION.md
+#                          present — the planner-reflect skill detects the catalog change
+#                          and appends auto-added rows. Manually edited cells are preserved.
 
 # 6. Smoke test
-#    Run `/plan-do features/<any-feature>/README.md` — all 3 phases should dispatch
-#    sdlc:architect → sdlc:code-implementer → sdlc:code-reviewer.
+#    Run `/plan-do features/<any-feature>/` on a feature that already has a current
+#    PLANNER_EXECUTION.md — the phase should dispatch sdlc:code-implementer, then
+#    sdlc:code-reviewer, under the role names from planner-context.md.
 
 # 7. Cleanup backups (after verification — at least one full session)
 rm -f ~/.claude/agents/*.backup
@@ -123,22 +139,22 @@ Sanity checks after migration:
 
 - **`tdd-master`** — `sdlc:code-implementer` activates `tdd-master:tdd-master` before writing any production code; the RED-GREEN-REFACTOR workflow is owned by `tdd-master`, not duplicated here.
 - **`functional-clarity`** — `sdlc:code-implementer` and `sdlc:code-reviewer` reference `functional-clarity:functional-clarity` for FPF/Error Hiding checks and parsimony rules.
-- **`planner`** — `/plan-do` (from `planner`) orchestrates the full pipeline: dispatches `sdlc:architect` → `sdlc:code-implementer` → `sdlc:code-reviewer` in sequence, loops until reviewer is clean.
+- **`planner`** — `/plan-do` (from `planner`) orchestrates by role, not by plugin name. It reads the role table in `.claude/planner-context.md`, dispatches the named implementer, then the named reviewer, and loops until review is clean. The architect is dispatched only when the reviewer reports a design defect — and after that update `/plan-do` stops, because the execution plan must be rebuilt against the new architecture version.
 - **`document-skills:frontend-design`** — graceful integration across the pipeline: `sdlc:architect` names the design system in the architecture document, `sdlc:code-implementer` activates it for visual quality during component implementation, `sdlc:code-reviewer` references it for visual/UX review of frontend changes. All three skills degrade gracefully when this plugin is not installed.
 
 ## Examples
 
-**Architecture pass from a feature README:**
+**Architecture pass from written slice requirements:**
 
 ```
-/plan-do features/FEAT-0042-billing/README.md
+/plan features/FEAT-0042-billing/README.md
 ```
-→ `/plan-do` dispatches `sdlc:architect` first; it reads `references/backend-python.md` and `references/api-design.md`, emits `features/FEAT-0042-billing/ARCH-01.md` (architect's design output; the planner artefact `PLANNER_OUTPUT.md` is separate).
+→ the `planner` skill produces `features/FEAT-0042-billing/ARCHITECTURE.md` with a version and a body fingerprint. Invoke `sdlc:architect` directly instead when there is no planner in the project; it then writes the architecture document under the project's own naming convention.
 
 **Backend implementation with TDD:**
 
 ```
-Архитектура готова (ARCH-01.md). Реализуй фичу.
+Архитектура готова. Реализуй фичу.
 ```
 → Activates `sdlc:code-implementer`, which calls `tdd-master:tdd-master` for RED phase, then loads `references/backend-python.md` (ORM patterns, pytest fixtures, mypy config).
 

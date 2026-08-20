@@ -2,6 +2,10 @@
 
 Плагины для Claude Code, собранные на основе моей практики.
 
+Документация: состав плагинов, связи между ними, правила проверки и отчёты о
+прогонах — в каталоге [`docs/`](docs/index.md). Сайт собирается Zensical и
+публикуется в GitHub Pages.
+
 ## Философия
 
 Я изучаю методы создания жизнеспособных систем, которые развиваются вместе с требованиями.
@@ -40,7 +44,7 @@
 
 ### [functional-clarity](plugins/functional-clarity/)
 
-22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии. Включает 7-шаговую Code-Change Discipline (с FPF-нормативами), дисциплину комментариев (объясняй «почему», не «что») и скилл `fpf-integration` — внедрение First Principles Framework ([ailev/FPF](https://github.com/ailev/FPF)) в multi-agent проекты: evidence-аудит, decay/DRR, NQD, навигационный индекс по спеке.
+22 принципа Функциональной ясности. Fail-fast, запрет Error Hiding, минимальные изменения, явные зависимости. Загружается при старте сессии. Включает 7-шаговую Code-Change Discipline (с FPF-нормативами) и дисциплину комментариев (объясняй «почему», не «что»).
 
 ### [tdd-master](plugins/tdd-master/)
 
@@ -62,6 +66,18 @@ SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-re
 
 Три скилла против AI-синтетики в текстах + SessionStart hook: `clarity-validator` (12 смысловых паттернов в тех-доках, FPF-обоснование), `ai-prose-detector` (стиль художественной прозы по 6 методам), `russian-style` (естественный русский — без кальки и придуманных русских переводов устоявшихся заимствований, без пустых антитез, простой язык для инженеров).
 
+### [plugin-testing](plugins/plugin-testing/)
+
+Поведенческая проверка плагинов Claude Code: кейсы и критерии, обёртка прогона, которая не даёт принять частичный результат за успех, разбор красного прогона, формат отчёта. Плюс утилита, находящая проверки, проходящие всегда.
+
+### [fpf-integration](plugins/fpf-integration/)
+
+Экосистема First Principles Framework ([ailev/FPF](https://github.com/ailev/FPF)): аудит решений с графом подтверждений, механизм устаревания решений, авторинг сводов принципов, резолвер сводов компетенций с гейтом свежести и ритуал закрытия сессии. Без источника справочника скилл останавливается, а не работает вслепую.
+
+### [fpf-competency-bank](plugins/fpf-competency-bank/)
+
+Только данные: два проверенных свода компетенций и карта для резолвера. Подключается через `~/.claude/frameworks.paths`, исполняется резолвером из `fpf-integration`.
+
 ## Установка
 
 ```
@@ -72,13 +88,31 @@ SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-re
 /plugin install planner@i-m-senior-developer
 /plugin install sdlc@i-m-senior-developer
 /plugin install clarity-language@i-m-senior-developer
+/plugin install plugin-testing@i-m-senior-developer
+/plugin install fpf-integration@i-m-senior-developer
+/plugin install fpf-competency-bank@i-m-senior-developer
 ```
+
+`sdlc` подтянет `tdd-master` и `functional-clarity`, `fpf-competency-bank` — `fpf-integration`: это объявленные зависимости.
 
 Локально:
 
 ```bash
-claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc --plugin-dir plugins/clarity-language
+claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc --plugin-dir plugins/clarity-language --plugin-dir plugins/plugin-testing --plugin-dir plugins/fpf-integration --plugin-dir plugins/fpf-competency-bank
 ```
+
+Что за что отвечает, как плагины связаны и в каких случаях каждым лучше не пользоваться — в [документации](docs/index.md).
+
+## Смежные проекты
+
+Оба опираются на эту витрину и не дублируют её методологию — ставятся рядом, а не вместо.
+
+- [senior-developer-tools](https://gitlab.com/mlopotkov/senior-developer-tools) — витрина по плагину на язык или связку: rust, python, typescript, web-svelte, плюс System Design для веб-сервисов, GitLab MR-flow, Bruno, SQLite-паттерны. TDD, Функциональная ясность и SDLC-роли там не дублируются, а подтягиваются отсюда, поэтому подключать нужно обе витрины.
+- [core-team](https://github.com/noxxer/core-team) — саморазворачивающийся мультиагентный фреймворк: фасилитатор и команда ролей, слой памяти между сессиями, гейты качества. Ставится копированием каталога `.claude/` в проект, а не через витрину. Для `planner` это один из внешних поставщиков продуктовой проработки — тот самый «пакет Core Team» из таблицы способностей.
+
+## Первоисточник
+
+- [ailev/FPF](https://github.com/ailev/FPF) — First Principles Framework А. Левенчука. Плагин `fpf-integration` читает эту спецификацию через MCP или локальную копию и без источника останавливается, а не работает вслепую. Своды компетенций в `fpf-competency-bank` собраны по её правилам.
 
 ## Автор
 

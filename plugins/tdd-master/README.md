@@ -47,11 +47,11 @@ Add the plugin path to your project's `.claude/settings.json`:
 2. **Skill activation** — triggers when user asks to write tests, implement features, fix bugs, or mentions TDD
 3. **Framework detection** — analyzes `pyproject.toml`, `conftest.py`, `manage.py` to determine pytest/Django usage
 4. **Reference loading** — always loads TDD_GUIDE + P0_DEFAULT_CONTEXT, conditionally loads framework-specific patterns
-5. **Agent execution** — tdd-master agent writes failing tests first, then minimal implementation, then refactors
+5. **Agent execution** — two modes. Called directly, the tdd-master agent runs the whole cycle: failing tests, then minimal implementation, then refactoring. Called by another agent, it stops after the RED phase: it creates the test file, writes the failing tests, reports the test list, and the calling agent implements against it.
 
 ## Integration
 
-This plugin works standalone. Other agents in your project can call tdd-master to write tests before implementation or verify TDD compliance during reviews.
+This plugin works standalone. Other agents in your project can call tdd-master to write tests before implementation or verify TDD compliance during reviews. In that delegated mode the caller owns the GREEN phase — see "Integration with Other Agents" in `agents/tdd-master.md`.
 
 ## Requirements
 

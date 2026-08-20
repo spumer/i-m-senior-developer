@@ -75,12 +75,15 @@ plugins/planner/
 │   │   └── SKILL.md
 │   └── planner-reflect/
 │       └── SKILL.md
+├── hooks/
+│   ├── hooks.json
+│   └── product_intake_hint.py
 ├── evals/
 │   ├── README.md
+│   ├── run.py
 │   ├── idea-routing/
 │   ├── multi-step-input/
 │   └── baseline-provider-limits/
-├── EVALUATION.md
 └── README.md
 ```
 
@@ -270,8 +273,16 @@ Section `§9` of the same file is the machine-readable capability matrix used by
 
 ## Evaluation
 
-`EVALUATION.md` documents how to check this plugin with `claude plugin eval` — case formats, the six grader types and their traps, ablation, scoring, and the sandbox. `evals/` holds the cases themselves, and `evals/README.md` records what they cover.
+Run the full behavioural suite with one command:
 
-Three cases check what is observable without a dialogue: a raw idea reaching discovery instead of slice requirements, a multi-outcome input not collapsing into one slice, and the built-in provider naming its limitations while writing no file. None of them has ever run — `plugin eval` is behind an early-access gate here — so their rubrics are uncalibrated.
+```bash
+python3 plugins/planner/evals/run.py
+```
+
+The wrapper pins the run contract, verifies the aggregate result, and refuses a partial run. General rules for plugin testing live in `docs/testing/`; the observed result of the latest run is recorded in `docs/reports/planner.md`.
+
+Three cases check what is observable without a dialogue: a raw idea reaching discovery instead of slice requirements, a multi-outcome input not collapsing into one slice, and the built-in provider naming its limitations while writing no file. All three pass three runs out of three at the strict threshold.
+
+Routing into discovery is not left to the skill description alone: the `UserPromptSubmit` hook in `hooks/` recognises a product-shaped prompt by explicit markers and requires the skill before an answer. The hook never blocks a prompt and stays silent on technical requests.
 
 What no case can cover is stated plainly. All four product commands ask the human through `AskUserQuestion`, and an eval case cannot script those answers; behaviour that depends on an answer needs a recorded transcript replayed through `context.history_file`. The helper and provider routing need no eval at all — they are covered by ordinary tests beside the code.

@@ -16,3 +16,7 @@ __pycache__/
 # Local eval run output
 evals/results/
 plugins/*/evals/results/
+
+# Documentation site build output and local virtualenv
+site/
+.venv/

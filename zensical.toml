@@ -1,0 +1,9 @@
+[project]
+site_name = "i-m-senior-developer"
+site_description = "Документация витрины плагинов Claude Code и отчёты по их проверкам."
+site_author = "Svyatoslav Posokhin"
+docs_dir = "docs"
+site_dir = "site"
+
+[project.theme]
+variant = "modern"
