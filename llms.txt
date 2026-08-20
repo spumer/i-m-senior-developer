@@ -15,8 +15,8 @@
 ## Маркетплейс и плагины
 
 - [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json): девять записей, каждая указывает на каталог плагина
-- [plugins/planner](plugins/planner/): конвейер от замысла до исполнения, файл на каждом шаге, гейт свежести плана
-- [plugins/sdlc](plugins/sdlc/): три роли с разделёнными полномочиями — проектирование, реализация, ревью
+- [plugins/planner](plugins/planner/): конвейер от замысла до исполнения, файл на каждом шаге, гейт свежести плана; проработку и исполнение отдаёт ролям из `.claude/planner-context.md`
+- [plugins/sdlc](plugins/sdlc/): агенты architect, code-implementer, code-reviewer
 - [plugins/tdd-master](plugins/tdd-master/): цикл красный–зелёный–рефакторинг, два режима вызова агента
 - [plugins/functional-clarity](plugins/functional-clarity/): принципы кода и дисциплина изменения чужого кода
 - [plugins/clarity-language](plugins/clarity-language/): ясность технических текстов, естественный русский, разбор прозы
@@ -37,7 +37,7 @@
 
 - [docs/index.md](docs/index.md): системное представление, что за что отвечает
 - [docs/plugins/index.md](docs/plugins/index.md): страница на каждый плагин — что это, для чего, как пользоваться, когда не пользоваться
-- [docs/plugins/planner.md](docs/plugins/planner.md): этапы конвейера, примеры разговора, подключение внешнего продуктового поставщика через §9
+- [docs/plugins/planner.md](docs/plugins/planner.md): интеграция с другими системами планирования (§1 роли, §9 поставщики), команды, артефакты, пример разговора
 - [docs/plugins/planner-commands.md](docs/plugins/planner-commands.md): восемь команд planner — входы, артефакты, стадии, исходы, коды остановки
 - [docs/plugins/relations.md](docs/plugins/relations.md): объявленные зависимости, операционные ссылки, роли по договорённости
 - [docs/decisions.md](docs/decisions.md): принятые решения по спорным вопросам с основаниями
