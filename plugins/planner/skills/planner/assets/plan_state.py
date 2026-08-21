@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import stat
 import sys
 import tempfile
@@ -611,6 +612,76 @@ def semantic_change(value: str) -> bool:
     return value == "yes"
 
 
+_REPORT_PREFIXES = {
+    "implementation": "IMPLEMENTATION",
+    "review": "REVIEW",
+    "documentation": "DOCUMENTATION",
+}
+_REPORT_NUMBER_LIMIT = 99
+_RESERVATION_ATTEMPTS = 100
+
+
+def report_directory_numbers(directory: Path, prefix: str) -> tuple[list[int], list[str]]:
+    pattern = re.compile(rf"^{prefix}-(\d{{2}})\.md$")
+    numbers: list[int] = []
+    empties: list[str] = []
+    try:
+        entries = sorted(directory.iterdir())
+    except OSError as error:
+        raise PlanStateError(f"{directory}: {error}") from error
+    for entry in entries:
+        match = pattern.fullmatch(entry.name)
+        if match is None:
+            continue
+        try:
+            size = entry.stat().st_size
+        except OSError as error:
+            raise PlanStateError(f"{entry}: {error}") from error
+        numbers.append(int(match.group(1)))
+        if size == 0:
+            empties.append(str(entry.resolve()))
+    return numbers, empties
+
+
+def report_exhausted(prefix: str, empties: list[str]) -> PlanStateError:
+    listing = ", ".join(empties) if empties else "none"
+    return PlanStateError(
+        f"{prefix} numbers 01-99 exhausted; cannot create {prefix}-100.md; "
+        f"empty reserved files: {listing}"
+    )
+
+
+def reserve_report(directory: Path, kind: str) -> dict[str, Any]:
+    prefix = _REPORT_PREFIXES[kind]
+    resolved = directory.expanduser().resolve()
+    if not resolved.is_dir():
+        raise PlanStateError(f"{resolved}: report directory must exist")
+    numbers, empties = report_directory_numbers(resolved, prefix)
+    number = max(numbers, default=0) + 1
+    for _ in range(_RESERVATION_ATTEMPTS):
+        if number > _REPORT_NUMBER_LIMIT:
+            raise report_exhausted(prefix, empties)
+        target = resolved / f"{prefix}-{number:02d}.md"
+        try:
+            descriptor = os.open(
+                target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666
+            )
+        except FileExistsError:
+            number += 1
+            continue
+        except OSError as error:
+            raise PlanStateError(f"{target}: {error}") from error
+        os.close(descriptor)
+        return {
+            "created": True,
+            "empties": empties,
+            "kind": kind,
+            "number": number,
+            "path": str(target.resolve()),
+        }
+    raise report_exhausted(prefix, empties)
+
+
 def build_parser() -> CliParser:
     parser = CliParser(prog="plan_state.py")
     commands = parser.add_subparsers(
@@ -650,6 +721,12 @@ def build_parser() -> CliParser:
     check_command = commands.add_parser("check")
     check_command.add_argument("path", type=Path)
     check_command.add_argument("--mark-stale", action="store_true")
+
+    reserve_command = commands.add_parser("reserve-report")
+    reserve_command.add_argument("--directory", type=Path, required=True)
+    reserve_command.add_argument(
+        "--kind", choices=tuple(_REPORT_PREFIXES), required=True
+    )
     return parser
 
 
@@ -678,6 +755,9 @@ def run(arguments: list[str] | None = None) -> int:
             options.architecture,
             semantic_change(options.semantic_change),
         )
+    if options.command == "reserve-report":
+        print_payload(reserve_report(options.directory, options.kind))
+        return 0
     return check_execution(options.path, options.mark_stale)
 
 

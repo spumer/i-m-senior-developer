@@ -1,3 +1,4 @@
+import errno
 import hashlib
 import json
 import os
@@ -5,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -777,6 +779,196 @@ class PlanStateCliTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 64)
         self.assertIn("usage:", result.stderr)
+
+    def test__reserve_report__fresh_directory__creates_first_number(self) -> None:
+        for kind, filename in (
+            ("implementation", "IMPLEMENTATION-01.md"),
+            ("review", "REVIEW-01.md"),
+            ("documentation", "DOCUMENTATION-01.md"),
+        ):
+            with self.subTest(kind=kind):
+                directory = self.root / f"fresh-{kind}"
+                directory.mkdir()
+
+                result = self.run_cli(
+                    "reserve-report", "--directory", str(directory), "--kind", kind
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertTrue(payload["created"])
+                self.assertEqual(payload["kind"], kind)
+                self.assertEqual(payload["number"], 1)
+                self.assertEqual(payload["path"], str((directory / filename).resolve()))
+                self.assertEqual(payload["empties"], [])
+                target = directory / filename
+                self.assertTrue(target.exists())
+                self.assertEqual(target.stat().st_size, 0)
+
+    def test__reserve_report__next_number__is_max_occupied_plus_one(self) -> None:
+        cases = [
+            (["IMPLEMENTATION-01.md", "IMPLEMENTATION-02.md"], 3, "IMPLEMENTATION-03.md", []),
+            (["IMPLEMENTATION-07.md"], 8, "IMPLEMENTATION-08.md", []),
+            (["IMPLEMENTATION-09.md", "IMPLEMENTATION-10.md"], 11, "IMPLEMENTATION-11.md", []),
+            (["REVIEW-01.md", "REVIEW-05.md"], 6, "REVIEW-06.md", []),
+        ]
+        for index, (occupied, expected_number, expected_name, _) in enumerate(cases):
+            with self.subTest(occupied=occupied):
+                directory = self.root / f"numbers-{index}"
+                directory.mkdir()
+                for name in occupied:
+                    (directory / name).write_text("# Report\n")
+
+                result = self.run_cli(
+                    "reserve-report", "--directory", str(directory), "--kind",
+                    expected_name.split("-")[0].lower(),
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["number"], expected_number)
+                self.assertEqual(payload["path"], str((directory / expected_name).resolve()))
+                self.assertFalse((directory / "IMPLEMENTATION-0007.md").exists())
+
+    def test__reserve_report__abandoned_reservation__consumes_number_and_is_listed(
+        self,
+    ) -> None:
+        directory = self.root / "feature"
+        directory.mkdir()
+        abandoned = directory / "IMPLEMENTATION-02.md"
+        abandoned.touch()
+        abandoned_resolved = abandoned.resolve()
+
+        result = self.run_cli(
+            "reserve-report", "--directory", str(directory), "--kind", "implementation"
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["number"], 3)
+        self.assertEqual(payload["path"], str((directory / "IMPLEMENTATION-03.md").resolve()))
+        self.assertEqual(payload["empties"], [str(abandoned_resolved)])
+
+    def test__reserve_report__number_over_99__refuses_loudly_before_creation(self) -> None:
+        cases = [
+            (["IMPLEMENTATION-99.md"], []),
+            (["IMPLEMENTATION-98.md", "IMPLEMENTATION-99.md"], ["IMPLEMENTATION-98.md"]),
+        ]
+        for index, (occupied, expected_empties) in enumerate(cases):
+            with self.subTest(occupied=occupied):
+                directory = self.root / f"limit-{index}"
+                directory.mkdir()
+                for name in occupied:
+                    target = directory / name
+                    if name in expected_empties:
+                        target.touch()
+                    else:
+                        target.write_text("# Report\n")
+
+                result = self.run_cli(
+                    "reserve-report", "--directory", str(directory), "--kind",
+                    "implementation",
+                )
+
+                self.assertEqual(result.returncode, 3)
+                self.assertIn("IMPLEMENTATION-100.md", result.stderr)
+                self.assertNotIn("exceeded", result.stderr)
+                for name in expected_empties:
+                    self.assertIn(str(directory / name), result.stderr)
+                listing = sorted(
+                    entry.name
+                    for entry in directory.iterdir()
+                    if entry.name.startswith("IMPLEMENTATION-")
+                )
+                self.assertEqual(listing, sorted(occupied))
+
+    def test__reserve_report__collision__advances_to_next_number(self) -> None:
+        directory = self.root / "feature"
+        directory.mkdir()
+        (directory / "IMPLEMENTATION-01.md").write_text("# Report\n")
+        real_open = os.open
+        calls = []
+
+        def conflicting_open(path, flags, mode=0o777):
+            if str(path).endswith("IMPLEMENTATION-02.md") and len(calls) < 1:
+                calls.append(path)
+                raise FileExistsError(errno.EEXIST, "File exists", str(path))
+            return real_open(path, flags, mode)
+
+        with mock.patch.object(plan_state.os, "open", side_effect=conflicting_open):
+            payload = plan_state.reserve_report(directory, "implementation")
+
+        self.assertEqual(payload["number"], 3)
+        self.assertTrue((directory / "IMPLEMENTATION-03.md").exists())
+
+    def reserve_concurrently(
+        self, directory: Path, participants: int
+    ) -> tuple[list, list]:
+        # Без предельного времени участник, упавший до входа в барьер, оставил
+        # бы остальных ждать навсегда, и набор завис бы вместо отказа.
+        barrier = threading.Barrier(participants, timeout=30)
+        real_numbers = plan_state.report_directory_numbers
+
+        def synchronized_numbers(*args, **kwargs):
+            barrier.wait()
+            return real_numbers(*args, **kwargs)
+
+        payloads = []
+        errors = []
+
+        def worker():
+            try:
+                payloads.append(
+                    plan_state.reserve_report(directory, "implementation")
+                )
+            except Exception as error:  # noqa: BLE001
+                errors.append(error)
+
+        with mock.patch.object(
+            plan_state, "report_directory_numbers", side_effect=synchronized_numbers
+        ):
+            threads = [threading.Thread(target=worker) for _ in range(participants)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+        return payloads, errors
+
+    def test__reserve_report__concurrent_calls__get_distinct_paths(self) -> None:
+        participants = 8
+        # Одного круга мало: варианту «посмотреть, потом записать» случается
+        # разойтись во времени и разминуться — примерно шесть раз из ста.
+        # Повторы убирают этот зазор.
+        for attempt in range(5):
+            with self.subTest(round=attempt):
+                directory = self.root / f"race-{attempt}"
+                directory.mkdir()
+
+                payloads, errors = self.reserve_concurrently(directory, participants)
+
+                self.assertEqual(errors, [])
+                paths = sorted(payload["path"] for payload in payloads)
+                self.assertEqual(len(paths), participants)
+                self.assertEqual(len(set(paths)), participants)
+                created = sorted(
+                    entry.name
+                    for entry in directory.iterdir()
+                    if entry.name.startswith("IMPLEMENTATION-")
+                )
+                self.assertEqual(len(created), participants)
+
+    def test__reserve_report__missing_directory__returns_invalid(self) -> None:
+        result = self.run_cli(
+            "reserve-report",
+            "--directory",
+            str(self.root / "absent"),
+            "--kind",
+            "implementation",
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("must exist", result.stderr)
 
 
 if __name__ == "__main__":
