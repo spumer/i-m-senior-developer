@@ -76,6 +76,134 @@ class PlanStateCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(prepared.exists())
 
+    def sync_documents(self, architecture: Path, execution: Path, body: str) -> None:
+        architecture_body = "# Architecture\n"
+        architecture_prepared = self.prepared_body(architecture, architecture_body)
+        architecture_result = self.run_cli(
+            "sync-architecture",
+            str(architecture),
+            "--body-file",
+            str(architecture_prepared),
+            "--semantic-change",
+            "yes",
+        )
+        self.assertEqual(architecture_result.returncode, 0, architecture_result.stderr)
+
+        execution_prepared = self.prepared_body(execution, body)
+        execution_result = self.run_cli(
+            "sync-execution",
+            str(execution),
+            "--body-file",
+            str(execution_prepared),
+            "--architecture",
+            str(architecture),
+            "--semantic-change",
+            "yes",
+        )
+        self.assertEqual(execution_result.returncode, 0, execution_result.stderr)
+
+    def initialize_repository(self, directory: Path) -> None:
+        result = subprocess.run(
+            ["git", "init"],
+            cwd=directory,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def commit_output(self, directory: Path, path: Path, timestamp: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("generated output\n")
+        relative_path = path.relative_to(directory)
+        added = subprocess.run(
+            ["git", "add", "--", str(relative_path)],
+            cwd=directory,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(added.returncode, 0, added.stderr)
+        environment = {
+            **os.environ,
+            "GIT_AUTHOR_DATE": timestamp,
+            "GIT_COMMITTER_DATE": timestamp,
+        }
+        committed = subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=Test User",
+                "-c",
+                "user.email=test@example.com",
+                "commit",
+                "-m",
+                "record output",
+            ],
+            cwd=directory,
+            text=True,
+            capture_output=True,
+            check=False,
+            env=environment,
+        )
+        self.assertEqual(committed.returncode, 0, committed.stderr)
+
+    def create_work_hint_case(
+        self, name: str, hint_status: str, stale: bool
+    ) -> tuple[Path, Path, int]:
+        directory = self.root / name
+        directory.mkdir()
+        architecture = directory / "ARCHITECTURE.md"
+        execution = directory / "PLANNER_EXECUTION.md"
+        body = "# Execution\n"
+        if hint_status != "unavailable":
+            body = "# Execution\nВыходы:\n- `./generated/output.md`\n"
+        self.sync_documents(architecture, execution, body)
+        self.initialize_repository(directory)
+        if hint_status == "outputs_unchanged":
+            self.commit_output(
+                directory,
+                directory / "generated" / "output.md",
+                "2020-09-13T12:26:40 +0000",
+            )
+        elif hint_status == "outputs_changed":
+            self.commit_output(
+                directory,
+                directory / "generated" / "output.md",
+                "2024-01-01T00:00:00 +0000",
+            )
+
+        plan_built_at_ns = 1_700_000_000_123_456_789
+        os.utime(execution, ns=(plan_built_at_ns, plan_built_at_ns))
+        if stale:
+            architecture.write_text(
+                architecture.read_text().replace(
+                    "# Architecture\n", "# Changed architecture\n"
+                )
+            )
+        return architecture, execution, plan_built_at_ns
+
+    def assert_existing_check_fields(
+        self,
+        payload: dict[str, object],
+        architecture: Path,
+        execution: Path,
+        status: str,
+    ) -> None:
+        expected = {
+            "architecture_path": str(architecture.resolve()),
+            "current_version": 1,
+            "execution_path": str(execution.resolve()),
+            "recorded_version": 1,
+            "status": status,
+        }
+        if status == "stale":
+            expected["reason"] = "architecture content hash mismatch"
+        self.assertEqual(
+            {name: payload[name] for name in expected},
+            expected,
+        )
+
     def write_valid_architecture(self, body: str = "# Original\n") -> bytes:
         content = plan_state.render_architecture(1, body_hash(body), body)
         self.architecture.write_text(content)
@@ -278,14 +406,26 @@ class PlanStateCliTest(unittest.TestCase):
 
         self.assertEqual(self.execution.read_bytes(), original)
 
-    def test__check__matching_documents__returns_current(self) -> None:
+    def test__check__matching_documents__returns_current_with_work_hint(self) -> None:
         self.sync_architecture()
         self.sync_execution()
 
         result = self.run_cli("check", str(self.execution))
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)["status"], "current")
+        payload = json.loads(result.stdout)
+        work_hint = payload.pop("work_hint")
+        self.assertEqual(
+            payload,
+            {
+                "architecture_path": str(self.architecture.resolve()),
+                "current_version": 1,
+                "execution_path": str(self.execution.resolve()),
+                "recorded_version": 1,
+                "status": "current",
+            },
+        )
+        self.assertEqual(work_hint["status"], "unavailable")
 
     def test__check__architecture_body_changed_directly__returns_stale(self) -> None:
         self.sync_architecture()
@@ -350,6 +490,51 @@ class PlanStateCliTest(unittest.TestCase):
             json.loads(second.stdout)["reason"],
             "architecture content hash mismatch",
         )
+
+    def test__check__work_hint_statuses__preserves_current_and_stale_exit_codes(self) -> None:
+        for hint_status in (
+            "outputs_unchanged",
+            "outputs_changed",
+            "unavailable",
+        ):
+            for stale in (False, True):
+                with self.subTest(hint_status=hint_status, stale=stale):
+                    architecture, execution, _ = self.create_work_hint_case(
+                        f"{hint_status}-{stale}", hint_status, stale
+                    )
+
+                    result = self.run_cli("check", str(execution))
+
+                    expected_status = "stale" if stale else "current"
+                    expected_code = 2 if stale else 0
+                    self.assertEqual(result.returncode, expected_code, result.stderr)
+                    payload = json.loads(result.stdout)
+                    self.assert_existing_check_fields(
+                        payload,
+                        architecture,
+                        execution,
+                        expected_status,
+                    )
+                    self.assertEqual(payload["work_hint"]["status"], hint_status)
+
+    def test__check__mark_stale__preserves_execution_mtime_for_repeated_work_hint(self) -> None:
+        _, execution, plan_built_at_ns = self.create_work_hint_case(
+            "preserved-mtime", "outputs_changed", True
+        )
+
+        first = self.run_cli("check", str(execution), "--mark-stale")
+
+        self.assertEqual(first.returncode, 2, first.stderr)
+        first_hint = json.loads(first.stdout)["work_hint"]
+        self.assertEqual(first_hint["status"], "outputs_changed")
+
+        second = self.run_cli("check", str(execution))
+
+        self.assertEqual(second.returncode, 2, second.stderr)
+        second_hint = json.loads(second.stdout)["work_hint"]
+        self.assertEqual(second_hint["plan_built_at"], first_hint["plan_built_at"])
+        self.assertEqual(second_hint["status"], "outputs_changed")
+        self.assertEqual(execution.stat().st_mtime_ns, plan_built_at_ns)
 
     def test__validate_architecture_target__distinct_path__returns_current(self) -> None:
         source = self.root / "README.md"
@@ -772,7 +957,27 @@ class PlanStateCliTest(unittest.TestCase):
         result = self.run_cli("check", str(self.execution))
 
         self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
         self.assertIn("execution content hash mismatch", result.stderr)
+
+    def test__check__invalid_architecture__does_not_build_work_hint(self) -> None:
+        self.sync_architecture()
+        self.sync_execution()
+        self.architecture.write_text(
+            "---\nplan_type: unknown\nversion: 1\nstatus: current\n---\n# Body\n"
+        )
+
+        with mock.patch.object(plan_state, "build_work_hint") as build_work_hint:
+            with self.assertRaises(plan_state.PlanStateError):
+                plan_state.check_execution(self.execution, False)
+
+        build_work_hint.assert_not_called()
+
+    def test__cli__check_without_path__returns_usage(self) -> None:
+        result = self.run_cli("check")
+
+        self.assertEqual(result.returncode, 64)
+        self.assertIn("usage:", result.stderr)
 
     def test__cli__missing_required_arguments__returns_usage(self) -> None:
         result = self.run_cli("sync-architecture")

@@ -10,6 +10,8 @@ import sys
 import tempfile
 from typing import Any, NoReturn
 
+from work_hint import build_work_hint
+
 
 EXIT_STALE = 2
 EXIT_INVALID = 3
@@ -578,9 +580,15 @@ def check_execution(path: Path, mark_stale: bool) -> int:
     if fingerprint(execution.body) != metadata["content_sha256"]:
         raise PlanStateError(f"{execution.path}: execution content hash mismatch")
 
+    execution_stat = execution.path.stat()
     architecture = read_document(resolve_architecture(execution))
     architecture_data = architecture_state(architecture)
     reason = stale_reason(execution, architecture, architecture_data)
+    work_hint = build_work_hint(
+        execution.path,
+        execution.body,
+        execution_stat.st_mtime_ns,
+    )
     if reason is None:
         print_payload(
             {
@@ -589,12 +597,17 @@ def check_execution(path: Path, mark_stale: bool) -> int:
                 "execution_path": str(execution.path),
                 "recorded_version": metadata["architecture"]["version"],
                 "status": "current",
+                "work_hint": work_hint,
             }
         )
         return 0
 
     if mark_stale and metadata["status"] != "stale":
         mark_execution_stale(execution)
+        os.utime(
+            execution.path,
+            ns=(execution_stat.st_atime_ns, execution_stat.st_mtime_ns),
+        )
     print_payload(
         {
             "architecture_path": architecture_data["path"],
@@ -603,6 +616,7 @@ def check_execution(path: Path, mark_stale: bool) -> int:
             "reason": reason,
             "recorded_version": metadata["architecture"]["version"],
             "status": "stale",
+            "work_hint": work_hint,
         }
     )
     return EXIT_STALE
