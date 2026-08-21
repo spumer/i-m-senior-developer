@@ -958,6 +958,93 @@ class PlanStateCliTest(unittest.TestCase):
                 )
                 self.assertEqual(len(created), participants)
 
+    def test__inspect_report__missing_path__returns_missing_with_null_size(self) -> None:
+        absent = self.root / "IMPLEMENTATION-01.md"
+
+        result = self.run_cli("inspect-report", str(absent))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {
+                "path": str(absent.resolve()),
+                "size": None,
+                "status": "missing",
+            },
+        )
+
+    def test__inspect_report__empty_regular_file__returns_empty_with_zero_size(self) -> None:
+        reserved = self.root / "IMPLEMENTATION-01.md"
+        reserved.touch()
+
+        result = self.run_cli("inspect-report", str(reserved))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {
+                "path": str(reserved.resolve()),
+                "size": 0,
+                "status": "empty",
+            },
+        )
+
+    def test__inspect_report__nonempty_regular_file__returns_nonempty_with_actual_size(self) -> None:
+        report = self.root / "IMPLEMENTATION-01.md"
+        body = "# Full report\n" * 17
+        report.write_text(body)
+
+        result = self.run_cli("inspect-report", str(report))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {
+                "path": str(report.resolve()),
+                "size": len(body.encode()),
+                "status": "nonempty",
+            },
+        )
+
+    def test__inspect_report__symbolic_link__returns_invalid_without_reading(self) -> None:
+        target = self.root / "outside.md"
+        target.write_text("# External report\n")
+        link = self.root / "IMPLEMENTATION-01.md"
+        link.symlink_to(target)
+
+        result = self.run_cli("inspect-report", str(link))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("symbolic link", result.stderr)
+
+    def test__inspect_report__directory__returns_invalid_without_reading(self) -> None:
+        directory = self.root / "IMPLEMENTATION-01.md"
+        directory.mkdir()
+
+        result = self.run_cli("inspect-report", str(directory))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("regular file", result.stderr)
+
+    def test__inspect_report__relative_path_from_directory__returns_absolute_path(self) -> None:
+        directory = self.root / "feature"
+        directory.mkdir()
+        report = directory / "IMPLEMENTATION-01.md"
+        report.write_text("# Report\n")
+
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "inspect-report", "IMPLEMENTATION-01.md"],
+            cwd=directory,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(
+            json.loads(completed.stdout)["path"], str(report.resolve())
+        )
+
     def test__reserve_report__missing_directory__returns_invalid(self) -> None:
         result = self.run_cli(
             "reserve-report",

@@ -682,6 +682,28 @@ def reserve_report(directory: Path, kind: str) -> dict[str, Any]:
     raise report_exhausted(prefix, empties)
 
 
+def inspect_report(path: Path) -> int:
+    target = absolute_path(path)
+    try:
+        target_stat = os.lstat(target)
+    except FileNotFoundError:
+        print_payload(
+            {"path": str(target), "size": None, "status": "missing"}
+        )
+        return 0
+    except OSError as error:
+        raise PlanStateError(f"{target}: {error}") from error
+    if stat.S_ISLNK(target_stat.st_mode):
+        raise PlanStateError(f"{target}: report path must not be a symbolic link")
+    if not stat.S_ISREG(target_stat.st_mode):
+        raise PlanStateError(f"{target}: report path must be a regular file")
+    status = "nonempty" if target_stat.st_size > 0 else "empty"
+    print_payload(
+        {"path": str(target), "size": target_stat.st_size, "status": status}
+    )
+    return 0
+
+
 def build_parser() -> CliParser:
     parser = CliParser(prog="plan_state.py")
     commands = parser.add_subparsers(
@@ -727,6 +749,9 @@ def build_parser() -> CliParser:
     reserve_command.add_argument(
         "--kind", choices=tuple(_REPORT_PREFIXES), required=True
     )
+
+    inspect_report_command = commands.add_parser("inspect-report")
+    inspect_report_command.add_argument("path", type=Path)
     return parser
 
 
@@ -758,6 +783,8 @@ def run(arguments: list[str] | None = None) -> int:
     if options.command == "reserve-report":
         print_payload(reserve_report(options.directory, options.kind))
         return 0
+    if options.command == "inspect-report":
+        return inspect_report(options.path)
     return check_execution(options.path, options.mark_stale)
 
 
