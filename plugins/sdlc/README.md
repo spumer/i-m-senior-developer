@@ -29,6 +29,16 @@ Claude Code plugin: full SDLC pipeline for feature development. Replaces the leg
 - **Not a substitute for running the tests.** The reviewer reads the diff; the
   implementer runs the suite and reports the exact commands.
 
+## Отчёты при `/plan-do`
+
+При самостоятельном вызове реализатор и ревьюер по-прежнему выводят полный
+отчёт в чат. Если `/plan-do` передаёт точный путь отчёта и форму краткого
+ответа, полный отчёт записывается в файл, а в контекст оркестратора возвращается
+только доказательная сводка. Реализатор использует
+`<feature-dir>/IMPLEMENTATION-NN.md`, ревьюер —
+`<feature-dir>/review-request-changes/REVIEW-NN.md`. Ревьюер может записать
+только переданный файл отчёта и не меняет проверяемый код.
+
 ## Structure
 
 ```
@@ -139,7 +149,7 @@ Sanity checks after migration:
 
 - **`tdd-master`** — `sdlc:code-implementer` activates `tdd-master:tdd-master` before writing any production code; the RED-GREEN-REFACTOR workflow is owned by `tdd-master`, not duplicated here.
 - **`functional-clarity`** — `sdlc:code-implementer` and `sdlc:code-reviewer` reference `functional-clarity:functional-clarity` for FPF/Error Hiding checks and parsimony rules.
-- **`planner`** — `/plan-do` (from `planner`) orchestrates by role, not by plugin name. It reads the role table in `.claude/planner-context.md`, dispatches the named implementer, then the named reviewer, and loops until review is clean. The architect is dispatched only when the reviewer reports a design defect — and after that update `/plan-do` stops, because the execution plan must be rebuilt against the new architecture version.
+- **`planner`** — `/plan-do` из `planner` выбирает роли из `.claude/planner-context.md`, а не по именам плагинов. Замечание к проектированию может оставить текущее ревью чистым, но останавливает план до следующей рабочей фазы, чтобы решение принял человек. `/plan-do` не вызывает архитектора автоматически; изменение архитектуры срабатывает на действующем гейте свежести и требует пересобрать план выполнения.
 - **`document-skills:frontend-design`** — graceful integration across the pipeline: `sdlc:architect` names the design system in the architecture document, `sdlc:code-implementer` activates it for visual quality during component implementation, `sdlc:code-reviewer` references it for visual/UX review of frontend changes. All three skills degrade gracefully when this plugin is not installed.
 
 ## Examples
