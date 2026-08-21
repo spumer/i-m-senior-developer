@@ -28,6 +28,7 @@ The full result lives in a file. A successful run prints only the path, version,
 - **Execution mode** — `/plan` on architecture writes a separate `PLANNER_EXECUTION.md` with phases, dependencies, models, and review gates.
 - **Freshness guard** — architecture and execution plans carry versions and SHA-256 body fingerprints. Direct architecture edits make the execution plan stale even when its visible version was not updated manually.
 - **Implementation orchestration** — `/plan-do` проверяет свежесть перед каждым вызовом роли, назначает файлы отчётов и координирует фазы реализации, ревью и документации.
+- **Экспериментальный workflow** — `/planner:plan-do-workflow <каталог-фичи>` явно запускает отдельный workflow с кодовым порядком фаз; обычный `/planner:plan-do` остаётся действующим путём.
 - **Post-task learning** — `/plan-reflect` writes stable lessons back to `.claude/planner-context.md`.
 
 ## Structure
@@ -46,7 +47,10 @@ plugins/planner/
 │   ├── plan-jira.md
 │   ├── plan.md
 │   ├── plan-do.md
+│   ├── plan-do-workflow.md
 │   └── plan-reflect.md
+├── workflows/
+│   └── plan-do-workflow.js
 ├── skills/
 │   ├── planner/
 │   │   ├── SKILL.md
@@ -243,6 +247,14 @@ The guard cannot be bypassed by confirmation. Rebuild the plan with:
 /plan <path-to-current-architecture>
 ```
 
+## Экспериментальный workflow выполнения
+
+`/planner:plan-do-workflow <каталог-фичи>` — отдельная экспериментальная команда для текущего плана выполнения. Она предварительно проверяет каталог и обязательные файлы, затем запускает workflow `planner:plan-do-workflow` из `workflows/plan-do-workflow.js`.
+
+Обычный цикл `/planner:plan-do` не меняется и остаётся действующим путём. Экспериментальная команда не вызывается автоматически и не переключается на обычную команду при отказе.
+
+Итог workflow возвращает состояние, число рабочих вызовов, число проверок свежести, забронированные пути и пути записанных отчётов. Полный текст отчётов в итог не включается.
+
 ## Отчёты фаз
 
 Для каждой роли, вызванной оркестратором, действует один принцип: полный отчёт записывается в файл, а доказательная сводка возвращается в контекст оркестратора. Номер отчёта — наибольший занятый плюс один: дыры в нумерации не переиспользуются, номер только растёт (до 99). Путь бронируется до вызова роли, поэтому параллельные прогоны не затирают чужие отчёты. Прерванный прогон может оставить по пути пустой файл — это не ошибка, автоматически он не удаляется. Имена: `IMPLEMENTATION-NN.md` для реализации и кругов правок, `review-request-changes/REVIEW-NN.md` для ревью, `DOCUMENTATION-NN.md` для документации.
@@ -275,6 +287,7 @@ An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it 
 | `/plan-jira` | Gather requirements from a Jira description |
 | `/plan` | Write architecture or execution planning to a file |
 | `/plan-do` | Проверить свежесть, скоординировать роли и сохранить отчёты фаз |
+| `/planner:plan-do-workflow <каталог-фичи>` | Явно запустить экспериментальный workflow `planner:plan-do-workflow` по текущему плану |
 | `/plan-reflect` | Record stable project-specific lessons |
 
 ## Configuration
