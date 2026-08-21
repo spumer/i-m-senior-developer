@@ -151,6 +151,12 @@ When no external provider covers a required capability, the built-in `product-ba
 
 A provider draft is accepted only after the helper checks its shape: `check-response` rejects a draft missing `problem`, `outcome`, or `limitations`, and rejects fields belonging to another document kind instead of dropping them silently. Two parts of the same contract stay a judgement the skill makes — a provider reporting a file write, and a provider claiming user research, real human feedback, independent multi-role review, or a confirmed hypothesis.
 
+### Проверка основания и черновика
+
+Для участия в выборе строка матрицы должна содержать содержательное основание. Прочерк и одна служебная HTML-метка основанием не считаются: покрытие такой строки становится неизвестным. Если для обязательной способности не остаётся подходящего поставщика, проработка останавливается до его вызова. Сообщение называет непокрытую способность и все её отклонённые строки с номером, поставщиком и причиной. При успешном выборе итог также показывает выбранные и отклонённые строки.
+
+Черновик ответа поставщика сохраняется только под именем `provider-response.json` в отдельном системном временном каталоге вне репозитория. Поставщик сам файлов не создаёт. После машинной проверки помощник удаляет черновик и его временный каталог и при принятии ответа, и при отказе.
+
 ### Write boundary
 
 The canonical document is written only by the `product_state.py` helper. The model prepares the document body in a temporary `.prepared` file and calls the helper, which allocates numbered directories, assigns versions, records the parent's version and fingerprint, and writes or refuses. Providers never write files; neither does the model write the canonical file directly.
