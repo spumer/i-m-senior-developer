@@ -62,7 +62,7 @@ active | paused | completed | cancelled
 ## Now
 | ID | Фича | Условие завершения | FEAT |
 |---|---|---|---|
-| RM-01 | ... | ... | features/FEAT-0021-... |
+| RM-01 | ... | ... | features/FEAT-0042-... |
 
 ## Next
 | ID | Фича | Что должно произойти раньше |

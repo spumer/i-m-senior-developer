@@ -1008,6 +1008,28 @@ class ProductStateCliTest(unittest.TestCase):
         )
         self.assertIn("line 15: provider none-provider: coverage-none", result.stderr)
 
+    def test__route__pinned_provider_without_evidence__stderr_lists_rejected_rows(
+        self,
+    ) -> None:
+        context = self.context_path(
+            row_overrides={"problem.external": {"evidence": "—"}}
+        )
+
+        result = self.run_cli(
+            "route", str(context), "--for", "feature", "--pin", "product"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("problem_outcome_framing", result.stderr)
+        self.assertIn(
+            "line 7: provider product: no-substantive-evidence", result.stderr
+        )
+        self.assertIn(
+            "line 8: provider planner:product-baseline: not-pinned-provider",
+            result.stderr,
+        )
+
     def test__route__unknown_product_kind__returns_usage_error(self) -> None:
         context = self.context_path()
 
@@ -1186,6 +1208,26 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertIn("provider-response.json", result.stderr)
         self.assertTrue(draft.exists())
 
+    def test__check_response__consume_foreign_correct_file_name__rejects_without_reading_or_deletion(
+        self,
+    ) -> None:
+        foreign_directory = self.root / "foreign-response-draft"
+        foreign_directory.mkdir()
+        draft = foreign_directory / product_state.LEASE_FILE_NAME
+        draft.write_text("this is not JSON\n")
+
+        result = self.run_cli(
+            "check-response", str(draft), "--for", "idea", "--consume"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn(str(draft.resolve()), result.stderr)
+        self.assertIn("product-response-", result.stderr)
+        self.assertNotIn("not valid JSON", result.stderr)
+        self.assertTrue(draft.exists())
+        self.assertTrue(foreign_directory.exists())
+
     def test__check_response__consume_deletion_failure__error_is_not_masked(
         self,
     ) -> None:
@@ -1247,6 +1289,23 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 3)
         self.assertIn("provider-response.json", result.stderr)
         self.assertTrue(draft.exists())
+
+    def test__release_response_draft__foreign_correct_file_name__rejects_without_deletion(
+        self,
+    ) -> None:
+        foreign_directory = self.root / "foreign-response-draft"
+        foreign_directory.mkdir()
+        draft = foreign_directory / product_state.LEASE_FILE_NAME
+        draft.write_text("{}\n")
+
+        result = self.run_cli("release-response-draft", str(draft))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn(str(draft.resolve()), result.stderr)
+        self.assertIn("product-response-", result.stderr)
+        self.assertTrue(draft.exists())
+        self.assertTrue(foreign_directory.exists())
 
     def test__inspect__valid_idea_frontmatter__returns_parsed_state(self) -> None:
         body = "# Idea\n"

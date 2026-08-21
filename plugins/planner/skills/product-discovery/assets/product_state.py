@@ -116,6 +116,7 @@ _DATE_MARKER_PATTERN = re.compile(
 )
 _HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
 _DASH = "—"
+LEASE_DIRECTORY_PREFIX = "product-response-"
 LEASE_FILE_NAME = "provider-response.json"
 
 
@@ -1036,6 +1037,25 @@ def rejection_reason(
     return "earlier-equivalent-provider"
 
 
+def unselected_reason(candidate: dict[str, Any], pin: str | None) -> str:
+    base = base_rejection_reason(candidate)
+    if base is not None:
+        return base
+    if pin is not None and candidate["provider"] != pin:
+        return "not-pinned-provider"
+    return "unselectable"
+
+
+def rejected_candidates(rows: list[dict[str, Any]], pin: str | None) -> str:
+    if not rows:
+        return "no candidate rows"
+    return "; ".join(
+        f"line {row['line']}: provider {row['provider']}: "
+        f"{unselected_reason(row, pin)}"
+        for row in rows
+    )
+
+
 def trace_candidate(
     row: dict[str, Any], selected: dict[str, Any], pin: str | None
 ) -> dict[str, Any]:
@@ -1076,12 +1096,13 @@ def route_capabilities(
         capability_rows = [
             row for row in relevant if row["capability"] == capability
         ]
+        rejected = rejected_candidates(capability_rows, pin)
         if pin is not None:
             pinned_rows = [row for row in capability_rows if row["provider"] == pin]
             if not pinned_rows:
                 raise ProductStateError(
                     f"{path.expanduser().resolve()}: pinned provider {pin!r} is absent "
-                    f"for required capability {capability!r}"
+                    f"for required capability {capability!r}: {rejected}"
                 )
             available_pinned = [
                 row for row in pinned_rows if row["availability"] == "available"
@@ -1090,26 +1111,21 @@ def route_capabilities(
                 statuses = sorted({row["availability"] for row in pinned_rows})
                 raise ProductStateError(
                     f"{path.expanduser().resolve()}: pinned provider {pin!r} is "
-                    f"unavailable for required capability {capability!r}: {statuses}"
+                    f"unavailable for required capability {capability!r}: {statuses}; "
+                    f"{rejected}"
                 )
             selectable = [row for row in available_pinned if row_is_selectable(row)]
             if not selectable:
                 raise ProductStateError(
                     f"{path.expanduser().resolve()}: pinned provider {pin!r} does "
-                    f"not cover required capability {capability!r}"
+                    f"not cover required capability {capability!r}: {rejected}"
                 )
         else:
             selectable = [row for row in capability_rows if row_is_selectable(row)]
             if not selectable:
-                rejected = "; ".join(
-                    f"line {row['line']}: provider {row['provider']}: "
-                    f"{base_rejection_reason(row) or 'unselectable'}"
-                    for row in capability_rows
-                )
                 raise ProductStateError(
                     f"{path.expanduser().resolve()}: required capability "
-                    f"{capability!r} is not covered"
-                    + (f": {rejected}" if rejected else ": no candidate rows")
+                    f"{capability!r} is not covered: {rejected}"
                 )
         selected_by_capability[capability] = min(selectable, key=candidate_rank)
 
@@ -1213,7 +1229,7 @@ def validate_response_completeness(draft: dict[str, Any], path: Path) -> None:
 
 
 def reserve_lease() -> int:
-    directory = Path(tempfile.mkdtemp(prefix="product-response-"))
+    directory = Path(tempfile.mkdtemp(prefix=LEASE_DIRECTORY_PREFIX))
     print_payload({"path": str(directory / LEASE_FILE_NAME)})
     return 0
 
@@ -1223,6 +1239,15 @@ def require_lease_path(path: Path) -> Path:
     if resolved.name != LEASE_FILE_NAME:
         raise ProductStateError(
             f"{resolved}: draft lease file must be named {LEASE_FILE_NAME}"
+        )
+    temp_directory = Path(tempfile.gettempdir()).resolve()
+    if (
+        not resolved.parent.name.startswith(LEASE_DIRECTORY_PREFIX)
+        or resolved.parent.parent != temp_directory
+    ):
+        raise ProductStateError(
+            f"{resolved}: draft lease must be in a {LEASE_DIRECTORY_PREFIX}* "
+            f"directory directly inside system temporary directory {temp_directory}"
         )
     return resolved
 
