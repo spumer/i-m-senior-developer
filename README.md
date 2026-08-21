@@ -82,18 +82,8 @@ SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-re
 
 ## Установка
 
-```
-/plugin marketplace add spumer/i-m-senior-developer
-/plugin install functional-clarity@i-m-senior-developer
-/plugin install tdd-master@i-m-senior-developer
-/plugin install llms-keeper@i-m-senior-developer
-/plugin install planner@i-m-senior-developer
-/plugin install sdlc@i-m-senior-developer
-/plugin install clarity-language@i-m-senior-developer
-/plugin install plugin-testing@i-m-senior-developer
-/plugin install fpf-integration@i-m-senior-developer
-/plugin install fpf-competency-bank@i-m-senior-developer
-```
+Установка и обновление маркетплейса и плагинов описаны на
+[отдельной странице](docs/install.md).
 
 `sdlc` подтянет `tdd-master` и `functional-clarity`, `fpf-competency-bank` — `fpf-integration`: это объявленные зависимости.
 
