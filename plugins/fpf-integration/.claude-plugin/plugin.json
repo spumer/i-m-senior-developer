@@ -5,6 +5,5 @@
   "author": {
     "name": "spumer"
   },
-  "keywords": ["fpf", "first-principles", "dpf", "dpf-apply", "framework-apply", "dpf-authoring", "evidence", "decision-quality"],
-  "hooks": "./hooks/hooks.json"
+  "keywords": ["fpf", "first-principles", "dpf", "dpf-apply", "framework-apply", "dpf-authoring", "evidence", "decision-quality"]
 }
