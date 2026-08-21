@@ -14,15 +14,26 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Юнит-тесты плагинов (stdlib unittest, без зависимостей).
+      # Юнит-тесты плагинов и скриптов-стражей (stdlib unittest, без зависимостей).
       # Каждый test_*.py сам добавляет свой каталог в sys.path — запускаем по пути.
       - name: unit tests
         run: |
           set -e
-          for t in $(find plugins -name 'test_*.py' | sort); do
+          for t in $(find plugins scripts -name 'test_*.py' | sort); do
             echo "== $t"
             python3 "$t"
           done
+
+      # Запрет верхнеуровневого ключа hooks в plugin.json (локальный страж
+      # scripts/check_manifests.py, тот же вызов — из корня репозитория).
+      - name: manifest guard
+        run: python3 scripts/check_manifests.py
+
+      # Скан числовых зеркал (стоимость, оценки) в docs/ вне docs/reports/.
+      # Сверка таблицы с результатом прогона здесь не запускается: результаты
+      # eval игнорируются git, в чистой копии CI их нет.
+      - name: numeric-mirror scan
+        run: python3 scripts/check_report_numbers.py --scan-mirrors
 
       # Приёмочный smoke: уровни зрелости seed-сводов не должны съезжать с калибровки.
       - name: maturity smoke — seed swords keep calibrated level
@@ -46,6 +57,23 @@ jobs:
           python3 "$m" "$bank/LPF-SIMPLIFICATION-REVIEW" >/dev/null
           changed=$(git status --porcelain -- 'plugins/fpf-competency-bank/frameworks/*/DPF.md')
           test -z "$changed" || { echo "::error::seed DPF.md изменён прогоном maturity.py:"; echo "$changed"; exit 1; }
+
+  # Сборка документации Zensical. Публикация на master остаётся в docs.yml;
+  # здесь только проверка, что docs/ собираются. Запускается на любых push/PR
+  # без фильтрации путей: отказ — дефект сборки, а не факт правки docs/.
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # --strict обязателен: без него сломанная ссылка или якорь — лишь Warning
+      # с кодом выхода 0, и сборка проходит с битой документацией.
+      - run: pip install zensical
+      - run: zensical build --clean --strict
 
   manifests:
     runs-on: ubuntu-latest
