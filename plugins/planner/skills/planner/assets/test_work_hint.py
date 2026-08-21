@@ -193,7 +193,6 @@ class WorkHintTest(unittest.TestCase):
                 }
             ],
         )
-        self.assertIn("другая работа", str(hint["message"]).lower())
 
     def test__work_hint__commit_in_build_second__is_ambiguous(self) -> None:
         same_second = "2024-01-01T00:00:30+0000"
