@@ -484,7 +484,7 @@ function documentationPrompt(input, documentation, reportPath, correction) {
     roleGuard(input.feature_directory) +
     correctionText +
     `Разрешённые пути документации:\n${renderPlanValue(documentation.allowed_paths)}\n\n` +
-    'Не изменяй файлы вне разрешённого списка.\n\n' +
+    `Не изменяй файлы вне разрешённого списка, кроме полного documentation report по пути ${reportPath}.\n\n` +
     'Верни в чат только эту сводку, не дублируя полный отчёт:\n\n' +
     `Status: complete | blocked | not-needed\nReport: ${reportPath}\nCommands:\n- <точная команда проверки> — <наблюдённый итог>\nSummary: <проза не длиннее 1200 символов>\nBlocked checks: <список | none>`
   )
