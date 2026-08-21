@@ -27,7 +27,7 @@ The full result lives in a file. A successful run prints only the path, version,
 - **Architecture mode** — `/plan` on a feature README or free-text task writes a complete `ARCHITECTURE.md`.
 - **Execution mode** — `/plan` on architecture writes a separate `PLANNER_EXECUTION.md` with phases, dependencies, models, and review gates.
 - **Freshness guard** — architecture and execution plans carry versions and SHA-256 body fingerprints. Direct architecture edits make the execution plan stale even when its visible version was not updated manually.
-- **Implementation orchestration** — `/plan-do` checks freshness before any agent, then runs implementation and review phases until clean.
+- **Implementation orchestration** — `/plan-do` проверяет свежесть перед каждым вызовом роли, назначает файлы отчётов и координирует фазы реализации, ревью и документации.
 - **Post-task learning** — `/plan-reflect` writes stable lessons back to `.claude/planner-context.md`.
 
 ## Structure
@@ -119,7 +119,7 @@ The technical chain, starting from a slice:
 /plan features/FEAT-0001-<slug>/ARCHITECTURE.md
         ↓ writes features/FEAT-0001-<slug>/PLANNER_EXECUTION.md
 /plan-do features/FEAT-0001-<slug>/
-        ↓ checks freshness, implements, reviews, updates documentation
+        ↓ проверяет свежесть; роли пишут полные отчёты фаз в файлы и возвращают доказательные сводки
 /plan-reflect features/FEAT-0001-<slug>/
         ↓ records stable lessons in planner-context.md
 ```
@@ -237,6 +237,12 @@ The guard cannot be bypassed by confirmation. Rebuild the plan with:
 /plan <path-to-current-architecture>
 ```
 
+## Отчёты фаз
+
+Для каждой роли, вызванной оркестратором, действует один принцип: полный отчёт записывается в файл, а доказательная сводка возвращается в контекст оркестратора. В каталоге фичи выбирается первый свободный путь: `IMPLEMENTATION-NN.md` для реализации и кругов правок, `review-request-changes/REVIEW-NN.md` для ревью, `DOCUMENTATION-NN.md` для документации.
+
+Замечание к проектированию не блокирует текущее ревью и не делает текущий диф дефектным. Оно останавливает план до следующей рабочей фазы, чтобы решение принял человек. `/plan-do` не вызывает архитектора автоматически; если решение меняет архитектуру, следующий гейт свежести требует пересобрать план выполнения.
+
 ## Chat output
 
 After a successful write, `/plan` and the product commands print only:
@@ -262,7 +268,7 @@ An existing `PLANNER_OUTPUT.md` is preserved. New planner runs do not delete it 
 | `/plan-feat` | Gather requirements for one deliverable slice and write a feature README |
 | `/plan-jira` | Gather requirements from a Jira description |
 | `/plan` | Write architecture or execution planning to a file |
-| `/plan-do` | Check freshness, implement, review, and document |
+| `/plan-do` | Проверить свежесть, скоординировать роли и сохранить отчёты фаз |
 | `/plan-reflect` | Record stable project-specific lessons |
 
 ## Configuration

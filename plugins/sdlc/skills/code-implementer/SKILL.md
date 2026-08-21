@@ -247,7 +247,7 @@ changes → no information loss.
 
 ## Output format — implementation report
 
-When the implementation is complete, emit to chat (do not write a
+When invoked independently, emit the complete report to chat (do not write a
 separate report file):
 
 ```
@@ -285,6 +285,49 @@ pytest                        # full suite — N passed, 0 failed
 Next agent: `sdlc:code-reviewer`
 Diff scope: <base-ref>..HEAD or <list of changed files>
 ```
+
+### Orchestrated report hand-off
+
+This mode applies only when the orchestrator explicitly supplies both the
+exact path for the complete implementation report and the compact return
+format. Write the complete report above to that exact path and return only
+this compact summary to chat; do not duplicate the complete report there.
+
+```text
+Status: complete | blocked
+Report: <path> | chat (no feature directory)
+Commands:
+- <exact command> — <observed result>
+Summary: <prose of at most 1200 characters>
+Blocked checks: <list | none>
+```
+
+`Commands` records every command that supplied evidence, including its
+observed outcome. The 1200-character limit applies only to `Summary`, not to
+the command list. Use `blocked` and name the unavailable checks when evidence
+cannot be obtained. If the orchestrator explicitly states that no feature
+directory exists, keep the complete report in chat and set `Report` to
+`chat (no feature directory)`; otherwise, a supplied report path must be
+written before returning the summary.
+
+If the orchestrator explicitly states in the same call that a complete correct
+report already exists at the supplied path and requests only a corrected compact
+summary, return that summary without writing, replacing, deleting, or renaming
+the report file. This exception applies only to that form-only correction.
+
+Before writing a complete report, inspect the supplied path. If it contains a
+nonempty file, do not overwrite it unless the orchestrator explicitly states
+in this same call that the file is an unfinished implementation report from
+this role and that replacing it is expected. In every other occupied-path
+case, return the exact chat line `Целевой путь занят: <путь>` with the actual
+path, followed by a short explanation of what was found there. Do not return
+the ordinary compact summary or choose another path yourself. Do not delete,
+rename, or overwrite a file owned by another role: the orchestrator owns path
+selection and numbering.
+
+These checks apply only to this orchestrated mode. Without both the supplied
+path and compact return format, keep the existing independent behavior of
+returning the complete report in chat.
 
 ## Gotchas
 

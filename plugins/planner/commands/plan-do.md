@@ -5,81 +5,166 @@ description: Execute a current planner execution file through implementation and
 allowed-tools: ["Read", "Grep", "Glob", "Bash(python3:*)", "Agent", "Write"]
 ---
 
-# Task
+# Задача
 
-Orchestrate implementation for: $ARGUMENTS
+Выполни план реализации для: $ARGUMENTS
 
-## 1. Resolve the plan files
+## 1. Разреши файлы плана
 
-Resolve the feature directory from the supplied directory or file. The execution artifact is `PLANNER_EXECUTION.md` in that directory.
+Определи каталог фичи по переданному каталогу или файлу. Актуальный план выполнения — `PLANNER_EXECUTION.md` в этом каталоге.
 
-Fail before starting any agent when:
+Не запускай ни одного агента, если:
 
-- the argument does not resolve to a readable path;
-- `PLANNER_EXECUTION.md` is missing or unreadable;
-- the execution header does not point to a readable architecture document;
-- the architecture and execution paths resolve to the same file.
+- аргумент не указывает на читаемый путь;
+- `PLANNER_EXECUTION.md` отсутствует или недоступен для чтения;
+- заголовок плана не указывает на читаемый архитектурный документ;
+- пути архитектуры и плана совпадают.
 
-For a missing execution plan, tell the user to run:
-
-```text
-/planner:plan <path-to-architecture>
-```
-
-Do not treat a legacy `PLANNER_OUTPUT.md` as the current execution plan.
-
-## 2. Check freshness before every Agent call
-
-Run the state helper before starting any working phase:
+Если плана выполнения нет, сообщи человеку точную команду:
 
 ```text
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" check <path-to-PLANNER_EXECUTION.md>
+/planner:plan <путь-к-архитектуре>
 ```
 
-Interpret its exit status:
+Не считай старый `PLANNER_OUTPUT.md` актуальным планом выполнения.
 
-- `0` — the plan is current; continue;
-- `2` — the plan is stale; stop before Agent;
-- `3` — the plan is invalid or unreadable; stop before Agent;
-- `64` — the helper invocation is invalid; fix the invocation and rerun it before Agent.
+## 2. Проверяй свежесть перед каждым вызовом агента
 
-When the plan is stale, report `reason`, the recorded architecture version, and the current architecture version from the helper output. The reason is required even when both versions are equal. Then give the exact rebuild command:
+Перед каждым рабочим вызовом агента запускай помощник состояния:
 
 ```text
-/planner:plan <resolved-architecture-path>
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/planner/assets/plan_state.py" check <путь-к-PLANNER_EXECUTION.md>
 ```
 
-Confirmation from the user does not bypass this gate. Re-run the same check immediately before each later Agent call; a long implementation session must not continue after the architecture changes underneath it.
+Интерпретируй код завершения:
 
-## 3. Execute `PLANNER_EXECUTION.md`
+- `0` — план актуален, можно продолжать;
+- `2` — план устарел, остановись до вызова агента;
+- `3` — план недействителен или нечитаем, остановись до вызова агента;
+- `64` — вызов помощника составлен неверно; исправь его и повтори проверку до вызова агента.
 
-Read the execution plan and map its abstract roles to agents from `.claude/planner-context.md` §1. Do not invent agent names.
+Если план устарел, покажи `reason`, записанную и текущую версии архитектуры из вывода помощника. Причину показывай и при одинаковых версиях. Затем укажи команду пересборки:
 
-For each implementation phase:
+```text
+/planner:plan <разрешённый-путь-к-архитектуре>
+```
 
-1. Start the named **implementer** with the phase inputs and outputs.
-2. Include this guard in every dispatched prompt: the feature identifier belongs only in artifact filenames inside the feature directory; never place it in code, comments, docstrings, test names, identifiers, or project documentation outside that directory.
-3. Require the implementer to run the project's tests and linters and to report the exact commands with their outcomes. A bare "tests pass" without the command and its output is not an outcome; return the phase to the implementer for the missing run.
-4. After implementation, start the named **reviewer** with the diff scope and that run report. The reviewer inspects the diff and does not run the suite itself; it writes one report per round to `<feature-dir>/review-request-changes/REVIEW-NN.md`. A finding that needs a run stays marked unverified for the implementer to reproduce.
-5. If the reviewer finds an implementation defect, dispatch the implementer with that report, then repeat review.
-6. If the reviewer finds a design defect, dispatch the architect to update the architecture document named in the execution plan header. The architect updates that document; it does not create a second one. After the update, stop: the execution plan must be rebuilt before implementation continues.
-7. Complete the phase only when review is clean.
+Подтверждение человека не отменяет этот гейт. Повторяй проверку непосредственно перед каждым следующим вызовом агента: архитектура может измениться во время долгой реализации.
 
-Independent phases may run in parallel only when `PLANNER_EXECUTION.md` marks them independent. Keep dependent phases serial.
+## 3. Владей путями и формой передачи
 
-## 4. Documentation
+Прочитай план выполнения. Сопоставляй роли только с действующими агентами из `.claude/planner-context.md` §1; не придумывай имена. Используй каталог фичи и правила хранения из §5.
 
-After all implementation phases are clean, dispatch the documentation keeper named in `.claude/planner-context.md`. It may update only the project documentation paths listed there. Apply the same identifier guard to its prompt.
+Обойди каждую implementation phase из `PLANNER_EXECUTION.md` в заданном плане порядке. Для текущей фазы возьми назначенного реализатора, её входы и выходы, выбери путь implementation report и вызови реализатора по договору ниже. После принятой сводки со `Status: complete` проведи ревью этого результата. Переходи к следующей implementation phase только после `clean`-ревью без design-находок. Если план прямо помечает несколько фаз как независимые, выполни этот цикл отдельно в каждой параллельной ветви.
 
-If no active documentation keeper exists, update only the explicitly listed documentation files yourself; do not invent new project-context files.
+Перед рабочим вызовом выбери первый отсутствующий двухзначный номер в соответствующем наборе файлов. Не используй существующий файл как цель и не перезаписывай его:
 
-## 5. Completion report
+- реализация и каждый круг правок: `<каталог-фичи>/IMPLEMENTATION-NN.md`;
+- ревью: `<каталог-фичи>/review-request-changes/REVIEW-NN.md`;
+- документация: `<каталог-фичи>/DOCUMENTATION-NN.md`.
 
-Report:
+Непосредственно перед первичным рабочим вызовом заново убедись, что выбранный путь отсутствует. Если он появился, выбери следующий свободный номер; не удаляй и не используй занятый файл.
 
-- files changed;
-- tests and validation commands actually run, with their outcomes;
-- review rounds and remaining limitations;
-- whether project documentation changed.
+Передавай выбранный точный путь в prompt роли. Полный отчёт должен быть записан по этому пути, а в основной контекст возвращается только компактная сводка. Не проси полный отчёт в чате и не перечитывай его без отдельной причины. Путь последнего implementation report передавай ревьюеру вместо текста этого отчёта.
 
-Do not claim a check ran when it was skipped or blocked. Do not commit, tag, push, delete, or publish unless the user separately asks.
+До проверки формы и статуса сводки обработай ответ `Целевой путь занят: <путь>`. Это не ошибка формы и не обычный `blocked` или `changes-requested`: не переигрывай роль по прежнему пути. Сохрани занятый файл, выбери следующий свободный номер, повторно проверь свежесть и вызови ту же роль с новым точным путём. Этот повторный рабочий вызов не расходует единственный корректирующий вызов формы. Занятый путь назови человеку в итоговом сообщении.
+
+На одну запланированную рабочую роль допускается не более трёх рабочих вызовов из-за занятых путей, включая первичный. Перед каждым повтором выбери следующий свободный номер и непосредственно перед вызовом снова проверь его отсутствие. Если третий такой вызов вернул `Целевой путь занят: <путь>`, останови цикл без четвёртого вызова и покажи человеку, что предел трёх коллизий пути исчерпан, с перечислением занятых путей. Это правило действует для реализации, ревью, документации и запасного документирования.
+
+В каждом рабочем prompt добавляй guard: идентификатор фичи допустим только в именах артефактов внутри каталога фичи. Его нельзя помещать в код, комментарии, docstring, имена тестов, идентификаторы и проектную документацию вне каталога фичи.
+
+### Повторная проверка перед корректирующим вызовом
+
+После гейта свежести и непосредственно перед единственным корректирующим вызовом заново проверь переданный путь полного отчёта. Если по нему уже есть полный корректный отчёт, прими его независимо от формы ранее полученной компактной сводки. При корректной сводке не вызывай роль повторно; при неполной или недействительной сводке вызови её только для корректной компактной сводки и прямо укажи: «Полный корректный отчёт уже записан по переданному пути; верни только корректную компактную сводку и не записывай, не заменяй, не удаляй и не переименовывай файл». Не переигрывай выполненную работу. Если файл отсутствует либо содержит незавершённый отчёт той же роли, отправь корректирующий вызов и прямо укажи: «Этот вызов должен записать отчёт по переданному пути; если там лежит твой незавершённый отчёт, его замена ожидаема». Если файл непустой, но не является незавершённым отчётом той же роли или его принадлежность неясна, не отправляй корректирующий вызов по этому пути: сохрани файл и обработай случай как занятый путь по правилу выше.
+
+### Сводка реализации и круга правок
+
+В prompt реализатора передай фазу, входы и выходы плана, путь выбранного `IMPLEMENTATION-NN.md` и этот договор:
+
+```text
+Запиши полный действующий implementation report по переданному пути.
+Верни в чат только эту сводку, не дублируя полный отчёт:
+
+Status: complete | blocked
+Report: <переданный путь>
+Commands:
+- <точная команда> — <наблюдённый итог>
+Summary: <проза не длиннее 1200 символов>
+Blocked checks: <список | none>
+```
+
+`Commands` содержит каждую команду, которая дала доказательство, и её наблюдённый итог. Ограничение длины относится только к `Summary`, не к списку команд. Напомни реализатору о запретах `commit`, `push` и `tag`.
+
+Проверь сводку по смыслу: в ней есть путь отчёта, он совпадает с переданным путём и файл записан; есть список команд с наблюдёнными итогами; присутствуют статус, `Summary` и `Blocked checks`. Допустимы только `Status: complete` и `Status: blocked`; другое значение — неполная или недействительная сводка. Если `Summary` длиннее 1200 символов, запиши отклонение формы для итога, но не переигрывай фазу по одной длине.
+
+При первом пропуске обязательной части или недействительном `Status` повторно проверь свежесть, затем действуй по правилу «Повторная проверка перед корректирующим вызовом». Если вызов нужен, один раз вызови того же реализатора. Назови отсутствующую или недействительную часть, передай прежний путь и потребуй только полную корректную компактную сводку; полный отчёт в чат не возвращается. При повторном пропуске останови цикл до следующей рабочей фазы и явно назови причину.
+
+Если `Status: blocked`, немедленно останови цикл, покажи причину из `Summary` и `Blocked checks` и не вызывай ревьюера. Только `Status: complete` открывает ревью.
+
+### Сводка ревью
+
+Только после принятой сводки реализации со `Status: complete` повторно проверь свежесть и вызови ревьюера. Передай область diff, путь последнего `IMPLEMENTATION-NN.md`, точный путь выбранного `REVIEW-NN.md` и этот договор:
+
+```text
+Прочитай implementation report по переданному пути. Запиши полный review report
+по переданному пути. Верни в чат только эту сводку, не дублируя полный отчёт:
+
+Status: clean | changes-requested
+Report: <переданный путь>
+Findings: major N; minor N; security N; design N
+Blocking: N
+Certification boundary: <что статическое ревью не удостоверяет>
+Summary: <проза не длиннее 1200 символов>
+```
+
+`Blocking` считает только находки, блокирующие текущее ревью. Если есть design concern, ревьюер обязан дословно поместить его в `Summary`, сохранив две оси: `blocks_current_review: false` и `blocks_plan_continuation: true`. Напомни ревьюеру, что он не правит исходники, архитектуру, план, индекс или ветку, а также не выполняет `commit`, `push` и `tag`.
+
+Проверь сводку по смыслу: путь отчёта совпадает с переданным и файл записан; присутствуют `Status`, числа всех четырёх видов находок и `Blocking`; есть непустая граница удостоверения и `Summary`. Допустимы только `Status: clean` и `Status: changes-requested`; другое значение или отсутствие поля делает сводку неполной либо недействительной. При design-находке проверь, что в `Summary` есть её дословное описание и две оси. Превышение `Summary` свыше 1200 символов фиксируй как отклонение формы, но не повторяй фазу только из-за длины.
+
+При первом пропуске обязательной части или недействительном `Status` повторно проверь свежесть, затем действуй по правилу «Повторная проверка перед корректирующим вызовом». Если вызов нужен, один раз вызови того же ревьюера с прежним путём. Назови отсутствующую или недействительную часть и потребуй только корректную компактную сводку. При повторном пропуске останови цикл до следующей рабочей фазы с явной причиной.
+
+Если `design N` больше нуля, покажи человеку текст concern из `Summary` дословно и останови выполнение до следующей рабочей фазы. Текущее ревью может остаться `clean`, когда нет блокирующих находок. Не вызывай архитектора автоматически и не утверждай, что текущий diff дефектен только из-за concern. Решение об изменении архитектуры остаётся за человеком; если её изменят, следующий гейт свежести потребует пересобрать план.
+
+Если design-находок нет, а статус `changes-requested` или `Blocking` больше нуля, начни круг правок: после гейта свежести выбери новый `IMPLEMENTATION-NN.md`, вызови реализатора по договору выше и затем назначь новый `REVIEW-NN.md`. Minor-находки остаются рекомендациями. Заверши фазу реализации только после чистого ревью без design-находок.
+
+### Порядок фаз
+
+Зависимые фазы выполняй последовательно. Параллельно запускай только те независимые фазы, для которых `PLANNER_EXECUTION.md` прямо указывает независимость. Каждая параллельная ветвь соблюдает свой гейт свежести, нумерацию, форму сводки и правило одного корректирующего вызова.
+
+## 4. Документация
+
+После чистого завершения всех фаз реализации выбери следующий `DOCUMENTATION-NN.md`. Перед вызовом активной документационной роли из `.claude/planner-context.md` §1 повторно проверь свежесть и непосредственно перед первичным вызовом заново убедись, что путь отсутствует. Передай только разрешённые в плане пути документации, точный путь полного отчёта, guard идентификатора и договор:
+
+```text
+Запиши полный documentation report по переданному пути.
+До записи проверь этот путь. Если там непустой файл, не перезаписывай его, кроме случая, когда оркестратор в этом же вызове прямо сообщил, что это твой незавершённый documentation report и его замена ожидаема. Во всех остальных случаях верни точную строку `Целевой путь занят: <путь>` с фактическим путём и коротким пояснением найденного; не выбирай другой путь, не удаляй, не переименовывай и не перезаписывай файл. Если оркестратор в этом же вызове прямо сообщил, что полный корректный отчёт уже есть и нужна только корректная компактная сводка, верни только сводку и не меняй файл.
+Верни в чат только эту сводку, не дублируя полный отчёт:
+
+Status: complete | blocked | not-needed
+Report: <переданный путь>
+Commands:
+- <точная команда проверки> — <наблюдённый итог>
+Summary: <проза не длиннее 1200 символов>
+Blocked checks: <список | none>
+```
+
+До проверки формы и статуса обработай ответ `Целевой путь занят: <путь>` по правилу §3, включая предел трёх коллизий. Проверь по смыслу путь и запись отчёта, команды с наблюдёнными итогами, `Status`, `Summary` и `Blocked checks`. Допустимы только `Status: complete`, `Status: blocked` и `Status: not-needed`; другое значение или отсутствие поля делает сводку неполной либо недействительной. При первом пропуске обязательной части или недействительном `Status` повторно проверь свежесть и перед корректирующим вызовом проверь путь по правилу «Повторная проверка перед корректирующим вызовом»: готовый корректный отчёт принимает независимо от сводки, а вызов для исправления формы не записывает файл. Повторный пропуск останавливает цикл с явной причиной. Если `Status: blocked`, немедленно останови цикл и покажи человеку причину из `Summary` и `Blocked checks`. Превышение длины `Summary` только занеси в отклонения формы.
+
+Если активной документационной роли нет или она не может записать полный отчёт по переданному пути, не вызывай другую роль по предположению. Сохрани запасной путь: самостоятельно обнови только документационные файлы, прямо разрешённые планом. Непосредственно перед `Write` полного `DOCUMENTATION-NN.md` заново проверь, что его путь отсутствует. Если он занят, не перезаписывай его и обработай коллизию по правилу §3, включая предел трёх попыток; только при свободном пути запиши полный отчёт через `Write`. Не создавай новые файлы проектного контекста и не примешивай подробный ответ роли к итогу.
+
+## 5. Итог человеку
+
+Собери итог только из компактных сводок и путей отчётов. Не вставляй в него полные implementation, review или documentation reports.
+
+Укажи:
+
+- изменённые файлы;
+- точные команды и наблюдённые итоги из сводок реализации и документации;
+- число кругов ревью и находок по тяжести;
+- границы удостоверения каждого круга ревью;
+- пути всех полных отчётов;
+- отклонения от формы сводок, включая `Summary` длиннее 1200 символов;
+- состояние документации;
+- остановки и непроверенные или заблокированные проверки.
+
+Не заявляй о проверке, которую не запускали, и не скрывай остановку цикла. Не выполняй `commit`, `push`, `tag`, удаление или публикацию, если человек не попросил об этом отдельно.

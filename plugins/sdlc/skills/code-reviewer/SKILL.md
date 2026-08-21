@@ -48,9 +48,9 @@ These six principles establish the reviewer's epistemic discipline. Together the
 
 4. **Detect stack from changed files.** `*.py` files in diff → load `references/backend-python.md`. `*.tsx` / `*.jsx` / `*.ts` / `*.vue` / `*.svelte` in diff → load `references/frontend-react.md`. Both present in diff → load both references and apply both checklists. Unknown stack → apply universal principles (see §When references are missing below) and note in the report header.
 
-5. **Walk the diff with loaded checklists.** Apply security checklist first, then FPF check (Error Hiding, fail-fast, contract), then stack-specific checklist. For each section of the diff: ask "what could go wrong here?", "is there a test for this behavior?", "does this change any contract silently?". Classify each finding: major (blocks merge), minor (advisory), security (always blocks merge), design concern (routes to architect). Consolidate duplicate findings — same pattern in multiple files becomes one item with all locations.
+5. **Walk the diff with loaded checklists.** Apply security checklist first, then FPF check (Error Hiding, fail-fast, contract), then stack-specific checklist. For each section of the diff: ask "what could go wrong here?", "is there a test for this behavior?", "does this change any contract silently?". Classify each finding: major (blocks the current review), minor (advisory), security (always blocks the current review), design concern. A design concern has two axes: `blocks_current_review: false` and `blocks_plan_continuation: true`. It does not call the current diff defective, but the orchestrator must present it to the human before the next plan phase; never invoke an architect automatically. Consolidate duplicate findings — same pattern in multiple files becomes one item with all locations.
 
-6. **Emit review report** per output format below. Write to `<feature-dir>/review-request-changes/REVIEW-NN.md` if a feature directory exists; output to chat otherwise. Output must always use the structured template — no freeform prose in place of the template sections. The structured format enables the implementer to process each finding as an independent work item.
+6. **Emit review report** per output format below. Write to the exact supplied `<feature-dir>/review-request-changes/REVIEW-NN.md` only when the orchestrator supplies both that path and the compact return format. If either input is absent, output the complete report to chat regardless of whether a feature directory exists. Output must always use the structured template — no freeform prose in place of the template sections. The structured format enables the implementer to process each finding as an independent work item.
 
 ## Git-diff approach
 
@@ -73,9 +73,9 @@ Additional tools for context:
 - **`Grep`** — search for patterns across the codebase (e.g. `grep -r "mark_safe" .` to find all usages, not just new ones in the diff; `grep -r "select_for_update" .` to confirm all usages are inside `atomic` blocks; `grep -r "SECRET_KEY" .` to check for leaked credentials).
 - **`Glob`** — list files matching a pattern to understand project structure when context is needed (e.g. `plugins/sdlc/**/*.py` to understand how many Python files exist before deciding to load `backend-python.md`).
 
-**Forbidden commands in review mode:** `git checkout`, `git reset`, `git add`, `git commit`, `git push`, `git stash`, `git apply`, `git merge`, `git rebase`. The reviewer never mutates the working tree, the index, or any branch.
+**Forbidden commands in review mode:** `git checkout`, `git reset`, `git add`, `git commit`, `git push`, `git stash`, `git apply`, `git merge`, `git rebase`. The reviewer never mutates reviewed source files, the index, or any branch; the sole permitted write is the exact report path supplied together with the compact return format.
 
-Review is strictly read-only. The rationale: a reviewer who can modify the repository is no longer a reviewer — they become a co-author of unreviewed changes. Maintain the separation of concerns.
+Review of source is strictly read-only. Writing the one permitted review report records the diagnosis without making the reviewer a co-author of the reviewed change. Maintain the separation of concerns.
 
 If a finding requires running code to verify (e.g. confirming a race condition is observable), instruct the implementer: "unverified — implementer to reproduce by running `<command>`." The implementer confirms and reports back; the reviewer then updates the finding if the reproduction fails. The report's `## Certification boundary` section names, up front, the defect classes static review cannot certify — state them as a self-limitation; do not silently imply they were cleared.
 
@@ -147,7 +147,7 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
   one finding per line.
 - **Test runtime config diverges from prod** (stack-neutral) — tests run under a different runtime/concurrency config than production, so a prod-only failure mode stays green in CI (e.g. a test runner that auto-cleans pending work vs a long-lived prod runner; test parallelism flags masking shared/singleton-state leaks; a test config/middleware stack thinner than prod). Flag concurrency / parallel / shutdown code tested only under the harness default — require a test or smoke under the prod runtime config.
 
-**Severity triage:** Major findings block the merge and require a fix commit before re-review. Minor findings are advisory — the implementer decides whether to address them now or file a ticket. Design concerns never block the current merge — they are inputs to the next architecture iteration. Security findings at high or critical severity always block merge; medium and low are advisory.
+**Severity triage:** Major findings block the current review and require a fix commit before re-review. Minor findings are advisory — the implementer decides whether to address them now or file a ticket. Design concerns never block the current review: record `blocks_current_review: false` and `blocks_plan_continuation: true`, so the orchestrator stops before the next plan phase and presents the concern to the human. The reviewer does not invoke an architect. Security findings at high or critical severity always block the current review; medium and low are advisory.
 
 Style and naming: delegate to ESLint, Ruff, Flake8, or similar. If the project has a linter configured, add one line to the review: "style: delegated to linter." If no linter is configured, put style items in `## Minor` and keep the section to 5 items maximum.
 
@@ -168,7 +168,7 @@ For stack-detection signals beyond the diff (detecting full project context), th
 
 ## Output format — review report
 
-Template for `<feature-dir>/review-request-changes/REVIEW-NN.md`. When no feature directory exists, output the same structure to chat.
+Template for the exact `<feature-dir>/review-request-changes/REVIEW-NN.md` supplied together with the compact return format. If either input is absent, output the same structure to chat regardless of whether a feature directory exists.
 
 ```markdown
 # Review — <feature-id or branch name> (REVIEW-NN)
@@ -190,7 +190,7 @@ Template for `<feature-dir>/review-request-changes/REVIEW-NN.md`. When no featur
 - `file:path:line` — <OWASP category> — <evidence/reproduction> — <fix direction>
 
 ## System issues
-<!-- N+1, races, transactions, error-swallow, contract changes, missing migrations -->
+<!-- N+1, races, transactions, error-swallow, contract changes, missing migrations. A design concern is recorded here with `blocks_current_review: false` and `blocks_plan_continuation: true`. -->
 - `file:path:line` — <category> — <evidence> — <fix direction>
 
 ## FPF / Functional Clarity violations
@@ -215,8 +215,52 @@ them for runtime/human verification; do not record them as cleared.
 
 ## Hand-off
 Next: `sdlc:code-implementer` to apply fixes for all major and security items.
-Design concerns (if any): escalate to `sdlc:architect` via the orchestrator.
+Design concerns (if any): the orchestrator presents them to the human before the next plan phase; no architect is invoked automatically.
 ```
+
+### Orchestrated report hand-off
+
+This mode applies only when the orchestrator explicitly supplies both the
+exact review-report path and the compact return format. Only then write the
+complete report above to that exact path and return this compact summary to
+chat; do not duplicate the complete report there. If either input is absent,
+keep the complete report in chat and do not write a report file, regardless of
+whether a feature directory exists.
+
+```text
+Status: clean | changes-requested
+Report: <path> | chat (no feature directory)
+Findings: major N; minor N; security N; design N
+Blocking: N
+Certification boundary: <what static review does not certify>
+Summary: <prose of at most 1200 characters>
+```
+
+`Blocking` counts only findings that block the current review. A nonzero
+`design` count separately means `blocks_plan_continuation: true`, even when
+`Status` is `clean`. The 1200-character limit applies only to `Summary`. Use
+`Report: chat (no feature directory)` only when the orchestrator explicitly
+states that condition; without both orchestrator inputs, return the complete
+report to chat instead of a compact summary.
+
+If the orchestrator explicitly states in the same call that a complete correct
+report already exists at the supplied path and requests only a corrected compact
+summary, return that summary without writing, replacing, deleting, or renaming
+the report file. This exception applies only to that form-only correction.
+
+Before writing a complete report, inspect the supplied path. If it contains a
+nonempty file, do not overwrite it unless the orchestrator explicitly states
+in this same call that the file is an unfinished review report from this role
+and that replacing it is expected. In every other occupied-path case, return
+the exact chat line `Целевой путь занят: <путь>` with the actual path, followed
+by a short explanation of what was found there. Do not return the ordinary
+compact summary or choose another path yourself. Do not delete, rename, or
+overwrite a file owned by another role: the orchestrator owns path selection
+and numbering.
+
+These checks apply only to this orchestrated mode. Without both the supplied
+path and compact return format, keep the existing independent behavior of
+returning the complete report in chat.
 
 Finding format (mandatory for every non-minor item):
 
@@ -237,7 +281,7 @@ Headlines below; full explanations in `references/review-conventions.md`.
 3. **"Looks fine" — security still gets a section** — the `## Security` section is non-negotiable; write "no security issues found in scope" rather than omitting it.
 4. **Reviewing without running tests** — the reviewer reads, does not run; mark run-required findings "unverified — implementer to reproduce by running `<cmd>`".
 5. **Same finding in 5 places → consolidate** — one finding, all `file:line` locations.
-6. **"I would have designed it differently" → design concern, not defect** — defect → `sdlc:code-implementer` (now); design concern → `sdlc:architect` (next iteration).
+6. **"I would have designed it differently" → design concern, not defect** — defect → `sdlc:code-implementer` (now); design concern does not block the current review, but stops plan continuation for a human decision. Do not invoke `sdlc:architect` automatically.
 7. **Skipping `references/security.md` because "it's just a refactor"** — refactors expose secrets, disable CSRF, introduce Error Hiding. Run security unconditionally.
 8. **Incoming claims are hypotheses, not evidence (FPF A.10)** — verify the load-bearing assertion against the source both ways (confirm the cited line exists and says so; `grep` for counter-evidence) before promoting or dismissing. Verify static claims against static source; do not run code (Gotcha 4).
 
@@ -247,7 +291,7 @@ Headlines below; full explanations in `references/review-conventions.md`.
 
 - **`tdd-master:tdd-master`** — the reviewer checks "is there a test for this behavioral change?" A new or modified behavior without a covering test is a review item. Format: `"no test for <behavior> — implementer to add RED test per tdd-master:tdd-master workflow before merge."` The reviewer does NOT write the test — test authoring is implementer work, governed by `tdd-master`.
 
-- **`planner:planner`** — the orchestrator dispatches this skill. The reviewer never invokes the planner back. If a finding implies a design change that cannot be fixed at the implementation level (e.g. a transaction boundary requiring a service-layer restructuring), record it as a design concern in the report and note "escalate to `sdlc:architect` via orchestrator." Do not improvise architecture decisions in the review.
+- **`planner:planner`** — the orchestrator dispatches this skill. The reviewer never invokes the planner back. If a finding implies a design change that cannot be fixed at the implementation level (e.g. a transaction boundary requiring a service-layer restructuring), record it as a design concern with `blocks_current_review: false` and `blocks_plan_continuation: true`. The orchestrator presents it to the human; do not invoke `sdlc:architect` automatically or improvise an architecture decision in the review.
 
 - **`document-skills:frontend-design`** — for visual / UX review of frontend changes (design system compliance, spacing, typography, component composition), mention as an optional co-reference when installed. If not installed, graceful degrade: apply universal accessibility and visual-quality principles from `references/frontend-react.md`. `document-skills:frontend-design` is never required for this skill to function — it enhances review quality for frontend-heavy changes but is not a dependency.
 
@@ -276,9 +320,9 @@ Universal principles applicable to any stack:
 
 The reviewer has one writeable path:
 
-- `<feature-dir>/review-request-changes/REVIEW-NN.md` — the review report, when a feature directory exists.
+- the exact `<feature-dir>/review-request-changes/REVIEW-NN.md` path supplied by the orchestrator together with the compact return format — the review report.
 
-If no feature directory exists (e.g. reviewer was invoked on an ad-hoc diff), output the review report to chat. Do not create `REVIEW-NN.md` in an arbitrary location — only inside the feature directory.
+If either input is absent, output the complete review report to chat, regardless of whether a feature directory exists. Do not create `REVIEW-NN.md` in an arbitrary location — only at the supplied path when both inputs are present.
 
 The reviewer does **not** write to:
 - The reviewed source files (reviewer reads, not edits).
