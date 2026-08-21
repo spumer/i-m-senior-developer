@@ -252,7 +252,9 @@ def scan_mirrors(docs_root, out):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description="Сверка таблицы «Последний прогон» с последним результатом прогона."
+    )
     parser.add_argument("plugin", nargs="?", help="имя плагина для обычной сверки")
     parser.add_argument("--report", type=Path, help="явный путь к отчёту")
     parser.add_argument("--results", type=Path, help="явный каталог результатов")

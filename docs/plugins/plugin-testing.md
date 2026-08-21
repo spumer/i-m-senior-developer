@@ -18,7 +18,7 @@
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/plugin-testing/scripts/check_eval_suite.py" \
-  plugins/<плагин>/evals
+  plugins/<плагин>
 ```
 
 Находит проверки, которые проходят всегда:
