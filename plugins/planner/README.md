@@ -247,6 +247,14 @@ The guard cannot be bypassed by confirmation. Rebuild the plan with:
 /plan <path-to-current-architecture>
 ```
 
+### Work hint in `check`
+
+For a valid plan, `plan_state.py check` adds `work_hint` to the existing JSON object. It always includes `status`, `message`, `complete`, `paths`, `rejected`, `plan_built_at`, and `plan_built_at_source`. Its status is `outputs_changed` when at least one declared output has a later reachable commit, `outputs_unchanged` when every declared output was checked and none changed later, or `unavailable` when a complete check was not possible.
+
+Each item in `paths` identifies the path, its `scope` (`file` or `directory`), and its state. Checked paths also name the full commit and its UTC time; unchecked paths name the reason. The hint observes reachable Git history, not authorship or plan completion: a later commit can belong to other work, especially for a directory, and uncommitted changes are not included.
+
+The helper's exit codes do not depend on `work_hint`: `0` still means a current plan, `2` a stale plan, `3` an invalid plan, and `64` an invalid invocation.
+
 ## Экспериментальный workflow выполнения
 
 `/planner:plan-do-workflow <каталог-фичи>` — отдельная экспериментальная команда для текущего плана выполнения. Она предварительно проверяет каталог и обязательные файлы, затем запускает workflow `planner:plan-do-workflow` из `workflows/plan-do-workflow.js`.

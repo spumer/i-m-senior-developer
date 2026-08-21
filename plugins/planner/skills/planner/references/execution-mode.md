@@ -60,6 +60,10 @@ architecture:
 
 The execution version and fingerprint belong to this file. The nested architecture version and fingerprint identify the exact architecture used to build it. `architecture.path` is a safely quoted path relative to the execution file. A newly synchronized file has `status: current`; `check --mark-stale` may change only that field to `stale`, preserving the execution version and body.
 
+### Declared outputs
+
+Each implementation phase declares its concrete repository outputs in an `Outputs:` field. Write every path in backticks and relative to the repository root: a file at the root uses the explicit form `./<name>`, for example `./README.md`; a directory ends with `/`, for example `plugins/example/`. Existing plans are not rewritten solely to adopt this form.
+
 ### Markdown body template
 
 ```markdown
