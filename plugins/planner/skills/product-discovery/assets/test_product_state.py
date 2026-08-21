@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -405,7 +406,11 @@ class ProductStateCliTest(unittest.TestCase):
     def reserve_lease(self) -> Path:
         result = self.run_cli("reserve-response-draft")
         self.assertEqual(result.returncode, 0, result.stderr)
-        return Path(json.loads(result.stdout)["path"])
+        lease = Path(json.loads(result.stdout)["path"])
+        # аренда живёт в системном временном каталоге, а не в self.root,
+        # поэтому её не забирает общая уборка теста
+        self.addCleanup(shutil.rmtree, lease.parent, ignore_errors=True)
+        return lease
 
     def lease_draft(self, lease: Path, *, valid: bool = True) -> None:
         draft: dict[str, object] = {
