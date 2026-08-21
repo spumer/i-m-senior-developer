@@ -90,7 +90,7 @@ claude plugin validate plugins/planner/agents --strict
 python3 plugins/planner/evals/run.py
 ```
 
-Скрипт фиксирует полный договор запуска: Claude Code `2.1.234`, три повтора,
+Скрипт фиксирует полный договор запуска: Claude Code не ниже `2.1.234`, три повтора,
 `--ablation none`, модель `opus` и судью `haiku`, локальный отчёт, выключенный
 scaffold, операторское разрешение `Write` и предел стоимости `$6`. Сначала он
 выполняет четыре `plugin validate --strict`, затем создаёт новый каталог

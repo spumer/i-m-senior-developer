@@ -10,7 +10,7 @@ from typing import Any
 import uuid
 
 
-EXPECTED_CLAUDE_VERSION = "2.1.234"
+MINIMUM_CLAUDE_VERSION = "2.1.234"
 EXPECTED_CASES = frozenset(
     {
         "baseline-provider-limits",
@@ -53,6 +53,17 @@ def command_output(result: subprocess.CompletedProcess[str]) -> str:
     )
 
 
+def version_key(version: str) -> tuple[int, ...]:
+    parts = version.split(".")
+    if not all(part.isdecimal() for part in parts):
+        raise RunnerError(
+            f"Claude Code version {version!r} could not be compared with the "
+            f"required minimum {MINIMUM_CLAUDE_VERSION}: expected numbers "
+            "separated by dots"
+        )
+    return tuple(int(part) for part in parts)
+
+
 def require_claude_version(claude_bin: str, repo_root: Path) -> None:
     result = run_claude(claude_bin, ["--version"], repo_root)
     output = command_output(result)
@@ -61,10 +72,10 @@ def require_claude_version(claude_bin: str, repo_root: Path) -> None:
             f"claude --version failed with code {result.returncode}: {output}"
         )
     actual = output.split(maxsplit=1)[0] if output else "<empty output>"
-    if actual != EXPECTED_CLAUDE_VERSION:
+    if version_key(actual) < version_key(MINIMUM_CLAUDE_VERSION):
         raise RunnerError(
-            "Claude Code version mismatch: "
-            f"expected {EXPECTED_CLAUDE_VERSION}, got {actual}"
+            "Claude Code is older than the eval contract allows: "
+            f"needs {MINIMUM_CLAUDE_VERSION} or newer, got {actual}"
         )
 
 

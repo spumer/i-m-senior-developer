@@ -277,18 +277,52 @@ class PlannerEvalRunnerTest(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(expected_error, result.stderr)
 
-    def test__runner__version_mismatch__fails_before_gate(self) -> None:
-        result = self.run_runner(
-            extra_env={"FAKE_CLAUDE_VERSION": "2.1.235 (Claude Code)"}
-        )
+    def test__runner__version_at_or_above_minimum__runs_the_eval(self) -> None:
+        for version in ("2.1.234", "2.1.238", "2.1.1000", "2.2.0", "3.0.0"):
+            with self.subTest(version=version):
+                self.log_path.unlink(missing_ok=True)
 
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("2.1.234", result.stderr)
-        self.assertIn("2.1.235", result.stderr)
-        self.assertEqual(
-            [call["argv"] for call in self.calls()],
-            [["--version"]],
-        )
+                result = self.run_runner(
+                    extra_env={"FAKE_CLAUDE_VERSION": f"{version} (Claude Code)"}
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(self.actual_eval_call()["cwd"], str(REPO_ROOT))
+
+    def test__runner__version_below_minimum__fails_before_gate(self) -> None:
+        for version in ("2.1.233", "2.1.99", "2.1", "2.0.999", "1.9.9"):
+            with self.subTest(version=version):
+                self.log_path.unlink(missing_ok=True)
+
+                result = self.run_runner(
+                    extra_env={"FAKE_CLAUDE_VERSION": f"{version} (Claude Code)"}
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("2.1.234", result.stderr)
+                self.assertIn(version, result.stderr)
+                self.assertEqual(
+                    [call["argv"] for call in self.calls()],
+                    [["--version"]],
+                )
+                self.assertEqual(list(self.results_root.glob("*")), [])
+
+    def test__runner__uncomparable_version__fails_before_gate(self) -> None:
+        for version in ("nonsense", "2.1.x", "2.1.4-beta.1", ""):
+            with self.subTest(version=version):
+                self.log_path.unlink(missing_ok=True)
+
+                result = self.run_runner(
+                    extra_env={"FAKE_CLAUDE_VERSION": version}
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("could not be compared", result.stderr)
+                self.assertEqual(
+                    [call["argv"] for call in self.calls()],
+                    [["--version"]],
+                )
+                self.assertEqual(list(self.results_root.glob("*")), [])
 
     def test__runner__closed_gate__fails_before_validation(self) -> None:
         result = self.run_runner(extra_env={"FAKE_CLAUDE_GATE": "closed"})
