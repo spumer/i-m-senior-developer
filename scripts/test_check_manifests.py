@@ -78,6 +78,21 @@ class ManifestGuardTests(unittest.TestCase):
         result = run_guard(self.root)
         self.assertEqual(result.returncode, 0, result.stdout)
 
+    def test__nested_hooks_before_top_level_hooks__reports_top_level_line(self):
+        text = (
+            "{\n"
+            '  "name": "alpha",\n'
+            '  "commands": {\n'
+            '    "hooks": "allowed"\n'
+            "  },\n"
+            '  "hooks": {}\n'
+            "}\n"
+        )
+        make_root(self.root, {"alpha": text})
+        result = run_guard(self.root)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("строка 6", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

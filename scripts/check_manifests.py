@@ -52,9 +52,30 @@ def check_manifests(root: Path) -> list[str]:
 
 
 def find_key_line(text: str) -> int:
-    """Номер строки первого вхождения ключа как строки JSON-текста."""
-    marker = f'"{FORBIDDEN_KEY}"'
-    return text[: text.index(marker)].count("\n") + 1
+    """Номер строки ключа в верхнем объекте JSON."""
+    depth = 0
+    string_start = None
+    escaped = False
+    for index, character in enumerate(text):
+        if string_start is not None:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                following = text[index + 1 :].lstrip()
+                key = json.loads(text[string_start : index + 1])
+                if depth == 1 and following.startswith(":") and key == FORBIDDEN_KEY:
+                    return text[:string_start].count("\n") + 1
+                string_start = None
+            continue
+        if character == '"':
+            string_start = index
+        elif character in "[{":
+            depth += 1
+        elif character in "]}":
+            depth -= 1
+    raise ValueError(f"ключ верхнего уровня «{FORBIDDEN_KEY}» не найден")
 
 
 def main(argv: list[str] | None = None) -> int:

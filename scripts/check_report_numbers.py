@@ -126,6 +126,12 @@ def compare_params(params, document):
             f" ({line})"
         )
 
+    for field in expected:
+        if field not in params:
+            mismatches.append(
+                f"расхождение: {field}: обязательное поле отсутствует в отчёте"
+            )
+
     for field, (cell, line) in params.items():
         where = f"строка {line}"
         if field == "Дата":

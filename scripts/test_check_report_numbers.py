@@ -166,6 +166,13 @@ class TestExitCodes(Harness):
         self.assertIn(str(self.report), message)
         self.assertIn("строка 12", message)
 
+    def test__missing_cost__exit_1_names_missing_field(self):
+        self.add_run("run-a", make_result())
+        self.add_report(REPORT.replace("| Стоимость | `$3.22` |\n", ""))
+        code = self.run_check()
+        self.assertEqual(code, 1)
+        self.assertIn("Стоимость", self.err.getvalue())
+
     def test__no_results__exit_2_with_explicit_message(self):
         self.results.mkdir()
         self.add_report()
