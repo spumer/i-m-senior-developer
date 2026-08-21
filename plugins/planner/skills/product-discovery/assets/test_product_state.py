@@ -402,6 +402,27 @@ class ProductStateCliTest(unittest.TestCase):
     ) -> subprocess.CompletedProcess[str]:
         return self.run_cli("check-response", str(path), "--for", kind)
 
+    def reserve_lease(self) -> Path:
+        result = self.run_cli("reserve-response-draft")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return Path(json.loads(result.stdout)["path"])
+
+    def lease_draft(self, lease: Path, *, valid: bool = True) -> None:
+        draft: dict[str, object] = {
+            "problem": "владелец теряет сохранённые элементы после массового удаления",
+            "outcome": "удалённый элемент возвращается за один шаг",
+            "actors": "владелец элемента",
+            "scope_in": "возврат последнего удалённого элемента",
+            "scope_out": "полная история версий",
+            "assumptions": ["потеря происходит при массовом удалении"],
+            "unknowns": ["как часто владелец замечает потерю"],
+            "limitations": ["нет данных о пользователях"],
+            "recommended_outcome": "feature",
+        }
+        if not valid:
+            draft["confidence"] = "high"
+        lease.write_text(json.dumps(draft, ensure_ascii=False))
+
     def context_path(
         self,
         *,
@@ -434,6 +455,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "capability": "problem_outcome_framing",
                 "coverage": "full",
                 "evidence": ".claude/agents/product.md",
+                "line": 7,
                 "limitations": "—",
                 "priority": "project",
                 "provider": "product",
@@ -455,6 +477,43 @@ class ProductStateCliTest(unittest.TestCase):
         row = json.loads(result.stdout)[0]
         self.assertEqual(row["evidence"], "")
         self.assertEqual(row["coverage"], "unknown")
+
+    def test__parse_capabilities__dash_or_comment_only_evidence__normalizes_coverage_to_unknown(
+        self,
+    ) -> None:
+        cases = (
+            ("dash-only", "—"),
+            ("html-comment-only", "<!-- auto-added 2026-08-14 -->"),
+        )
+
+        for case_name, evidence in cases:
+            with self.subTest(case=case_name):
+                context = self.context_path(
+                    row_overrides={"problem.external": {"evidence": evidence}}
+                )
+
+                result = self.run_cli("parse-capabilities", str(context))
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                row = json.loads(result.stdout)[0]
+                self.assertEqual(row["evidence"], evidence)
+                self.assertEqual(row["coverage"], "unknown")
+
+    def test__parse_capabilities__path_with_html_comment_evidence__keeps_recorded_coverage(
+        self,
+    ) -> None:
+        evidence = ".claude/agents/product.md <!-- auto-added 2026-08-14 -->"
+
+        context = self.context_path(
+            row_overrides={"problem.external": {"evidence": evidence}}
+        )
+
+        result = self.run_cli("parse-capabilities", str(context))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        row = json.loads(result.stdout)[0]
+        self.assertEqual(row["evidence"], evidence)
+        self.assertEqual(row["coverage"], "full")
 
     def test__parse_capabilities__unknown_closed_value__returns_invalid_with_line(
         self,
@@ -532,6 +591,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "capability": "product_synthesis",
                 "coverage": "full",
                 "evidence": ".claude/agents/product.md",
+                "line": 9,
                 "priority": "project",
                 "provider": "product",
                 "rejected": None,
@@ -545,6 +605,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "capability": "product_synthesis",
                 "coverage": "partial",
                 "evidence": "plugins/planner/skills/product-baseline/SKILL.md",
+                "line": 10,
                 "priority": "builtin",
                 "provider": "planner:product-baseline",
                 "rejected": "higher-priority-full-provider",
@@ -870,6 +931,83 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertEqual(trace["fallback_used"], False)
         self.assertEqual(trace["limitations"], ["требуется проверка рыночных данных"])
 
+    def test__route__trace_names_line_and_reason_for_every_candidate(self) -> None:
+        context = self.context_path(
+            extra_rows=(
+                (
+                    "synthesis.dash-evidence",
+                    capability_row(
+                        "dash-provider", capability="product_synthesis", evidence="—"
+                    ),
+                ),
+            )
+        )
+
+        result = self.run_cli("route", str(context), "--for", "epic")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        trace = json.loads(result.stdout)
+        self.assertEqual(len(trace["candidates"]), 7)
+        for candidate in trace["candidates"]:
+            with self.subTest(provider=candidate["provider"]):
+                self.assertIsInstance(candidate["line"], int)
+                if candidate["selected"]:
+                    self.assertIsNone(candidate["rejected"])
+                else:
+                    self.assertIsNotNone(candidate["rejected"])
+        dash = next(
+            candidate
+            for candidate in trace["candidates"]
+            if candidate["provider"] == "dash-provider"
+        )
+        self.assertEqual(dash["line"], 13)
+        self.assertEqual(dash["coverage"], "unknown")
+        self.assertEqual(dash["rejected"], "no-substantive-evidence")
+
+    def test__route__uncovered_capability__stderr_lists_rejected_rows(self) -> None:
+        context = self.context_path(
+            extra_rows=(
+                (
+                    "uncovered.dash",
+                    capability_row(
+                        "dash-provider",
+                        capability="uncovered_capability",
+                        evidence="—",
+                    ),
+                ),
+                (
+                    "uncovered.stale",
+                    capability_row(
+                        "stale-provider",
+                        capability="uncovered_capability",
+                        availability="stale",
+                    ),
+                ),
+                (
+                    "uncovered.none",
+                    capability_row(
+                        "none-provider",
+                        capability="uncovered_capability",
+                        coverage="none",
+                    ),
+                ),
+            )
+        )
+
+        result = self.run_cli("route", str(context), "--for", "epic")
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("uncovered_capability", result.stderr)
+        self.assertIn("not covered", result.stderr)
+        self.assertIn(
+            "line 13: provider dash-provider: no-substantive-evidence", result.stderr
+        )
+        self.assertIn(
+            "line 14: provider stale-provider: availability-stale", result.stderr
+        )
+        self.assertIn("line 15: provider none-provider: coverage-none", result.stderr)
+
     def test__route__unknown_product_kind__returns_usage_error(self) -> None:
         context = self.context_path()
 
@@ -984,6 +1122,131 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 64)
         self.assertIn("invalid choice", result.stderr)
         self.assertEqual(result.stdout, "")
+
+    def test__reserve_response_draft__unique_temp_directory_with_exact_file_name(
+        self,
+    ) -> None:
+        first = self.reserve_lease()
+        second = self.reserve_lease()
+
+        self.assertEqual(first.name, "provider-response.json")
+        self.assertEqual(second.name, "provider-response.json")
+        self.assertNotEqual(first.parent, second.parent)
+        self.assertTrue(first.parent.is_dir())
+        self.assertTrue(
+            first.parent.is_relative_to(Path(tempfile.gettempdir())),
+            str(first.parent),
+        )
+
+    def test__check_response__consume_accepted_draft__removes_file_and_directory(
+        self,
+    ) -> None:
+        lease = self.reserve_lease()
+        self.lease_draft(lease)
+
+        result = self.run_cli(
+            "check-response", str(lease), "--for", "idea", "--consume"
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["accepted"], True)
+        self.assertEqual(payload["draft_removed"], True)
+        self.assertFalse(lease.exists())
+        self.assertFalse(lease.parent.exists())
+
+    def test__check_response__consume_rejected_draft__still_removes_file_and_directory(
+        self,
+    ) -> None:
+        lease = self.reserve_lease()
+        self.lease_draft(lease, valid=False)
+
+        result = self.run_cli(
+            "check-response", str(lease), "--for", "idea", "--consume"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("confidence", result.stderr)
+        self.assertFalse(lease.exists())
+        self.assertFalse(lease.parent.exists())
+
+    def test__check_response__consume_wrong_file_name__returns_invalid_without_deletion(
+        self,
+    ) -> None:
+        draft = self.root / "provider-draft.json"
+        draft.write_text("{}\n")
+
+        result = self.run_cli(
+            "check-response", str(draft), "--for", "idea", "--consume"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("provider-response.json", result.stderr)
+        self.assertTrue(draft.exists())
+
+    def test__check_response__consume_deletion_failure__error_is_not_masked(
+        self,
+    ) -> None:
+        for valid in (True, False):
+            with self.subTest(valid=valid):
+                lease = self.reserve_lease()
+                self.lease_draft(lease, valid=valid)
+                os.chmod(lease.parent, 0o500)
+                try:
+                    result = self.run_cli(
+                        "check-response", str(lease), "--for", "idea", "--consume"
+                    )
+                finally:
+                    os.chmod(lease.parent, 0o700)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn("draft cleanup failed", result.stderr)
+                if not valid:
+                    self.assertIn("confidence", result.stderr)
+                self.assertTrue(lease.exists())
+
+    def test__release_response_draft__existing_file__removes_file_and_directory(
+        self,
+    ) -> None:
+        lease = self.reserve_lease()
+        self.lease_draft(lease)
+
+        result = self.run_cli("release-response-draft", str(lease))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {"draft_existed": True, "path": str(lease.resolve()), "removed": True},
+        )
+        self.assertFalse(lease.exists())
+        self.assertFalse(lease.parent.exists())
+
+    def test__release_response_draft__absent_file__reports_nothing_to_remove(
+        self,
+    ) -> None:
+        lease = self.reserve_lease()
+
+        result = self.run_cli("release-response-draft", str(lease))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            json.loads(result.stdout),
+            {"draft_existed": False, "path": str(lease.resolve()), "removed": False},
+        )
+        self.assertFalse(lease.parent.exists())
+
+    def test__release_response_draft__wrong_file_name__returns_invalid(self) -> None:
+        draft = self.root / "provider-draft.json"
+        draft.write_text("{}\n")
+
+        result = self.run_cli("release-response-draft", str(draft))
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("provider-response.json", result.stderr)
+        self.assertTrue(draft.exists())
 
     def test__inspect__valid_idea_frontmatter__returns_parsed_state(self) -> None:
         body = "# Idea\n"

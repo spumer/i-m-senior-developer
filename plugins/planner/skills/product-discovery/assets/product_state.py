@@ -114,6 +114,9 @@ _COVERAGE_ORDER = {"full": 0, "partial": 1}
 _DATE_MARKER_PATTERN = re.compile(
     r"<!--[^>]*\b([0-9]{4}-[0-9]{2}-[0-9]{2})\b[^>]*-->"
 )
+_HTML_COMMENT_PATTERN = re.compile(r"<!--.*?-->", re.DOTALL)
+_DASH = "—"
+LEASE_FILE_NAME = "provider-response.json"
 
 
 class ProductStateError(Exception):
@@ -973,10 +976,16 @@ def parse_capability_matrix(path: Path) -> list[dict[str, Any]]:
             kind.strip() for kind in row["required_for"].split(",")
         ]
         validate_capability_row(row, resolved, index + 1)
-        if not row["evidence"]:
+        row["line"] = index + 1
+        if not substantive_evidence(row["evidence"]):
             row["coverage"] = "unknown"
         rows.append(row)
     return rows
+
+
+def substantive_evidence(evidence: str) -> str:
+    without_comments = _HTML_COMMENT_PATTERN.sub(" ", evidence)
+    return without_comments.replace(_DASH, "").strip()
 
 
 def print_payload(payload: Any) -> None:
@@ -996,15 +1005,24 @@ def candidate_rank(row: dict[str, Any]) -> tuple[int, int]:
     return _COVERAGE_ORDER[row["coverage"]], _PRIORITY_ORDER[row["priority"]]
 
 
+def base_rejection_reason(candidate: dict[str, Any]) -> str | None:
+    if candidate["availability"] != "available":
+        return f"availability-{candidate['availability']}"
+    if not substantive_evidence(candidate["evidence"]):
+        return "no-substantive-evidence"
+    if candidate["coverage"] not in _COVERAGE_ORDER:
+        return f"coverage-{candidate['coverage']}"
+    return None
+
+
 def rejection_reason(
     candidate: dict[str, Any], selected: dict[str, Any], pin: str | None
 ) -> str:
     if pin is not None and candidate["provider"] != pin:
         return "not-pinned-provider"
-    if candidate["availability"] != "available":
-        return f"availability-{candidate['availability']}"
-    if candidate["coverage"] not in _COVERAGE_ORDER:
-        return f"coverage-{candidate['coverage']}"
+    base = base_rejection_reason(candidate)
+    if base is not None:
+        return base
     candidate_coverage = _COVERAGE_ORDER[candidate["coverage"]]
     selected_coverage = _COVERAGE_ORDER[selected["coverage"]]
     candidate_priority = _PRIORITY_ORDER[candidate["priority"]]
@@ -1027,6 +1045,7 @@ def trace_candidate(
         "capability": row["capability"],
         "coverage": row["coverage"],
         "evidence": row["evidence"],
+        "line": row["line"],
         "priority": row["priority"],
         "provider": row["provider"],
         "rejected": None if is_selected else rejection_reason(row, selected, pin),
@@ -1082,9 +1101,15 @@ def route_capabilities(
         else:
             selectable = [row for row in capability_rows if row_is_selectable(row)]
             if not selectable:
+                rejected = "; ".join(
+                    f"line {row['line']}: provider {row['provider']}: "
+                    f"{base_rejection_reason(row) or 'unselectable'}"
+                    for row in capability_rows
+                )
                 raise ProductStateError(
                     f"{path.expanduser().resolve()}: required capability "
                     f"{capability!r} is not covered"
+                    + (f": {rejected}" if rejected else ": no candidate rows")
                 )
         selected_by_capability[capability] = min(selectable, key=candidate_rank)
 
@@ -1187,21 +1212,80 @@ def validate_response_completeness(draft: dict[str, Any], path: Path) -> None:
         )
 
 
-def check_response(path: Path, kind: str) -> int:
+def reserve_lease() -> int:
+    directory = Path(tempfile.mkdtemp(prefix="product-response-"))
+    print_payload({"path": str(directory / LEASE_FILE_NAME)})
+    return 0
+
+
+def require_lease_path(path: Path) -> Path:
     resolved = absolute_path(path)
-    draft = read_response_draft(resolved)
-    validate_response_field_names(draft, kind, resolved)
-    validate_response_field_types(draft, resolved)
-    validate_response_completeness(draft, resolved)
+    if resolved.name != LEASE_FILE_NAME:
+        raise ProductStateError(
+            f"{resolved}: draft lease file must be named {LEASE_FILE_NAME}"
+        )
+    return resolved
+
+
+def cleanup_lease(path: Path) -> str | None:
+    errors: list[str] = []
+    try:
+        if path.exists() or path.is_symlink():
+            path.unlink()
+    except OSError as error:
+        errors.append(f"{path}: {error}")
+    try:
+        path.parent.rmdir()
+    except OSError as error:
+        errors.append(f"{path.parent}: {error}")
+    return "; ".join(errors) or None
+
+
+def release_lease(path: Path) -> int:
+    resolved = require_lease_path(path)
+    existed = resolved.exists() or resolved.is_symlink()
+    cleanup_error = cleanup_lease(resolved)
+    if cleanup_error is not None:
+        raise ProductStateError(f"draft lease release failed: {cleanup_error}")
     print_payload(
-        {
+        {"draft_existed": existed, "path": str(resolved), "removed": existed}
+    )
+    return 0
+
+
+def check_response(path: Path, kind: str, consume: bool) -> int:
+    resolved = require_lease_path(path) if consume else absolute_path(path)
+    error: ProductStateError | None = None
+    payload: dict[str, Any] | None = None
+    try:
+        draft = read_response_draft(resolved)
+        validate_response_field_names(draft, kind, resolved)
+        validate_response_field_types(draft, resolved)
+        validate_response_completeness(draft, resolved)
+        payload = {
             "accepted": True,
             "fields": sorted(draft),
             "for": kind,
             "limitations": response_field_content(draft["limitations"]),
             "path": str(resolved),
         }
-    )
+    except ProductStateError as caught:
+        error = caught
+    if consume:
+        cleanup_error = cleanup_lease(resolved)
+        if error is not None:
+            message = str(error)
+            if cleanup_error is not None:
+                message = f"{message}; draft cleanup failed: {cleanup_error}"
+            raise ProductStateError(message) from error
+        if cleanup_error is not None:
+            raise ProductStateError(
+                f"{resolved}: accepted but draft cleanup failed: {cleanup_error}"
+            )
+        payload["draft_removed"] = True
+    if error is not None:
+        raise error
+    print_payload(payload)
     return 0
 
 
@@ -1254,6 +1338,12 @@ def build_parser() -> CliParser:
         choices=("idea", "epic", "roadmap", "feature"),
         required=True,
     )
+    response_command.add_argument("--consume", action="store_true")
+
+    commands.add_parser("reserve-response-draft")
+
+    release_lease_command = commands.add_parser("release-response-draft")
+    release_lease_command.add_argument("path", type=Path)
 
     sync_command = commands.add_parser("sync")
     sync_command.add_argument(
@@ -1298,7 +1388,11 @@ def run(arguments: list[str] | None = None) -> int:
     if options.command == "check":
         return check_document(options.path, options.mark_stale)
     if options.command == "check-response":
-        return check_response(options.path, options.product_kind)
+        return check_response(options.path, options.product_kind, options.consume)
+    if options.command == "reserve-response-draft":
+        return reserve_lease()
+    if options.command == "release-response-draft":
+        return release_lease(options.path)
     if options.command == "parse-capabilities":
         return parse_capabilities(options.context_path)
     if options.command == "route":
