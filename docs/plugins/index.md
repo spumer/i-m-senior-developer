@@ -2,17 +2,21 @@
 
 Установка и обновление описаны на [отдельной странице](../install.md).
 
-| Плагин | Версия | Команды | Скиллы | Агенты | Хуки |
-|---|---|---|---|---|---|
-| [planner](planner.md) | 1.1.0 | 8 | 4 | 1 | `UserPromptSubmit` |
-| [sdlc](sdlc.md) | 0.3.0 | — | 3 | 3 | — |
-| [tdd-master](tdd-master.md) | 0.1.0 | — | 1 | 1 | `SessionStart` |
-| [functional-clarity](functional-clarity.md) | 1.1.0 | — | 1 | — | `SessionStart` |
-| [clarity-language](clarity-language.md) | 0.3.0 | — | 3 | — | `SessionStart` |
-| [plugin-testing](plugin-testing.md) | 0.1.0 | — | 1 | — | — |
-| [llms-keeper](llms-keeper.md) | 0.1.0 | 1 | 1 | 1 | `SessionStart` |
-| [fpf-integration](fpf-integration.md) | 0.6.0 | — | 4 | 1 | `SessionStart`, `UserPromptSubmit` |
-| [fpf-competency-bank](fpf-competency-bank.md) | 0.1.0 | — | — | — | — |
+| Плагин | Что делает |
+|---|---|
+| [planner](planner.md) | планирование: замысел, требования фичи, архитектура, план, исполнение |
+| [sdlc](sdlc.md) | агенты `architect`, `code-implementer`, `code-reviewer` |
+| [tdd-master](tdd-master.md) | цикл красный–зелёный–рефакторинг |
+| [functional-clarity](functional-clarity.md) | принципы кода и дисциплина изменения существующего кода |
+| [clarity-language](clarity-language.md) | проверка текстов: смысл, русский стиль, проза |
+| [plugin-testing](plugin-testing.md) | eval-кейсы и обёртка прогона для плагинов |
+| [llms-keeper](llms-keeper.md) | `llms.txt` и `llms-full.txt` по команде `/update-docs` |
+| [fpf-integration](fpf-integration.md) | аудит решений, авторинг и применение сводов компетенций |
+| [fpf-competency-bank](fpf-competency-bank.md) | данные: два свода и карта для резолвера |
+
+Версию установленного плагина показывает `claude plugin list` — строкой
+`Version:` рядом с его именем. Состав каждого плагина — команды, скиллы, агенты,
+хуки, workflow — назван поимённо на его странице.
 
 Версионирование и выпуск описаны на [странице релиза](../release.md).
 
