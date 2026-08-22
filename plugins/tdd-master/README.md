@@ -1,18 +1,14 @@
 # tdd-master
 
-Claude Code plugin for Test-Driven Development methodology based on Kent Beck and Uncle Bob principles.
-
-## What it does
-
-- Guides agents through Red-Green-Refactor cycle
-- Automatically detects project frameworks (pytest, Django) and loads relevant patterns
-- Provides reference documentation for TDD methodology, fixture defaults, and testing patterns
-- Integrates with development workflow: tests are written BEFORE implementation
+Claude Code plugin for Test-Driven Development methodology. This file answers
+how the plugin is structured in the repository. The contract — what it does,
+its two agent modes, what the cycle forbids — lives on
+[`docs/plugins/tdd-master.md`](../../docs/plugins/tdd-master.md).
 
 ## Structure
 
 ```
-tdd-master-plugin/
+plugins/tdd-master/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
 ├── agents/
@@ -33,28 +29,11 @@ tdd-master-plugin/
 
 ## Installation
 
-Add the plugin path to your project's `.claude/settings.json`:
+Add this marketplace to Claude Code and install the plugin:
 
-```json
-{
-  "plugins": ["./tdd-master-plugin"]
-}
+```
+/plugin marketplace add spumer/i-m-senior-developer
+/plugin install tdd-master@i-m-senior-developer
 ```
 
-## How it works
-
-1. **SessionStart hook** — injects TDD workflow reminder into every new session
-2. **Skill activation** — triggers when user asks to write tests, implement features, fix bugs, or mentions TDD
-3. **Framework detection** — analyzes `pyproject.toml`, `conftest.py`, `manage.py` to determine pytest/Django usage
-4. **Reference loading** — always loads TDD_GUIDE + P0_DEFAULT_CONTEXT, conditionally loads framework-specific patterns
-5. **Agent execution** — two modes. Called directly, the tdd-master agent runs the whole cycle: failing tests, then minimal implementation, then refactoring. Called by another agent, it stops after the RED phase: it creates the test file, writes the failing tests, reports the test list, and the calling agent implements against it.
-
-## Integration
-
-This plugin works standalone. Other agents in your project can call tdd-master to write tests before implementation or verify TDD compliance during reviews. In that delegated mode the caller owns the GREEN phase — see "Integration with Other Agents" in `agents/tdd-master.md`.
-
-## Requirements
-
-- Claude Code CLI
-- Python project with pytest (recommended)
-- Django (optional, for Django-specific patterns)
+Works standalone; no dependencies on other plugins in this marketplace.

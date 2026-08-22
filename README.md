@@ -2,9 +2,29 @@
 
 Плагины для Claude Code, собранные на основе моей практики.
 
+Этот файл отвечает на два вопроса: что это за набор и как его поставить.
+Договор каждого плагина — что он даёт и как связан с другими — описан на
+страницах [`docs/plugins/`](docs/plugins/), устройство и расположение
+компонентов — в локальных README плагинов.
+
 Документация: состав плагинов, связи между ними, правила проверки и отчёты о
 прогонах — в каталоге [`docs/`](docs/index.md). Сайт собирается Zensical и
 публикуется в GitHub Pages.
+
+## Установка
+
+Установка и обновление маркетплейса и плагинов описаны на
+[отдельной странице](docs/install.md).
+
+`sdlc` подтянет `tdd-master` и `functional-clarity`, `fpf-competency-bank` — `fpf-integration`: это объявленные зависимости.
+
+Локально:
+
+```bash
+claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc --plugin-dir plugins/clarity-language --plugin-dir plugins/plugin-testing --plugin-dir plugins/fpf-integration --plugin-dir plugins/fpf-competency-bank
+```
+
+Что за что отвечает, как плагины связаны и в каких случаях каждым лучше не пользоваться — в [документации](docs/index.md).
 
 ## Философия
 
@@ -23,7 +43,7 @@
 
 Именно вышеописанные качества делают систему жизнеспособной.
 
-Есть и множствео других факторов, которые делают её НЕ жизнеспособной
+Есть и множество других факторов, которые делают её НЕ жизнеспособной
 
 ### Иллюзия простоты.
 
@@ -79,21 +99,6 @@ SDLC-конвейер: 3 агента (`architect`, `code-implementer`, `code-re
 ### [fpf-competency-bank](plugins/fpf-competency-bank/)
 
 Только данные: два проверенных свода компетенций и карта для резолвера. Подключается через `~/.claude/frameworks.paths`, исполняется резолвером из `fpf-integration`.
-
-## Установка
-
-Установка и обновление маркетплейса и плагинов описаны на
-[отдельной странице](docs/install.md).
-
-`sdlc` подтянет `tdd-master` и `functional-clarity`, `fpf-competency-bank` — `fpf-integration`: это объявленные зависимости.
-
-Локально:
-
-```bash
-claude --plugin-dir plugins/functional-clarity --plugin-dir plugins/tdd-master --plugin-dir plugins/llms-keeper --plugin-dir plugins/planner --plugin-dir plugins/sdlc --plugin-dir plugins/clarity-language --plugin-dir plugins/plugin-testing --plugin-dir plugins/fpf-integration --plugin-dir plugins/fpf-competency-bank
-```
-
-Что за что отвечает, как плагины связаны и в каких случаях каждым лучше не пользоваться — в [документации](docs/index.md).
 
 ## Смежные проекты
 
