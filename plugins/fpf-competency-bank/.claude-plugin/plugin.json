@@ -1,6 +1,6 @@
 {
   "name": "fpf-competency-bank",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Эталонный банк компетенций FPF: distributable-набор проверенных сводов (DPF/LPF) для подключения через ~/.claude/frameworks.paths. Несёт DPF-COUPLING-GENERALIZATION (доменный, обобщение через связность) и LPF-SIMPLIFICATION-REVIEW (локальная практика ревью-обобщения, образец класса LPF) с унаследованным вердиктом критика и картой компетенций для резолвера dpf-apply.",
   "dependencies": [
     "fpf-integration"
