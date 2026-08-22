@@ -1,6 +1,6 @@
 {
   "name": "llms-keeper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Maintain llms.txt + llms-full.txt for any project following llmstxt.org standard. Helps AI agents quickly understand a project by keeping documentation in sync with the codebase.",
   "author": {
     "name": "spumer"
