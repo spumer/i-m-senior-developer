@@ -4,6 +4,36 @@ site_description = "Документация витрины плагинов Cla
 site_author = "spumer"
 docs_dir = "docs"
 site_dir = "site"
+# Порядок чтения сайта: вход, подготовка, установка, выбор плагинов, правила
+# проверки, отчёты, разбор неполадок, выпуск, журнал решений. Полноту списка
+# против docs/**/*.md охраняет scripts/check_docs_nav.py.
+nav = [
+  "index.md",
+  "prerequisites.md",
+  "install.md",
+  "plugins/index.md",
+  "plugins/planner.md",
+  "plugins/planner-commands.md",
+  "plugins/sdlc.md",
+  "plugins/tdd-master.md",
+  "plugins/functional-clarity.md",
+  "plugins/clarity-language.md",
+  "plugins/plugin-testing.md",
+  "plugins/llms-keeper.md",
+  "plugins/fpf-integration.md",
+  "plugins/fpf-competency-bank.md",
+  "plugins/relations.md",
+  "testing/index.md",
+  "testing/running.md",
+  "testing/authoring.md",
+  "testing/early-access.md",
+  "testing/reference.md",
+  "reports/index.md",
+  "reports/planner.md",
+  "troubleshooting.md",
+  "release.md",
+  "decisions.md",
+]
 
 [project.theme]
 variant = "modern"
