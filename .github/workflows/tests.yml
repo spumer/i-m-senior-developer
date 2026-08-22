@@ -29,6 +29,11 @@ jobs:
       - name: manifest guard
         run: python3 scripts/check_manifests.py
 
+      # Запрет зеркала манифестов в docs/: версия рядом с именем плагина
+      # обязана совпадать с plugin.json, колонки состава в каталоге запрещены.
+      - name: docs plugin-mirror guard
+        run: python3 scripts/check_docs_plugins.py
+
       # Скан числовых зеркал (стоимость, оценки) в docs/ вне docs/reports/.
       # Сверка таблицы с результатом прогона здесь не запускается: результаты
       # eval игнорируются git, в чистой копии CI их нет.
@@ -69,6 +74,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      # Полнота явного project.nav: каждый docs/**/*.md присутствует в списке
+      # ровно раз, лишних целей нет. До сборки: забытая страница — дефект
+      # навигации, а не сборки.
+      - name: navigation completeness
+        run: python3 scripts/check_docs_nav.py
 
       # --strict обязателен: без него сломанная ссылка или якорь — лишь Warning
       # с кодом выхода 0, и сборка проходит с битой документацией.

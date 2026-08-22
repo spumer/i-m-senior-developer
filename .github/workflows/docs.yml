@@ -23,9 +23,16 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: 3.x
+      # Полнота явного project.nav до публикации: недостижимая из меню
+      # страница равна отсутствующей.
+      - run: python3 scripts/check_docs_nav.py
+      # Запрет зеркала манифестов в docs/ до публикации: расхождение версии
+      # или возврат колонок состава — молчаливая ложь каталога.
+      - run: python3 scripts/check_docs_plugins.py
       - run: pip install zensical
       # Кеш на CI пока не рекомендован самим Zensical: поведение ещё меняется.
-      - run: zensical build --clean
+      # --strict обязателен: без него битая ссылка — лишь Warning с кодом 0.
+      - run: zensical build --clean --strict
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
