@@ -182,10 +182,15 @@ def require_top_level(result: dict[str, Any]) -> None:
     if result.get("partial") is not False:
         raise RunnerError("partial must be false")
     aggregates = require_mapping(result.get("aggregates"), "aggregates")
-    if aggregates.get("casesTotal") != 3:
-        raise RunnerError("aggregates.casesTotal must equal 3")
-    if aggregates.get("casesPassed") != 3:
-        raise RunnerError("aggregates.casesPassed must equal 3")
+    expected_case_count = len(EXPECTED_CASES)
+    if aggregates.get("casesTotal") != expected_case_count:
+        raise RunnerError(
+            f"aggregates.casesTotal must equal {expected_case_count}"
+        )
+    if aggregates.get("casesPassed") != expected_case_count:
+        raise RunnerError(
+            f"aggregates.casesPassed must equal {expected_case_count}"
+        )
     require_one(aggregates.get("overallScore"), "aggregates.overallScore")
 
 

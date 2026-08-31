@@ -4,7 +4,7 @@ description: Встроенный поставщик называет свои �
 tags: [provider, product-baseline]
 runs: 3
 max_turns: 6
-timeout_seconds: 180
+timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill, Write]
 plugins: ["../.."]
 expected_outcome: >

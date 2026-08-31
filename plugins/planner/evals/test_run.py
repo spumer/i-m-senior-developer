@@ -30,6 +30,9 @@ from pathlib import Path
 import sys
 
 
+CASE_NAMES = $EXPECTED_CASES
+
+
 def log_call(argv):
     log_path = Path(os.environ["FAKE_CLAUDE_LOG"])
     with log_path.open("a") as stream:
@@ -38,11 +41,7 @@ def log_call(argv):
 
 def valid_result():
     cases = []
-    for case_name in (
-        "baseline-provider-limits",
-        "idea-routing",
-        "multi-step-input",
-    ):
+    for case_name in CASE_NAMES:
         runs = []
         for index in range(3):
             runs.append({
@@ -66,8 +65,8 @@ def valid_result():
         "partial": False,
         "cases": cases,
         "aggregates": {
-            "casesTotal": 3,
-            "casesPassed": 3,
+            "casesTotal": len(CASE_NAMES),
+            "casesPassed": len(CASE_NAMES),
             "overallScore": 1,
         },
     }
@@ -83,8 +82,9 @@ def write_fixture(output_dir, fixture):
         result["partial"] = True
     elif fixture == "missing-case":
         result["cases"].pop()
-        result["aggregates"]["casesTotal"] = 2
-        result["aggregates"]["casesPassed"] = 2
+        case_count = len(result["cases"])
+        result["aggregates"]["casesTotal"] = case_count
+        result["aggregates"]["casesPassed"] = case_count
     elif fixture == "two-runs":
         result["cases"][0]["arms"]["with"].pop()
     elif fixture == "skipped-paid-graders":
@@ -131,7 +131,7 @@ if argv[:3] == ["plugin", "eval", "plugins/planner"]:
 
 print(f"unsupported fake invocation: {argv}", file=sys.stderr)
 raise SystemExit(91)
-'''
+'''.replace("$EXPECTED_CASES", repr(EXPECTED_CASES))
 
 
 class PlannerEvalRunnerTest(unittest.TestCase):
@@ -252,13 +252,15 @@ class PlannerEvalRunnerTest(unittest.TestCase):
         self.assertTrue((output_dir / "report.html").is_file())
         self.assertIn(str(output_dir), result.stdout)
         self.assertIn("costUsd=0.42", result.stdout)
-        self.assertIn("cases=3", result.stdout)
+        self.assertIn(f"cases={len(EXPECTED_CASES)}", result.stdout)
         self.assertEqual(result.stderr, "")
 
     def test__runner__invalid_result_fixture__fails_with_reason(self) -> None:
         cases = (
             ("partial", "partial"),
-            ("missing-case", "multi-step-input"),
+            # Фикстура снимает последний случай, поэтому ожидание берётся из
+            # состава: при правке набора имя не должно отставать молча.
+            ("missing-case", EXPECTED_CASES[-1]),
             ("two-runs", "exactly 3"),
             ("skipped-paid-graders", "skippedPaidGraders"),
             ("broken-json", "valid JSON"),
