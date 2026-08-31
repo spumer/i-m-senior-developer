@@ -9,10 +9,12 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
 import tempfile
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -299,6 +301,227 @@ def test_cli_bank_pass_and_fail():
 
         missing = run_cli(project, "--verify", "DPF-NOPE", "--scope", "bank")
         assert missing.returncode == 1, missing.stdout
+
+
+def run_cli_with_home(project_root, home, *cli_args):
+    env = dict(os.environ)
+    env["HOME"] = home
+    return subprocess.run(
+        [sys.executable, SCRIPT, *cli_args],
+        cwd=project_root,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_published_root_gates_package_without_admissible_verdict():
+    for case, source_file, conformance, expected_code in (
+        ("published_no_verdict", "frameworks.published", None, 2),
+        ("published_repair_verdict", "frameworks.published", REPAIR, 2),
+        ("published_admissible", "frameworks.published", ADMISSIBLE, 0),
+        ("human_paths_no_verdict", "frameworks.paths", None, 0),
+    ):
+        with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+            root = os.path.join(home, "bank-frameworks")
+            os.makedirs(root, exist_ok=True)
+            make_pkg(root, "DPF-BANK", conformance=conformance)
+            write_source_file(home, source_file, [root])
+
+            proc = run_cli_with_home(project, home, "DPF-BANK")
+
+            assert proc.returncode == expected_code, (
+                f"{case}: код {proc.returncode}\n{proc.stdout}{proc.stderr}"
+            )
+            if expected_code == 2:
+                assert "допуск" in (proc.stdout + proc.stderr), f"{case}: {proc.stderr}"
+
+
+def test_verify_local_scope_stays_open_for_published_root():
+    # Гейт основного пути и таблица областей --verify — разные договоры:
+    # область local намеренно не гейтит допуск, и включение гейта на основном
+    # пути её не меняет.
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+        root = os.path.join(home, "bank-frameworks")
+        os.makedirs(root, exist_ok=True)
+        make_pkg(root, "DPF-BANK", conformance=None)
+        write_source_file(home, "frameworks.published", [root])
+
+        local = run_cli_with_home(project, home, "--verify", "DPF-BANK", "--scope", "local")
+        bank = run_cli_with_home(project, home, "--verify", "DPF-BANK", "--scope", "bank")
+
+        assert local.returncode == 0, local.stdout + local.stderr
+        assert bank.returncode == 2, bank.stdout + bank.stderr
+
+
+def test_list_marks_published_package_without_admissible_verdict():
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+        root = os.path.join(home, "bank-frameworks")
+        os.makedirs(root, exist_ok=True)
+        make_pkg(root, "DPF-BANK", conformance=None)
+        make_pkg(root, "DPF-OK", conformance=ADMISSIBLE)
+        write_source_file(home, "frameworks.published", [root])
+
+        proc = run_cli_with_home(project, home, "--list", "--json")
+
+        assert proc.returncode == 0, proc.stderr
+        rows = {row["id"]: row for row in json.loads(proc.stdout)}
+        assert rows["DPF-BANK"]["published"] is True
+        assert rows["DPF-BANK"]["admissible"] is False
+        assert rows["DPF-OK"]["admissible"] is True
+
+
+def write_source_file(home, name, lines):
+    claude_dir = os.path.join(home, ".claude")
+    os.makedirs(claude_dir, exist_ok=True)
+    with open(os.path.join(claude_dir, name), "w", encoding="utf-8") as handle:
+        handle.write("\n".join(lines) + "\n")
+
+
+def test_build_levels_includes_published_roots_after_paths():
+    with tempfile.TemporaryDirectory() as home:
+        paths_root = os.path.join(home, "paths-root")
+        published_root = os.path.join(home, "published-root")
+        write_source_file(home, "frameworks.paths", [paths_root])
+        write_source_file(home, "frameworks.published", [published_root])
+
+        with mock.patch.dict(os.environ, {"HOME": home}):
+            with mock.patch.object(resolve.os, "getcwd", return_value="/project"):
+                levels = resolve.build_levels()
+
+    assert levels == [
+        ("project", "/project/.claude/frameworks"),
+        ("user", os.path.join(home, ".claude", "frameworks")),
+        ("plugin", paths_root),
+        ("plugin", published_root),
+    ]
+
+
+def test_build_levels_deduplicates_published_alias_after_human_path():
+    with tempfile.TemporaryDirectory() as home:
+        human_root = os.path.join(home, "human-root")
+        published_alias = os.path.join(home, "published-alias")
+        os.makedirs(human_root)
+        os.symlink(human_root, published_alias)
+        write_source_file(home, "frameworks.paths", [human_root])
+        write_source_file(home, "frameworks.published", [published_alias])
+
+        with mock.patch.dict(os.environ, {"HOME": home}):
+            with mock.patch.object(resolve.os, "getcwd", return_value="/project"):
+                levels = resolve.build_levels()
+
+    assert levels == [
+        ("project", "/project/.claude/frameworks"),
+        ("user", os.path.join(home, ".claude", "frameworks")),
+        ("plugin", human_root),
+    ]
+
+
+def test_build_levels_without_published_file_keeps_existing_levels():
+    with tempfile.TemporaryDirectory() as home:
+        paths_root = os.path.join(home, "paths-root")
+        write_source_file(home, "frameworks.paths", [paths_root])
+
+        with mock.patch.dict(os.environ, {"HOME": home}):
+            with mock.patch.object(resolve.os, "getcwd", return_value="/project"):
+                levels = resolve.build_levels()
+
+    assert levels == [
+        ("project", "/project/.claude/frameworks"),
+        ("user", os.path.join(home, ".claude", "frameworks")),
+        ("plugin", paths_root),
+    ]
+
+
+def test_sources_reports_missing_published_root_without_error():
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+        missing_root = os.path.join(home, "missing-bank")
+        write_source_file(home, "frameworks.published", [missing_root])
+        env = dict(os.environ, HOME=home)
+        result = subprocess.run(
+            [sys.executable, SCRIPT, "--sources", "--json"],
+            cwd=project,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+
+    assert result.returncode == 0, result.stderr
+    rows = json.loads(result.stdout)
+    published = next(row for row in rows if row["origin"] == "published")
+    assert published == {
+        "level": "plugin",
+        "origin": "published",
+        "path": missing_root,
+        "exists": False,
+    }
+
+
+def test_sources_human_reports_all_roots_with_origin_and_existence():
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+        paths_root = os.path.join(home, "paths-root")
+        missing_root = os.path.join(home, "missing-bank")
+        os.makedirs(paths_root)
+        write_source_file(home, "frameworks.paths", [paths_root])
+        write_source_file(home, "frameworks.published", [missing_root])
+        env = dict(os.environ, HOME=home)
+        result = subprocess.run(
+            [sys.executable, SCRIPT, "--sources"],
+            cwd=project,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+
+    assert result.returncode == 0, result.stderr
+    rows = {}
+    for line in result.stdout.splitlines():
+        prefix, exists = line.rsplit(" exists=", 1)
+        level, origin, path = prefix.split(maxsplit=2)
+        rows[origin, path] = level, exists
+    assert rows == {
+        ("project", os.path.join(os.path.realpath(project), ".claude", "frameworks")): ("project", "no"),
+        ("user", os.path.join(home, ".claude", "frameworks")): ("user", "no"),
+        ("paths", paths_root): ("plugin", "yes"),
+        ("published", missing_root): ("plugin", "no"),
+    }
+
+
+def test_list_json_is_unchanged_without_published_file():
+    with tempfile.TemporaryDirectory() as home, tempfile.TemporaryDirectory() as project:
+        frameworks = os.path.join(project, ".claude", "frameworks")
+        os.makedirs(frameworks)
+        package = make_pkg(frameworks, "DPF-ONLY")
+        env = dict(os.environ, HOME=home)
+        result = subprocess.run(
+            [sys.executable, SCRIPT, "--list", "--json"],
+            cwd=project,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == [
+        {
+            "id": "DPF-ONLY",
+            "path": os.path.realpath(package),
+            "level": "project",
+            "kind": "Domain Principle Framework",
+            "owner": "guardian",
+            "status": "active",
+            "review_due": "2099-01-01",
+            "date": "",
+            "executable": False,
+            "stale": False,
+            "stale_reason": None,
+            # Уровень project публикацией не затронут, поэтому допуск к нему
+            # не применяется: банковский гейт живёт только у корней публикации.
+            "published": False,
+            "admissible": None,
+            "shadowed": False,
+        }
+    ]
 
 
 def _run_all():

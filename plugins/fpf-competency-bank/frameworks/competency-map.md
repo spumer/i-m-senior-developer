@@ -1,6 +1,6 @@
 # Карта компетенций — fpf-competency-bank
 
-Плоская таблица сводов, которые несёт этот банк. Резолвер `dpf-apply` (`resolve.py`) находит банк через строку в `~/.claude/frameworks.paths` (см. README) и читает эту карту вместе с `DPF.md` каждого пакета.
+Плоская таблица сводов, которые несёт этот банк. Плагин объявляет обработчик `SessionStart` с публикатором, который заменяет содержимое `~/.claude/frameworks.published` строкой `<CLAUDE_PLUGIN_ROOT>/frameworks`. Резолвер `dpf-apply` (`resolve.py`) читает этот файл после человеческого `~/.claude/frameworks.paths`, устраняет повторные корни по каноническому пути и ищет `DPF.md` пакетов. Карту читает хук `UserPromptSubmit` для подсказок.
 
 | id | path | kind | status | edition | modes | cues | depends_on | maturity_level |
 |----|------|------|--------|---------|-------|------|------------|-----------------|

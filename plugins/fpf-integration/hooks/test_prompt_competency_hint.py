@@ -10,10 +10,12 @@ stdlib only (unittest) — pytest в окружении отсутствует.
 
 from __future__ import annotations
 
+import io
 import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -293,6 +295,127 @@ class SeenStoreRoundtripTests(unittest.TestCase):
         # пустой session_id -> путь None -> load всегда set() (дедуп не применяется)
         self.assertEqual(hint.load_seen(""), set())
         hint.record_seen("", ["DPF-A"])  # не должно падать и ничего не писать
+
+
+class FetchKnownIdsTests(unittest.TestCase):
+    def known_ids_for(self, rows):
+        with tempfile.TemporaryDirectory() as directory:
+            stub = os.path.join(directory, "resolve_stub.py")
+            with open(stub, "w", encoding="utf-8") as handle:
+                handle.write(f"import json\nprint(json.dumps({rows!r}))\n")
+            return hint.fetch_known_ids(stub)
+
+    def test_known_ids_skip_published_packages_without_admission(self):
+        rows = [
+            {"id": "DPF-ADMITTED", "published": True, "admissible": True},
+            {"id": "DPF-UNADMITTED", "published": True, "admissible": False},
+            {"id": "DPF-HUMAN-ROOT", "published": False, "admissible": None},
+            {"id": "DPF-WITHOUT-FIELDS"},
+        ]
+
+        self.assertEqual(
+            self.known_ids_for(rows),
+            {"DPF-ADMITTED", "DPF-HUMAN-ROOT", "DPF-WITHOUT-FIELDS"},
+        )
+
+
+class PublishedLevelsTests(unittest.TestCase):
+    def write_source_file(self, home, name, lines):
+        claude_dir = os.path.join(home, ".claude")
+        os.makedirs(claude_dir, exist_ok=True)
+        with open(os.path.join(claude_dir, name), "w", encoding="utf-8") as handle:
+            handle.write("\n".join(lines) + "\n")
+
+    def test__published_root__follows_human_paths(self):
+        with tempfile.TemporaryDirectory() as home:
+            paths_root = os.path.join(home, "paths-root")
+            published_root = os.path.join(home, "published-root")
+            self.write_source_file(home, "frameworks.paths", [paths_root])
+            self.write_source_file(home, "frameworks.published", [published_root])
+
+            with mock.patch.dict(os.environ, {"HOME": home}):
+                with mock.patch.object(hint.os, "getcwd", return_value="/project"):
+                    levels = hint.build_levels()
+
+        self.assertEqual(
+            levels,
+            [
+                ("project", "/project/.claude/frameworks"),
+                ("user", os.path.join(home, ".claude", "frameworks")),
+                ("plugin", paths_root),
+                ("plugin", published_root),
+            ],
+        )
+
+    def test__published_alias__is_deduplicated_after_human_path(self):
+        with tempfile.TemporaryDirectory() as home:
+            human_root = os.path.join(home, "human-root")
+            published_alias = os.path.join(home, "published-alias")
+            os.makedirs(human_root)
+            os.symlink(human_root, published_alias)
+            self.write_source_file(home, "frameworks.paths", [human_root])
+            self.write_source_file(home, "frameworks.published", [published_alias])
+
+            with mock.patch.dict(os.environ, {"HOME": home}):
+                with mock.patch.object(hint.os, "getcwd", return_value="/project"):
+                    levels = hint.build_levels()
+
+        self.assertEqual(
+            levels,
+            [
+                ("project", "/project/.claude/frameworks"),
+                ("user", os.path.join(home, ".claude", "frameworks")),
+                ("plugin", human_root),
+            ],
+        )
+
+    def test__no_published_file__keeps_existing_levels(self):
+        with tempfile.TemporaryDirectory() as home:
+            paths_root = os.path.join(home, "paths-root")
+            self.write_source_file(home, "frameworks.paths", [paths_root])
+
+            with mock.patch.dict(os.environ, {"HOME": home}):
+                with mock.patch.object(hint.os, "getcwd", return_value="/project"):
+                    levels = hint.build_levels()
+
+        self.assertEqual(
+            levels,
+            [
+                ("project", "/project/.claude/frameworks"),
+                ("user", os.path.join(home, ".claude", "frameworks")),
+                ("plugin", paths_root),
+            ],
+        )
+
+
+class PublishedBankHintTests(unittest.TestCase):
+    def test__bank_only_map__prints_relevant_competency_hint(self):
+        with tempfile.TemporaryDirectory() as home:
+            bank_root = os.path.join(home, "bank-frameworks")
+            os.makedirs(bank_root)
+            with open(os.path.join(bank_root, "competency-map.md"), "w", encoding="utf-8") as handle:
+                handle.write(
+                    "| id | cues |\n"
+                    "|----|------|\n"
+                    "| DPF-BANK-ONLY | bank-only cue |\n"
+                )
+            claude_dir = os.path.join(home, ".claude")
+            os.makedirs(claude_dir)
+            with open(os.path.join(claude_dir, "frameworks.published"), "w", encoding="utf-8") as handle:
+                handle.write(bank_root + "\n")
+
+            output = io.StringIO()
+            integration_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            with mock.patch.dict(
+                os.environ,
+                {"HOME": home, "CLAUDE_PLUGIN_ROOT": integration_root},
+            ):
+                with mock.patch.object(sys, "stdin", io.StringIO('{"prompt": "bank-only cue"}')):
+                    with mock.patch.object(sys, "stdout", output):
+                        code = hint.main()
+
+        self.assertEqual(code, 0)
+        self.assertIn("DPF-BANK-ONLY", output.getvalue())
 
 
 if __name__ == "__main__":

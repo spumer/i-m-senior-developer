@@ -54,25 +54,62 @@ def fetch_known_ids(resolve_path: str) -> set[str]:
         return set()
     if not isinstance(data, list):
         return set()
-    return {row.get("id", "") for row in data if isinstance(row, dict) and row.get("id")}
+    return {
+        row.get("id", "")
+        for row in data
+        if isinstance(row, dict) and row.get("id") and admitted(row)
+    }
+
+
+def admitted(row: dict) -> bool:
+    """Пакет из опубликованного корня без подтверждённого допуска не подсказываем.
+
+    Подсказка ведёт к применению, поэтому недопущенный пакет здесь молчит:
+    предложить его — то же, что выдать. Строки без полей допуска приходят от
+    прежней версии резолвера и остаются допущенными.
+    """
+    return not row.get("published") or bool(row.get("admissible"))
+
+
+def read_source_paths(path: str) -> list[str]:
+    if not os.path.isfile(path):
+        return []
+    roots = []
+    with open(path, encoding="utf-8") as handle:
+        for raw_line in handle:
+            line = raw_line.strip()
+            if line and not line.startswith("#"):
+                roots.append(os.path.expanduser(line))
+    return roots
 
 
 def build_levels() -> list[tuple[str, str]]:
-    """Та же конвенция уровней, что `resolve.py.build_levels()` (2.4: стабильная
-    публичная конвенция, продублирована намеренно — хук не расширяет контракт
-    resolve.py, и не импортирует его внутренности)."""
-    levels = [
+    """Та же конвенция уровней, что `resolve.py.build_levels()`.
+
+    Копия намеренна: хук читает опубликованный вывод резолвера, поэтому не
+    зависит от его внутренностей и не импортирует их.
+    """
+    home = os.path.expanduser("~")
+    claude_dir = os.path.join(home, ".claude")
+    source_roots = [
         ("project", os.path.join(os.getcwd(), ".claude", "frameworks")),
-        ("user", os.path.join(os.path.expanduser("~"), ".claude", "frameworks")),
+        ("user", os.path.join(claude_dir, "frameworks")),
     ]
-    paths_file = os.path.join(os.path.expanduser("~"), ".claude", "frameworks.paths")
-    if os.path.isfile(paths_file):
-        with open(paths_file, encoding="utf-8") as handle:
-            for raw_line in handle:
-                line = raw_line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                levels.append(("plugin", os.path.expanduser(line)))
+    source_roots.extend(
+        ("plugin", root) for root in read_source_paths(os.path.join(claude_dir, "frameworks.paths"))
+    )
+    source_roots.extend(
+        ("plugin", root) for root in read_source_paths(os.path.join(claude_dir, "frameworks.published"))
+    )
+
+    levels = []
+    seen_roots = set()
+    for level, root in source_roots:
+        canonical_root = os.path.realpath(root)
+        if canonical_root in seen_roots:
+            continue
+        seen_roots.add(canonical_root)
+        levels.append((level, root))
     return levels
 
 
