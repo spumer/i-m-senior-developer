@@ -95,4 +95,4 @@ python3 plugins/planner/evals/run.py
 
 The wrapper pins the run contract, verifies the aggregate result, and refuses a
 partial run. General rules for plugin testing live in `docs/testing/`; the
-observed result of the latest run is recorded in `docs/reports/planner.md`.
+numbers of a run stay in its `aggregate-result.json`, which git does not track.

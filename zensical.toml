@@ -28,8 +28,6 @@ nav = [
   "testing/authoring.md",
   "testing/early-access.md",
   "testing/reference.md",
-  "reports/index.md",
-  "reports/planner.md",
   "troubleshooting.md",
   "release.md",
   "decisions.md",

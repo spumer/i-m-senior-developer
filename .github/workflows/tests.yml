@@ -42,11 +42,11 @@ jobs:
       - name: docs plugin-mirror guard
         run: python3 scripts/check_docs_plugins.py
 
-      # Скан числовых зеркал (стоимость, оценки) в docs/ вне docs/reports/.
-      # Сверка таблицы с результатом прогона здесь не запускается: результаты
-      # eval игнорируются git, в чистой копии CI их нет.
-      - name: numeric-mirror scan
-        run: python3 scripts/check_report_numbers.py --scan-mirrors
+      # Числа наблюдённого прогона (стоимость, оценки) в docs/ не переносятся:
+      # они живут в aggregate-result.json, который git не отслеживает, и в
+      # документации устаревают молча.
+      - name: docs run-number guard
+        run: python3 scripts/check_docs_run_numbers.py
 
       # Приёмочный smoke: уровни зрелости seed-сводов не должны съезжать с калибровки.
       - name: maturity smoke — seed swords keep calibrated level

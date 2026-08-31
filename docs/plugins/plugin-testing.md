@@ -97,6 +97,5 @@ python3 "${CLAUDE_PLUGIN_ROOT}/skills/plugin-testing/scripts/check_eval_suite.py
 
 - [Проверка плагинов](../testing/index.md) — правила, общие для всех плагинов
   репозитория.
-- [Отчёты](../reports/index.md) — наблюдённые прогоны.
 - [Связи между плагинами](relations.md) — откуда взялась методика и с чем плагин
   связан.
