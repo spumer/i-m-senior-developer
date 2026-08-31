@@ -22,6 +22,32 @@ const COMMAND_RECEIPT_SCHEMA = {
   },
 }
 
+const INPUT_PATHS = [
+  { name: 'feature_directory', kind: 'directory' },
+  { name: 'execution_path', kind: 'file' },
+  { name: 'architecture_path', kind: 'file' },
+  { name: 'planner_context_path', kind: 'file' },
+  { name: 'helper_path', kind: 'file' },
+]
+const INPUT_PROBE_LABEL = 'проверка пригодности входа'
+const INPUT_PROBE_SCRIPT = [
+  'import json',
+  'import os',
+  'import sys',
+  `names = ${JSON.stringify(INPUT_PATHS.map(({ name }) => name))}`,
+  'def inspect(path):',
+  '    if not os.path.exists(path):',
+  "        return {'kind': 'missing', 'readable': False}",
+  '    if os.path.isdir(path):',
+  "        kind = 'directory'",
+  '    elif os.path.isfile(path):',
+  "        kind = 'file'",
+  '    else:',
+  "        kind = 'other'",
+  "    return {'kind': kind, 'readable': os.access(path, os.R_OK)}",
+  'print(json.dumps(dict(zip(names, map(inspect, sys.argv[1:]))), sort_keys=True))',
+].join('\n')
+
 function isNonemptyString(value) {
   return typeof value === 'string' && value.trim().length > 0
 }
@@ -30,8 +56,17 @@ function isAbsolutePath(value) {
   return isNonemptyString(value) && value.startsWith('/')
 }
 
+function hasUnsubstitutedVariable(value) {
+  return typeof value === 'string' && /\$\{[^}]*\}/.test(value)
+}
+
 function shellQuote(value) {
   return `'${value.replaceAll("'", "'\"'\"'")}'`
+}
+
+function inputProbeCommand(input) {
+  const paths = INPUT_PATHS.map(({ name }) => shellQuote(input[name])).join(' ')
+  return `python3 -c ${shellQuote(INPUT_PROBE_SCRIPT)} ${paths}`
 }
 
 function errorMessage(error) {
@@ -89,9 +124,12 @@ function normalizeArguments(rawArgs, result) {
     return { problems: ['args must be an object'] }
   }
 
-  const pathNames = ['feature_directory', 'execution_path', 'architecture_path', 'planner_context_path', 'helper_path']
-  for (const name of pathNames) {
-    if (!isAbsolutePath(rawArgs[name])) problems.push(`${name} must be an absolute path`)
+  for (const { name } of INPUT_PATHS) {
+    if (hasUnsubstitutedVariable(rawArgs[name])) {
+      problems.push(`${name}: contains an unsubstituted variable`)
+    } else if (!isAbsolutePath(rawArgs[name])) {
+      problems.push(`${name} must be an absolute path`)
+    }
   }
   if (rawArgs.execution_path === rawArgs.architecture_path) {
     problems.push('execution_path and architecture_path must be different')
@@ -196,7 +234,15 @@ function parseProtocolSections(value, headings) {
     const matches = [...text.matchAll(expression)]
     if (matches.length === 0) return { ok: false, reason: `missing ${heading}` }
     if (matches.length > 1) return { ok: false, reason: `duplicate ${heading}` }
-    entries.push({ heading, index: matches[0].index, valueStart: matches[0].index + matches[0][0].length })
+    entries.push({
+      heading,
+      index: matches[0].index,
+      // Совпадение съедает строку заголовка целиком, поэтому значение в той же
+      // строке живёт только в группе; срез до следующего заголовка добавляет
+      // продолжение многострочного поля.
+      inline: matches[0][1],
+      valueStart: matches[0].index + matches[0][0].length,
+    })
   }
 
   const ordered = [...entries].sort((left, right) => left.index - right.index)
@@ -210,7 +256,8 @@ function parseProtocolSections(value, headings) {
   for (let index = 0; index < ordered.length; index += 1) {
     const current = ordered[index]
     const next = ordered[index + 1]
-    sections[current.heading] = text.slice(current.valueStart, next ? next.index : text.length).trim()
+    const continuation = text.slice(current.valueStart, next ? next.index : text.length)
+    sections[current.heading] = `${current.inline}${continuation}`.trim()
   }
 
   const allowed = new Set(headings)
@@ -314,6 +361,44 @@ async function relayCommand(command, label) {
     { label, phase: 'Гейт', schema: COMMAND_RECEIPT_SCHEMA, effort: 'low' },
   )
   return requireReceipt(receipt, label)
+}
+
+async function checkInputSuitability(context) {
+  const { input } = context
+  const receipt = await relayCommand(inputProbeCommand(input), INPUT_PROBE_LABEL)
+  if (receipt.exit_code !== 0) {
+    failRun(context, `input suitability check failed: ${receipt.raw_stderr || receipt.raw_stdout}`)
+    return false
+  }
+
+  let payload
+  try {
+    payload = parseJsonStdout(receipt, 'input suitability check')
+  } catch (error) {
+    failRun(context, errorMessage(error))
+    return false
+  }
+
+  for (const { name, kind: expectedKind } of INPUT_PATHS) {
+    const node = payload[name]
+    if (!node || typeof node !== 'object' || Array.isArray(node) || typeof node.kind !== 'string' || typeof node.readable !== 'boolean') {
+      failRun(context, `input ${name}: invalid suitability probe result`)
+      return false
+    }
+    if (node.kind === 'missing') {
+      failRun(context, `input ${name}: path does not exist`)
+      return false
+    }
+    if (!node.readable) {
+      failRun(context, `input ${name}: path is not readable`)
+      return false
+    }
+    if (node.kind !== expectedKind) {
+      failRun(context, `input ${name}: expected ${expectedKind}, got ${node.kind}`)
+      return false
+    }
+  }
+  return true
 }
 
 async function checkFreshness(context, before) {
@@ -503,9 +588,11 @@ function acceptSummary(context, kind, phaseKey, reservation, summary) {
 
 async function invokeRole(context, options) {
   let collisions = 0
-  let correctionUsed = false
 
   while (collisions < 3) {
+    // Разрешение на корректирующий вызов принадлежит пути, а не роли: занятый
+    // путь отменяет попытку целиком, и новый путь получает своё разрешение.
+    let correctionUsed = false
     const reservation = await reserveReport(context, options.kind, options.phaseKey)
     if (!reservation) return { accepted: false }
 
@@ -563,8 +650,13 @@ async function invokeRole(context, options) {
     if (!correctedInspection) return { accepted: false }
 
     if (isTargetOccupied(corrected.response, reservation.path)) {
-      stopRun(context, `summary correction returned a target-path collision in ${options.phaseKey}: ${reservation.path}`)
-      return { accepted: false }
+      collisions += 1
+      recordSummaryDeviation(context.result, options.phaseKey, `target path occupied: ${reservation.path}`)
+      if (collisions === 3) {
+        stopRun(context, `target-path-collision-limit: ${reservation.path}`)
+        return { accepted: false }
+      }
+      continue
     }
 
     const correctedSummary = options.parseSummary(corrected.response, reservation.path)
@@ -689,6 +781,7 @@ async function runWorkflow(rawArgs) {
     context.input = normalized.value
 
     phase('Гейт')
+    if (!(await checkInputSuitability(context))) return result
     if (!(await checkFreshness(context, 'initialization'))) return result
     result.state = 'running'
 

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import stat
+import subprocess
 import sys
 import tempfile
 from typing import Any, NoReturn
@@ -622,6 +623,237 @@ def check_execution(path: Path, mark_stale: bool) -> int:
     return EXIT_STALE
 
 
+_BOOTSTRAP_METADATA_HEADING = re.compile(
+    r"##\s+(?:(?:§\s*)?\d+\.?\s+|§\s+)?Метаданные bootstrap\s*"
+)
+_BOOTSTRAP_LAST_SCAN = re.compile(
+    r"-\s+(?:\*\*)?(?:Last|Последний) auto-scan:(?:\*\*)?\s+(\S.*)"
+)
+_GIT_NOT_REPOSITORY = "fatal: not a git repository"
+_GIT_NOT_WORKTREE = "fatal: this operation must be run in a work tree"
+
+
+def run_git(directory: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
+    environment = dict(os.environ)
+    environment["LC_ALL"] = "C"
+    try:
+        return subprocess.run(
+            ["git", "-C", str(directory), *arguments],
+            text=True,
+            capture_output=True,
+            check=False,
+            env=environment,
+        )
+    except OSError as error:
+        raise PlanStateError(f"cannot run git: {error}") from error
+
+
+def git_directory(output: str, base: Path, description: str) -> Path:
+    if not isinstance(output, str):
+        raise PlanStateError(f"git {description} returned no path")
+    path_value = output.removesuffix("\n")
+    if not path_value:
+        raise PlanStateError(f"git {description} returned no path")
+    try:
+        path = Path(path_value)
+        if not path.is_absolute():
+            path = base / path
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise PlanStateError(f"git {description} returned an invalid directory") from error
+    if not resolved.is_dir():
+        raise PlanStateError(f"git {description} returned a path that is not a directory")
+    return resolved
+
+
+def git_first_worktree(output: str, base: Path) -> Path:
+    if not isinstance(output, str):
+        raise PlanStateError("git worktree list --porcelain returned no worktree")
+    first_line = output.split("\n", 1)[0]
+    prefix = "worktree "
+    if not first_line.startswith(prefix):
+        raise PlanStateError("git worktree list --porcelain returned no worktree")
+    return git_directory(first_line.removeprefix(prefix), base, "worktree list --porcelain")
+
+
+def git_failure(description: str, result: subprocess.CompletedProcess[str]) -> PlanStateError:
+    detail = result.stderr.strip()
+    if detail:
+        return PlanStateError(
+            f"git {description} failed with exit code {result.returncode}: {detail}"
+        )
+    return PlanStateError(f"git {description} failed with exit code {result.returncode}")
+
+
+def shared_git_root(start: Path) -> Path | None:
+    common_directory = run_git(start, "rev-parse", "--git-common-dir")
+    if common_directory.returncode != 0:
+        if (
+            common_directory.returncode == 128
+            and common_directory.stderr.strip().startswith(_GIT_NOT_REPOSITORY)
+        ):
+            return None
+        raise git_failure("rev-parse --git-common-dir", common_directory)
+    common_path = git_directory(
+        common_directory.stdout,
+        start,
+        "rev-parse --git-common-dir",
+    )
+
+    worktrees = run_git(start, "worktree", "list", "--porcelain")
+    if worktrees.returncode != 0:
+        raise git_failure("worktree list --porcelain", worktrees)
+    candidate = git_first_worktree(worktrees.stdout, start)
+
+    candidate_root = run_git(candidate, "rev-parse", "--show-toplevel")
+    if candidate_root.returncode != 0:
+        if (
+            candidate_root.returncode == 128
+            and candidate_root.stderr.strip().startswith(_GIT_NOT_WORKTREE)
+        ):
+            return None
+        raise git_failure("rev-parse --show-toplevel", candidate_root)
+    if (
+        git_directory(
+            candidate_root.stdout,
+            candidate,
+            "rev-parse --show-toplevel",
+        )
+        != candidate
+    ):
+        return None
+
+    candidate_common = run_git(candidate, "rev-parse", "--git-common-dir")
+    if candidate_common.returncode != 0:
+        raise git_failure("rev-parse --git-common-dir", candidate_common)
+    if (
+        git_directory(
+            candidate_common.stdout,
+            candidate,
+            "rev-parse --git-common-dir",
+        )
+        != common_path
+    ):
+        return None
+    return candidate
+
+
+def bootstrap_last_scan(context: str) -> tuple[bool, str | None]:
+    lines = context.splitlines()
+    for index, line in enumerate(lines):
+        if _BOOTSTRAP_METADATA_HEADING.fullmatch(line) is None:
+            continue
+        for section_line in lines[index + 1 :]:
+            if section_line.startswith("## "):
+                break
+            last_scan = _BOOTSTRAP_LAST_SCAN.fullmatch(section_line)
+            if last_scan is not None:
+                return True, last_scan.group(1)
+        return True, None
+    return False, None
+
+
+def context_payload(
+    path: Path | None,
+    scope: str | None,
+    status: str,
+    start: Path,
+    shared_root: Path | None,
+    last_scan: str | None,
+    searched: list[Path] | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "bootstrap_last_scan": last_scan,
+        "path": str(path) if path is not None else None,
+        "scope": scope,
+        "shared_root": str(shared_root) if shared_root is not None else None,
+        "start": str(start),
+        "status": status,
+    }
+    if searched is not None:
+        payload["searched"] = [str(candidate) for candidate in searched]
+    return payload
+
+
+def context_failure(
+    status: str,
+    start: Path,
+    shared_root: Path | None,
+    searched: list[Path],
+) -> int:
+    print_payload(
+        context_payload(
+            None,
+            None,
+            status,
+            start,
+            shared_root,
+            None,
+            searched,
+        )
+    )
+    return EXIT_INVALID
+
+
+def read_context(candidate: Path) -> str:
+    descriptor = os.open(
+        candidate,
+        os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
+    )
+    try:
+        candidate_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(candidate_stat.st_mode):
+            raise OSError(f"{candidate}: context file must be regular")
+        source = os.fdopen(descriptor, "r", encoding="utf-8")
+        descriptor = -1
+        with source:
+            return source.read()
+    finally:
+        if descriptor != -1:
+            os.close(descriptor)
+
+
+def resolve_context(start_path: Path) -> int:
+    start = start_path.expanduser().resolve()
+    shared_root = shared_git_root(start)
+    local = start / ".claude" / "planner-context.md"
+    candidates = [(local, "local")]
+    if shared_root is not None:
+        shared = shared_root / ".claude" / "planner-context.md"
+        if shared != local:
+            candidates.append((shared, "shared"))
+
+    searched: list[Path] = []
+    for candidate, scope in candidates:
+        try:
+            context = read_context(candidate)
+        except FileNotFoundError:
+            searched.append(candidate)
+            continue
+        except (OSError, UnicodeError):
+            searched.append(candidate)
+            return context_failure("unreadable", start, shared_root, searched)
+
+        searched.append(candidate)
+        has_metadata, last_scan = bootstrap_last_scan(context)
+        if not has_metadata:
+            return context_failure("malformed", start, shared_root, searched)
+
+        print_payload(
+            context_payload(
+                candidate,
+                scope,
+                "ok",
+                start,
+                shared_root,
+                last_scan,
+            )
+        )
+        return 0
+
+    return context_failure("missing", start, shared_root, searched)
+
+
 def semantic_change(value: str) -> bool:
     return value == "yes"
 
@@ -766,11 +998,20 @@ def build_parser() -> CliParser:
 
     inspect_report_command = commands.add_parser("inspect-report")
     inspect_report_command.add_argument("path", type=Path)
+
+    resolve_context_command = commands.add_parser("resolve-context")
+    resolve_context_command.add_argument("--start", type=Path, default=Path.cwd())
     return parser
 
 
 def run(arguments: list[str] | None = None) -> int:
-    options = build_parser().parse_args(arguments)
+    parser = build_parser()
+    options = parser.parse_args(arguments)
+    if options.command == "resolve-context":
+        start = options.start.expanduser().resolve()
+        if not start.is_dir():
+            parser.error(f"{start}: start must be an existing directory")
+        return resolve_context(start)
     if options.command == "inspect":
         return inspect_architecture(options.path)
     if options.command == "validate-architecture-target":

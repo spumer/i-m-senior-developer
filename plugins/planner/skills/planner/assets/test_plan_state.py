@@ -148,6 +148,64 @@ class PlanStateCliTest(unittest.TestCase):
         )
         self.assertEqual(committed.returncode, 0, committed.stderr)
 
+    def create_context_worktree(self, name: str) -> tuple[Path, Path]:
+        main = self.root / name
+        main.mkdir()
+        self.initialize_repository(main)
+        self.commit_output(
+            main,
+            main / "README.md",
+            "2024-01-01T00:00:00 +0000",
+        )
+        worktree = self.root / f"{name}-worktree"
+        result = subprocess.run(
+            ["git", "worktree", "add", "--detach", str(worktree)],
+            cwd=main,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return main, worktree
+
+    def write_context(self, directory: Path, last_scan: str = "2024-01-01") -> Path:
+        context = directory / ".claude" / "planner-context.md"
+        context.parent.mkdir(exist_ok=True)
+        context.write_text(
+            "# Planner context\n\n"
+            "## §7 Метаданные bootstrap\n\n"
+            f"- **Last auto-scan:** {last_scan}\n"
+        )
+        return context
+
+    def git_result(
+        self, returncode: int, stdout: str = "", stderr: str = ""
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(["git"], returncode, stdout, stderr)
+
+    def assert_context_payload(
+        self,
+        payload: dict[str, object],
+        path: Path | None,
+        scope: str | None,
+        status: str,
+        start: Path,
+        shared_root: Path | None,
+        last_scan: str | None,
+        searched: list[Path] | None = None,
+    ) -> None:
+        expected = {
+            "bootstrap_last_scan": last_scan,
+            "path": str(path.resolve()) if path is not None else None,
+            "scope": scope,
+            "shared_root": str(shared_root.resolve()) if shared_root is not None else None,
+            "start": str(start.resolve()),
+            "status": status,
+        }
+        if searched is not None:
+            expected["searched"] = [str(candidate.resolve()) for candidate in searched]
+        self.assertEqual(payload, expected)
+
     def create_work_hint_case(
         self, name: str, hint_status: str, stale: bool
     ) -> tuple[Path, Path, int]:
@@ -220,6 +278,440 @@ class PlanStateCliTest(unittest.TestCase):
         self.assertEqual(document.metadata, expected_metadata)
         self.assertEqual(document.body, expected_body)
         return document
+
+    def test__resolve_context__local_and_shared__prefers_local_context(self) -> None:
+        main, worktree = self.create_context_worktree("local-preferred")
+        shared = self.write_context(main, "2024-01-02")
+        local = self.write_context(worktree, "2024-01-03")
+
+        result = self.run_cli("resolve-context", "--start", str(worktree))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            worktree,
+            main,
+            "2024-01-03",
+        )
+        self.assertTrue(shared.exists())
+
+    def test__resolve_context__only_shared_context__returns_shared_context(self) -> None:
+        main, worktree = self.create_context_worktree("shared-fallback")
+        shared = self.write_context(main, "2024-01-04")
+
+        result = self.run_cli("resolve-context", "--start", str(worktree))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            shared,
+            "shared",
+            "ok",
+            worktree,
+            main,
+            "2024-01-04",
+        )
+
+    def test__resolve_context__no_context_files__returns_missing_and_searched_paths(self) -> None:
+        main, worktree = self.create_context_worktree("missing-context")
+        local = worktree / ".claude" / "planner-context.md"
+        shared = main / ".claude" / "planner-context.md"
+
+        result = self.run_cli("resolve-context", "--start", str(worktree))
+
+        self.assertEqual(result.returncode, 3, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            None,
+            None,
+            "missing",
+            worktree,
+            main,
+            None,
+            [local, shared],
+        )
+
+    def test__resolve_context__unreadable_local_context__returns_unreadable(self) -> None:
+        main, worktree = self.create_context_worktree("unreadable-context")
+        local = self.write_context(worktree)
+        self.write_context(main, "2024-01-05")
+        local.chmod(0)
+        try:
+            result = self.run_cli("resolve-context", "--start", str(worktree))
+        finally:
+            local.chmod(0o644)
+
+        self.assertEqual(result.returncode, 3, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            None,
+            None,
+            "unreadable",
+            worktree,
+            main,
+            None,
+            [local],
+        )
+
+    def test__resolve_context__local_context_without_metadata__returns_malformed(self) -> None:
+        main, worktree = self.create_context_worktree("malformed-context")
+        local = worktree / ".claude" / "planner-context.md"
+        local.parent.mkdir()
+        local.write_text("# Planner context\n")
+        self.write_context(main, "2024-01-06")
+
+        result = self.run_cli("resolve-context", "--start", str(worktree))
+
+        self.assertEqual(result.returncode, 3, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            None,
+            None,
+            "malformed",
+            worktree,
+            main,
+            None,
+            [local],
+        )
+
+    def test__resolve_context__live_bootstrap_metadata_outside_git__returns_local_context(
+        self,
+    ) -> None:
+        outside = self.root / "outside-git"
+        outside.mkdir()
+        local = outside / ".claude" / "planner-context.md"
+        local.parent.mkdir()
+        local.write_text(
+            "# Planner context\n\n"
+            "## §7 Метаданные bootstrap\n\n"
+            "- **Last auto-scan:** 2024-01-07\n"
+        )
+
+        result = self.run_cli("resolve-context", "--start", str(outside))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            outside,
+            None,
+            "2024-01-07",
+        )
+
+    def test__resolve_context__start_omitted__uses_working_directory(self) -> None:
+        outside = self.root / "default-start"
+        outside.mkdir()
+        local = self.write_context(outside, "2024-01-08")
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "resolve-context"],
+            cwd=outside,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            outside,
+            None,
+            "2024-01-08",
+        )
+
+    def test__resolve_context__missing_start_directory__returns_usage(self) -> None:
+        missing = self.root / "absent"
+
+        result = self.run_cli("resolve-context", "--start", str(missing))
+
+        self.assertEqual(result.returncode, 64)
+        self.assertIn("must be an existing directory", result.stderr)
+
+    def test__resolve_context__main_worktree__returns_root_context_path(self) -> None:
+        main, _ = self.create_context_worktree("main-worktree")
+        local = self.write_context(main, "2024-01-08")
+
+        result = self.run_cli("resolve-context", "--start", str(main))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            main,
+            main,
+            "2024-01-08",
+        )
+
+    def test__resolve_context__trailing_space_in_repository_name__returns_local_context(
+        self,
+    ) -> None:
+        main = self.root / "trailing-space "
+        main.mkdir()
+        self.initialize_repository(main)
+        self.commit_output(main, main / "README.md", "2024-01-01T00:00:00 +0000")
+        local = self.write_context(main, "2024-01-09")
+
+        result = self.run_cli("resolve-context", "--start", str(main))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            main,
+            main,
+            "2024-01-09",
+        )
+
+    def test__resolve_context__candidate_replaced_before_read__returns_unreadable(
+        self,
+    ) -> None:
+        start = self.root / "replacement"
+        start.mkdir()
+        candidate = self.write_context(start, "2024-01-10")
+        foreign = self.root / "foreign-context.md"
+        foreign.write_text(
+            "# Foreign context\n\n"
+            "## §7 Метаданные bootstrap\n\n"
+            "- **Last auto-scan:** 2099-12-31\n"
+        )
+        resolved_candidate = candidate.resolve()
+        original_path_open = Path.open
+        original_os_open = os.open
+
+        def replace_candidate() -> None:
+            if not resolved_candidate.is_symlink():
+                resolved_candidate.unlink()
+                resolved_candidate.symlink_to(foreign)
+
+        def open_after_replacement(
+            path: Path, *arguments: object, **keywords: object
+        ) -> object:
+            if path == resolved_candidate:
+                replace_candidate()
+            return original_path_open(path, *arguments, **keywords)
+
+        def secure_open_after_replacement(
+            path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
+            flags: int,
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> int:
+            if Path(path) == resolved_candidate:
+                replace_candidate()
+            return original_os_open(path, flags, mode, dir_fd=dir_fd)
+
+        with mock.patch.object(plan_state, "shared_git_root", return_value=None):
+            with mock.patch.object(Path, "open", new=open_after_replacement):
+                with mock.patch.object(
+                    plan_state.os, "open", new=secure_open_after_replacement
+                ):
+                    with mock.patch.object(
+                        plan_state,
+                        "bootstrap_last_scan",
+                        wraps=plan_state.bootstrap_last_scan,
+                    ) as parsed:
+                        with mock.patch.object(plan_state, "print_payload") as printed:
+                            result = plan_state.resolve_context(start)
+
+        payload = printed.call_args.args[0]
+        self.assertNotEqual(payload["bootstrap_last_scan"], "2099-12-31")
+        self.assertEqual(result, 3)
+        parsed.assert_not_called()
+        self.assertEqual(payload["status"], "unreadable")
+
+    def test__resolve_context__separate_git_directory__does_not_invent_shared_root(
+        self,
+    ) -> None:
+        main = self.root / "separate-main"
+        metadata = self.root / "separate-metadata"
+        initialized = subprocess.run(
+            ["git", "init", "--separate-git-dir", str(metadata), str(main)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(initialized.returncode, 0, initialized.stderr)
+        self.commit_output(main, main / "README.md", "2024-01-01T00:00:00 +0000")
+        worktree = self.root / "separate-linked"
+        added = subprocess.run(
+            ["git", "worktree", "add", "--detach", str(worktree)],
+            cwd=main,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(added.returncode, 0, added.stderr)
+        invented = self.write_context(self.root, "2024-01-11")
+        local = worktree / ".claude" / "planner-context.md"
+
+        result = self.run_cli("resolve-context", "--start", str(worktree))
+
+        self.assertEqual(result.returncode, 3, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            None,
+            None,
+            "missing",
+            worktree,
+            None,
+            None,
+            [local],
+        )
+        self.assertTrue(invented.exists())
+
+    def test__resolve_context__bare_repository__checks_only_local_context(self) -> None:
+        bare = self.root / "bare.git"
+        initialized = subprocess.run(
+            ["git", "init", "--bare", str(bare)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(initialized.returncode, 0, initialized.stderr)
+        local = self.write_context(bare, "2024-01-12")
+
+        result = self.run_cli("resolve-context", "--start", str(bare))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            bare,
+            None,
+            "2024-01-12",
+        )
+
+    def test__resolve_context__template_bootstrap_metadata__returns_last_scan(
+        self,
+    ) -> None:
+        outside = self.root / "template-metadata"
+        outside.mkdir()
+        local = outside / ".claude" / "planner-context.md"
+        local.parent.mkdir()
+        local.write_text(
+            "# Planner context\n\n"
+            "## 7. Метаданные bootstrap\n\n"
+            "- Последний auto-scan: 2024-01-09\n"
+        )
+
+        result = self.run_cli("resolve-context", "--start", str(outside))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            outside,
+            None,
+            "2024-01-09",
+        )
+
+    def test__resolve_context__unnumbered_bootstrap_metadata__returns_last_scan(
+        self,
+    ) -> None:
+        outside = self.root / "unnumbered-metadata"
+        outside.mkdir()
+        local = outside / ".claude" / "planner-context.md"
+        local.parent.mkdir()
+        local.write_text(
+            "# Planner context\n\n"
+            "## Метаданные bootstrap\n\n"
+            "- Последний auto-scan: 2024-01-10\n"
+        )
+
+        result = self.run_cli("resolve-context", "--start", str(outside))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_context_payload(
+            json.loads(result.stdout),
+            local,
+            "local",
+            "ok",
+            outside,
+            None,
+            "2024-01-10",
+        )
+
+    def test__shared_git_root__git_errors_or_invalid_output__raise_domain_error(
+        self,
+    ) -> None:
+        root_output = f"{self.root}\n"
+        cases = (
+            ("launch failure", [FileNotFoundError("git")]),
+            ("root command failure", [self.git_result(1, stderr="damaged")]),
+            (
+                "empty root output",
+                [self.git_result(0, "\n"), self.git_result(0, ".git\n")],
+            ),
+            (
+                "common command failure",
+                [self.git_result(0, root_output), self.git_result(1, stderr="damaged")],
+            ),
+            (
+                "empty common output",
+                [self.git_result(0, root_output), self.git_result(0, "\n")],
+            ),
+            (
+                "unparseable common output",
+                [self.git_result(0, root_output), self.git_result(0, "\x00\n")],
+            ),
+            (
+                "missing common directory",
+                [
+                    self.git_result(0, root_output),
+                    self.git_result(0, "missing-common-dir\n"),
+                ],
+            ),
+        )
+        for name, responses in cases:
+            with self.subTest(name=name):
+                with mock.patch.object(
+                    plan_state.subprocess, "run", side_effect=responses
+                ):
+                    with self.assertRaises(plan_state.PlanStateError):
+                        plan_state.shared_git_root(self.root)
+
+    def test__resolve_context__nonregular_candidates__return_unreadable_without_open(
+        self,
+    ) -> None:
+        for node_type in ("symbolic link", "fifo"):
+            with self.subTest(node_type=node_type):
+                start = self.root / node_type
+                start.mkdir()
+                candidate = start / ".claude" / "planner-context.md"
+                candidate.parent.mkdir()
+                if node_type == "symbolic link":
+                    target = self.root / "outside-context.md"
+                    target.write_text("# Outside\n")
+                    candidate.symlink_to(target)
+                else:
+                    os.mkfifo(candidate)
+
+                with mock.patch.object(
+                    plan_state, "shared_git_root", return_value=None
+                ):
+                    with mock.patch.object(plan_state, "print_payload") as printed:
+                        with mock.patch.object(Path, "open") as opened:
+                            result = plan_state.resolve_context(start)
+
+                self.assertEqual(result, 3)
+                opened.assert_not_called()
+                self.assertEqual(printed.call_args.args[0]["status"], "unreadable")
 
     def test__inspect__legacy_architecture__reports_version_zero_without_write(self) -> None:
         original = "# Legacy architecture\n"
