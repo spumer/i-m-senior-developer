@@ -29,6 +29,14 @@ jobs:
       - name: manifest guard
         run: python3 scripts/check_manifests.py
 
+      - name: builtin provider guard
+        run: python3 scripts/check_builtin_providers.py
+
+      # Вне hooks путь к ресурсам плагина приходит только подстановкой:
+      # команда или скилл не читает CLAUDE_PLUGIN_ROOT во время работы.
+      - name: plugin root substitution guard
+        run: python3 scripts/check_plugin_root_usage.py
+
       # Запрет зеркала манифестов в docs/: версия рядом с именем плагина
       # обязана совпадать с plugin.json, колонки состава в каталоге запрещены.
       - name: docs plugin-mirror guard
@@ -130,3 +138,15 @@ jobs:
                 claude plugin validate "$plugin/$components" --strict
             done
           done
+
+  workflow-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: workflow input guard
+        run: node plugins/planner/workflows/test_plan_do_workflow_inputs.mjs
