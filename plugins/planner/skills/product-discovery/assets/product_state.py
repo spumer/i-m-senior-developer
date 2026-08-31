@@ -65,6 +65,23 @@ _RESPONSE_LIST_FIELDS = {
     "limitations",
 }
 _RESPONSE_REQUIRED_FIELDS = ("problem", "outcome", "limitations")
+_EVIDENCE_REQUIRED_FIELDS = ("id", "type", "claim", "carrier")
+_EVIDENCE_TYPES = (
+    "наблюдение",
+    "внешний источник",
+    "допущение",
+    "POV-гипотеза",
+    "неизвестное",
+    "не перенесено",
+)
+_REFERENCE_DUTY_SECTIONS = {
+    "idea": "Решение",
+    "epic": "Принятые решения",
+    "roadmap": "Основание порядка",
+    "feature": "Договор взаимодействия",
+}
+_EVIDENCE_REFERENCE_PATTERN = re.compile(r"\[([A-Za-z][A-Za-z0-9_-]*)\]")
+_TABLE_DIVIDER = re.compile(r"\|[:\s|-]+\|")
 _SLUG_PATTERN = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 _IDEA_NAME_PATTERN = re.compile(
     r"IDEA-[0-9]{4}-[a-z0-9]+(?:-[a-z0-9]+)*\.md\Z"
@@ -292,6 +309,12 @@ def require_choice(value: Any, field: str, choices: set[str], path: Path) -> str
     return value
 
 
+def validate_analysis_by(value: Any, path: Path) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ProductStateError(f"{path}: analysis_by must be a non-empty string")
+    return value
+
+
 def validate_common(
     metadata: dict[str, Any], plan_type: str, allowed: set[str], required: set[str], path: Path
 ) -> None:
@@ -336,10 +359,12 @@ def validate_idea(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
     validate_common(
         metadata,
         "idea",
-        {"stage", "outcome", "target"},
+        {"stage", "outcome", "target", "analysis_by"},
         {"stage", "outcome"},
         path,
     )
+    if "analysis_by" in metadata:
+        validate_analysis_by(metadata["analysis_by"], path)
     require_choice(metadata["stage"], "stage", _IDEA_STAGES, path)
     require_choice(metadata["outcome"], "outcome", _IDEA_OUTCOMES, path)
     validate_idea_relationships(metadata, path)
@@ -347,7 +372,11 @@ def validate_idea(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
 
 
 def validate_epic(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
-    validate_common(metadata, "epic", {"stage", "origin"}, {"stage"}, path)
+    validate_common(
+        metadata, "epic", {"stage", "origin", "analysis_by"}, {"stage"}, path
+    )
+    if "analysis_by" in metadata:
+        validate_analysis_by(metadata["analysis_by"], path)
     require_choice(metadata["stage"], "stage", _EPIC_STAGES, path)
     if "origin" in metadata:
         validate_reference(metadata["origin"], "origin", path)
@@ -356,8 +385,14 @@ def validate_epic(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
 
 def validate_roadmap(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
     validate_common(
-        metadata, "roadmap", {"state", "epic"}, {"state", "epic"}, path
+        metadata,
+        "roadmap",
+        {"state", "epic", "analysis_by"},
+        {"state", "epic"},
+        path,
     )
+    if "analysis_by" in metadata:
+        validate_analysis_by(metadata["analysis_by"], path)
     require_choice(metadata["state"], "state", _ROADMAP_STATES, path)
     validate_reference(metadata["epic"], "epic", path)
     return metadata
@@ -365,8 +400,14 @@ def validate_roadmap(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
 
 def validate_feature(metadata: dict[str, Any], path: Path) -> dict[str, Any]:
     validate_common(
-        metadata, "feature", {"readiness", "parent"}, {"readiness"}, path
+        metadata,
+        "feature",
+        {"readiness", "parent", "analysis_by"},
+        {"readiness"},
+        path,
     )
+    if "analysis_by" in metadata:
+        validate_analysis_by(metadata["analysis_by"], path)
     require_choice(metadata["readiness"], "readiness", _FEATURE_READINESS, path)
     if "parent" in metadata:
         validate_reference(metadata["parent"], "parent", path)
@@ -491,6 +532,15 @@ def validate_target(
     return 0
 
 
+_FRONTMATTER_PLAIN = re.compile(r"[0-9A-Za-z_.:@/-]+\Z")
+
+
+def frontmatter_scalar(value: str) -> str:
+    if _FRONTMATTER_PLAIN.fullmatch(value):
+        return value
+    return json.dumps(value, ensure_ascii=False)
+
+
 def render_document(metadata: dict[str, Any], body: str) -> str:
     lines = [
         "---\n",
@@ -499,6 +549,8 @@ def render_document(metadata: dict[str, Any], body: str) -> str:
         f"status: {metadata['status']}\n",
         f"content_sha256: {metadata['content_sha256']}\n",
     ]
+    if "analysis_by" in metadata:
+        lines.append(f"analysis_by: {frontmatter_scalar(metadata['analysis_by'])}\n")
     for field in ("stage", "outcome", "readiness", "state"):
         if field in metadata:
             lines.append(f"{field}: {metadata[field]}\n")
@@ -566,13 +618,18 @@ def sync_idea_document(
     path: Path,
     body_path: Path,
     semantic_change: bool,
+    analysis_by: str,
     stage: str | None,
     outcome: str | None,
     target_reference: str | None,
 ) -> int:
     target_path = absolute_path(path)
     target = resolve_target("idea", target_path, target_path.parent)
-    body = consume_prepared_body(body_path, target)
+    validate_analysis_by(analysis_by, target)
+    body = prevalidate_prepared_body(body_path, target, "idea", stage)
+    require_choice(stage, "stage", _IDEA_STAGES, target)
+    require_choice(outcome, "outcome", _IDEA_OUTCOMES, target)
+    remove_prepared_body(body_path, target)
     document = read_optional_document(target)
     if document.has_frontmatter:
         document_state(document)
@@ -582,6 +639,7 @@ def sync_idea_document(
         "version": next_version(document, content_hash, semantic_change),
         "status": "current",
         "content_sha256": content_hash,
+        "analysis_by": analysis_by,
         "stage": stage,
         "outcome": outcome,
     }
@@ -619,6 +677,7 @@ def sync_linked_document(
     path: Path,
     body_path: Path,
     semantic_change: bool,
+    analysis_by: str,
     parent: Path | None,
     field_value: str | None,
 ) -> int:
@@ -636,24 +695,37 @@ def sync_linked_document(
                 validation_parent = resolve_parent(document, reference)
 
     target = resolve_target(kind, target_path, target_path.parent, validation_parent)
+    validate_analysis_by(analysis_by, target)
     reference_field = _REFERENCE_FIELD_BY_KIND[kind]
     parent_reference = (
         parent_snapshot(target, parent) if parent is not None else None
     )
-    body = consume_prepared_body(body_path, target)
+    body = prevalidate_prepared_body(body_path, target, kind, None)
+    value_field = {"epic": "stage", "roadmap": "state", "feature": "readiness"}[
+        kind
+    ]
+    require_choice(
+        field_value,
+        value_field,
+        {
+            "epic": _EPIC_STAGES,
+            "roadmap": _ROADMAP_STATES,
+            "feature": _FEATURE_READINESS,
+        }[kind],
+        target,
+    )
+    remove_prepared_body(body_path, target)
     if document is None:
         document = read_optional_document(target)
         if document.has_frontmatter:
             document_state(document)
     content_hash = fingerprint(body)
-    value_field = {"epic": "stage", "roadmap": "state", "feature": "readiness"}[
-        kind
-    ]
     metadata: dict[str, Any] = {
         "plan_type": kind,
         "version": next_version(document, content_hash, semantic_change),
         "status": "current",
         "content_sha256": content_hash,
+        "analysis_by": analysis_by,
         value_field: field_value,
     }
     if parent_reference is not None:
@@ -741,7 +813,7 @@ def check_document(path: Path, mark_stale: bool) -> int:
     return EXIT_STALE
 
 
-def consume_prepared_body(body_path: Path, target: Path) -> str:
+def prepared_body_path(body_path: Path, target: Path) -> Path:
     prepared = absolute_path(body_path)
     resolved_target = absolute_path(target)
     expected = resolved_target.with_name(f"{resolved_target.name}.prepared")
@@ -749,6 +821,11 @@ def consume_prepared_body(body_path: Path, target: Path) -> str:
         raise ProductStateError(
             f"{prepared}: prepared body must be {expected.name}"
         )
+    return prepared
+
+
+def read_prepared_body(body_path: Path, target: Path) -> str:
+    prepared = prepared_body_path(body_path, target)
     if prepared.is_symlink():
         raise ProductStateError(
             f"{prepared}: prepared body must not be a symbolic link"
@@ -764,12 +841,368 @@ def consume_prepared_body(body_path: Path, target: Path) -> str:
                 f"{prepared}: prepared body must not be a hard link"
             )
         with prepared.open("r", encoding="utf-8", newline="") as source:
-            body = source.read()
-        prepared.unlink()
+            return source.read()
     except ProductStateError:
         raise
     except (OSError, UnicodeError) as error:
         raise ProductStateError(f"{prepared}: {error}") from error
+
+
+def remove_prepared_body(body_path: Path, target: Path) -> None:
+    prepared = prepared_body_path(body_path, target)
+    try:
+        prepared.unlink()
+    except OSError as error:
+        raise ProductStateError(f"{prepared}: {error}") from error
+
+
+def consume_prepared_body(body_path: Path, target: Path) -> str:
+    body = read_prepared_body(body_path, target)
+    remove_prepared_body(body_path, target)
+    return body
+
+
+def _evidence_error(evidence: Path, line: int, message: str) -> ProductStateError:
+    return ProductStateError(f"{evidence}: line {line}: {message}")
+
+
+def _parse_evidence_field(
+    record: dict[str, str],
+    field_lines: dict[str, int],
+    text: str,
+    number: int,
+    record_number: int,
+    evidence: Path,
+) -> str | None:
+    key, separator, value = text.partition(":")
+    if not separator or not key or key != key.strip():
+        raise _evidence_error(evidence, number, "field must have a name and colon")
+    if key not in _EVIDENCE_REQUIRED_FIELDS:
+        raise _evidence_error(evidence, number, f"unsupported field {key!r}")
+    if key in record:
+        raise _evidence_error(
+            evidence, number, f"record {record_number} field {key} repeats"
+        )
+    value = value.strip()
+    if value == "|":
+        record[key] = ""
+        field_lines[key] = number
+        return key
+    if re.fullmatch(r"[>|](?:[+-][1-9]?|[1-9][+-]?)?", value):
+        raise _evidence_error(
+            evidence,
+            number,
+            f"unsupported block scalar indicator {value!r}; allowed indicator '|'",
+        )
+    if not value:
+        raise _evidence_error(evidence, number, f"field {key} is without a value")
+    if value[0] in "&*!{[":
+        raise _evidence_error(evidence, number, "unsupported YAML construct")
+    record[key] = value
+    field_lines[key] = number
+    return None
+
+
+def _evidence_block_bounds(
+    lines: list[str], evidence: Path
+) -> tuple[int, int]:
+    markers = [
+        number
+        for number, line in enumerate(lines, start=1)
+        if line == "```yaml evidence-registry"
+    ]
+    if not markers:
+        raise _evidence_error(evidence, 1, "evidence-registry marker is required")
+    if len(markers) > 1:
+        raise _evidence_error(evidence, markers[1], "second evidence-registry marker")
+
+    opening_line = markers[0]
+    closing_line = next(
+        (
+            number
+            for number, line in enumerate(lines[opening_line:], start=opening_line + 1)
+            if line == "```"
+        ),
+        None,
+    )
+    if closing_line is None:
+        raise _evidence_error(evidence, opening_line, "closing fence is required")
+    return opening_line, closing_line
+
+
+def parse_evidence_registry(body: str, evidence: Path) -> list[dict[str, str]]:
+    lines = normalize_body(body).split("\n")
+    opening_line, closing_line = _evidence_block_bounds(lines, evidence)
+
+    records: list[dict[str, str]] = []
+    field_lines: list[dict[str, int]] = []
+    record: dict[str, str] | None = None
+    record_field_lines: dict[str, int] | None = None
+    block_field: str | None = None
+    block_lines: list[str] = []
+
+    def close_block() -> None:
+        nonlocal block_field, block_lines
+        if block_field is not None:
+            assert record is not None
+            record[block_field] = "\n".join(block_lines).rstrip("\n")
+            block_field = None
+            block_lines = []
+
+    def close_record() -> None:
+        nonlocal record, record_field_lines
+        if record is not None:
+            assert record_field_lines is not None
+            records.append(record)
+            field_lines.append(record_field_lines)
+            record = None
+            record_field_lines = None
+
+    for number, raw in enumerate(
+        lines[opening_line:closing_line - 1], start=opening_line + 1
+    ):
+        if "\t" in raw:
+            raise _evidence_error(evidence, number, "tab indentation is unsupported")
+        if block_field is not None:
+            if not raw.strip():
+                block_lines.append("")
+                continue
+            if raw.startswith("    ") and len(raw) > 4 and not raw[4].isspace():
+                block_lines.append(raw[4:])
+                continue
+            close_block()
+        if not raw.strip():
+            continue
+        if raw.startswith("- "):
+            close_record()
+            record = {}
+            record_field_lines = {"_record": number}
+            remainder = raw[2:]
+            if not remainder.strip():
+                raise _evidence_error(evidence, number, "record starts without a field")
+            block_field = _parse_evidence_field(
+                record,
+                record_field_lines,
+                remainder,
+                number,
+                len(records) + 1,
+                evidence,
+            )
+            continue
+        if raw.startswith("  "):
+            if len(raw) == 2 or raw[2].isspace():
+                raise _evidence_error(
+                    evidence, number, "field indentation must be two spaces"
+                )
+            if record is None or record_field_lines is None:
+                raise _evidence_error(evidence, number, "field outside record")
+            block_field = _parse_evidence_field(
+                record,
+                record_field_lines,
+                raw[2:],
+                number,
+                len(records) + 1,
+                evidence,
+            )
+            continue
+        if raw[0].isspace():
+            raise _evidence_error(
+                evidence, number, "field indentation must be two spaces"
+            )
+        raise _evidence_error(
+            evidence, number, "expected a record or a two-space field"
+        )
+
+    close_block()
+    close_record()
+    validate_evidence_records(records, evidence, field_lines)
+    return records
+
+
+def validate_evidence_records(
+    records: list[Any],
+    evidence: Path,
+    record_lines: list[dict[str, int]] | None = None,
+) -> list[dict[str, Any]]:
+    allowed_types = ", ".join(_EVIDENCE_TYPES)
+    seen_ids: dict[str, tuple[int, int]] = {}
+
+    def error(number: int, field: str, message: str) -> ProductStateError:
+        if record_lines is None:
+            return ProductStateError(
+                f"{evidence}: record {number} field {field} {message}"
+            )
+        line = record_lines[number - 1].get(
+            field, record_lines[number - 1]["_record"]
+        )
+        return _evidence_error(
+            evidence, line, f"record {number} field {field} {message}"
+        )
+
+    for number, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            raise ProductStateError(f"{evidence}: record {number} must be an object")
+        for field in _EVIDENCE_REQUIRED_FIELDS:
+            if field not in record:
+                message = "is missing"
+                if field == "type":
+                    message = f"{message}, allowed values: {allowed_types}"
+                raise error(number, field, message)
+        for field in _EVIDENCE_REQUIRED_FIELDS:
+            if not isinstance(record[field], str):
+                raise error(number, field, "must be a string")
+        record_type = record["type"]
+        if record_type not in _EVIDENCE_TYPES:
+            raise error(
+                number,
+                "type",
+                f"has unknown value {record_type!r}, allowed values: {allowed_types}",
+            )
+        identifier = record["id"]
+        if not identifier.strip():
+            raise error(number, "id", "must be non-empty")
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", identifier) is None:
+            raise error(number, "id", "has invalid form")
+        for field in ("claim", "carrier"):
+            if not record[field].strip():
+                raise error(number, field, "must be non-empty")
+        if identifier in seen_ids:
+            first_number, first_line = seen_ids[identifier]
+            message = f"repeats record {first_number}"
+            if record_lines is not None:
+                message = f"{message} (line {first_line})"
+            raise error(number, "id", message)
+        identifier_line = (
+            record_lines[number - 1]["id"] if record_lines is not None else number
+        )
+        seen_ids[identifier] = (number, identifier_line)
+    return records
+
+
+def reference_identifiers(line: str) -> list[str]:
+    return [
+        match.group(1)
+        for match in _EVIDENCE_REFERENCE_PATTERN.finditer(line)
+        if line[match.end() : match.end() + 1] != "("
+    ]
+
+
+def resolve_body_references(
+    body: str, records: list[dict[str, str]], evidence: Path
+) -> None:
+    lines = normalize_body(body).split("\n")
+    opening_line, closing_line = _evidence_block_bounds(lines, evidence)
+    known = {record["id"] for record in records}
+    for number, line in enumerate(lines, start=1):
+        if opening_line <= number <= closing_line:
+            continue
+        for identifier in reference_identifiers(line):
+            if identifier not in known:
+                raise _evidence_error(
+                    evidence,
+                    number,
+                    f"unresolved evidence reference [{identifier}]",
+                )
+
+
+def _section_entries(
+    lines: list[str], title: str, registry_bounds: tuple[int, int] | None
+) -> tuple[int, list[tuple[int, str]]] | None:
+    header = f"## {title}"
+    opening = next(
+        (
+            number
+            for number, line in enumerate(lines, start=1)
+            if line.strip() == header
+        ),
+        None,
+    )
+    if opening is None:
+        return None
+    entries: list[tuple[int, str]] = []
+    for number in range(opening + 1, len(lines) + 1):
+        line = lines[number - 1]
+        if line.startswith("#"):
+            break
+        if registry_bounds is not None and registry_bounds[0] <= number <= registry_bounds[1]:
+            continue
+        entries.append((number, line))
+    return opening, entries
+
+
+def _section_carries_decision(entries: list[tuple[int, str]]) -> bool:
+    filled = [line.strip() for _, line in entries if line.strip()]
+    for index, line in enumerate(filled):
+        if not line.startswith("|"):
+            return True
+        if _TABLE_DIVIDER.fullmatch(line):
+            continue
+        following = filled[index + 1] if index + 1 < len(filled) else ""
+        if _TABLE_DIVIDER.fullmatch(following):
+            continue
+        return True
+    return False
+
+
+def _require_section_reference(
+    lines: list[str], title: str, evidence: Path, registry_bounds: tuple[int, int]
+) -> None:
+    section = _section_entries(lines, title, registry_bounds)
+    header = f"## {title}"
+    if section is None:
+        raise _evidence_error(
+            evidence,
+            1,
+            f"missing required section {header} with an evidence reference",
+        )
+    opening, entries = section
+    if any(reference_identifiers(line) for _, line in entries):
+        return
+    raise _evidence_error(
+        evidence, opening, f"section {header} requires an evidence reference [id]"
+    )
+
+
+def _require_decision_reference(
+    lines: list[str], title: str, evidence: Path, registry_bounds: tuple[int, int]
+) -> None:
+    section = _section_entries(lines, title, registry_bounds)
+    if section is None:
+        return
+    opening, entries = section
+    if any(reference_identifiers(line) for _, line in entries):
+        return
+    if _section_carries_decision(entries):
+        raise _evidence_error(
+            evidence,
+            opening,
+            f"section ## {title} requires an evidence reference [id]",
+        )
+
+
+def validate_reference_duty(
+    body: str, evidence: Path, kind: str, stage: str | None
+) -> None:
+    lines = normalize_body(body).split("\n")
+    registry_bounds = _evidence_block_bounds(lines, evidence)
+    title = _REFERENCE_DUTY_SECTIONS[kind]
+    if kind == "idea":
+        if stage == "resolved":
+            _require_section_reference(lines, title, evidence, registry_bounds)
+    elif kind == "epic":
+        _require_decision_reference(lines, title, evidence, registry_bounds)
+    else:
+        _require_section_reference(lines, title, evidence, registry_bounds)
+
+
+def prevalidate_prepared_body(
+    body_path: Path, target: Path, kind: str, stage: str | None
+) -> str:
+    prepared = prepared_body_path(body_path, target)
+    body = read_prepared_body(body_path, target)
+    records = parse_evidence_registry(body, prepared)
+    resolve_body_references(body, records, prepared)
+    validate_reference_duty(body, prepared, kind, stage)
     return body
 
 
@@ -1379,6 +1812,7 @@ def build_parser() -> CliParser:
     sync_command.add_argument(
         "--semantic-change", choices=("yes", "no"), required=True
     )
+    sync_command.add_argument("--analysis-by", required=True)
     sync_command.add_argument("--parent", type=Path)
     sync_command.add_argument("--stage")
     sync_command.add_argument("--outcome")
@@ -1429,6 +1863,7 @@ def run(arguments: list[str] | None = None) -> int:
                 options.path,
                 options.body_file,
                 options.semantic_change == "yes",
+                options.analysis_by,
                 options.stage,
                 options.outcome,
                 options.target,
@@ -1443,6 +1878,7 @@ def run(arguments: list[str] | None = None) -> int:
             options.path,
             options.body_file,
             options.semantic_change == "yes",
+            options.analysis_by,
             options.parent,
             field_value,
         )

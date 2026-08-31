@@ -237,6 +237,44 @@ def capability_context(
     )
 
 
+def evidence_record(
+    identifier: str = "a1",
+    record_type: str = "наблюдение",
+    claim: str = "владелец теряет элементы при массовом удалении",
+    carrier: str = "реплика владельца в обсуждении",
+) -> dict[str, object]:
+    return {
+        "id": identifier,
+        "type": record_type,
+        "claim": claim,
+        "carrier": carrier,
+    }
+
+
+def complete_body(kind: str, body: str, stage: str | None = None) -> str:
+    if "```yaml evidence-registry" in body:
+        return body
+    registry = (
+        "```yaml evidence-registry\n"
+        "- id: E1\n"
+        "  type: наблюдение\n"
+        "  claim: владелец теряет элементы при массовом удалении\n"
+        "  carrier: реплика владельца в обсуждении\n"
+        "```\n\n"
+    )
+    duty = ""
+    if kind == "roadmap":
+        duty = "## Основание порядка\nПорядок опирается на [E1].\n"
+    elif kind == "feature":
+        duty = (
+            "## Договор взаимодействия\n"
+            "Актор вызывает действие и видит результат [E1].\n"
+        )
+    elif kind == "idea" and stage == "resolved":
+        duty = "## Решение\nИсход: decision\nОснование: [E1].\n"
+    return f"{body}{registry}{duty}"
+
+
 def make_symbolic_link(node: Path, source: Path) -> None:
     source.write_text("# Draft\n")
     node.symlink_to(source)
@@ -314,9 +352,12 @@ class ProductStateCliTest(unittest.TestCase):
         body: str,
         semantic_change: str = "yes",
         parent: Path | None = None,
+        analysis_by: str = "planner:product-baseline",
         **fields: str,
     ) -> subprocess.CompletedProcess[str]:
-        prepared = self.prepared_body(path, body)
+        prepared = self.prepared_body(
+            path, complete_body(kind, body, fields.get("stage"))
+        )
         arguments = [
             "sync",
             kind,
@@ -325,6 +366,8 @@ class ProductStateCliTest(unittest.TestCase):
             str(prepared),
             "--semantic-change",
             semantic_change,
+            "--analysis-by",
+            analysis_by,
         ]
         if parent is not None:
             arguments.extend(("--parent", str(parent)))
@@ -336,7 +379,7 @@ class ProductStateCliTest(unittest.TestCase):
         return result
 
     def sync_idea(
-        self, body: str = "# Idea\n", semantic_change: str = "yes"
+        self, body: str = "# Idea\n", semantic_change: str = "yes", **fields: str
     ) -> subprocess.CompletedProcess[str]:
         return self.sync_product(
             "idea",
@@ -345,6 +388,7 @@ class ProductStateCliTest(unittest.TestCase):
             semantic_change,
             stage="exploring",
             outcome="open",
+            **fields,
         )
 
     def allocate_product(self, kind: str, root: Path, slug: str) -> Path:
@@ -1312,7 +1356,7 @@ class ProductStateCliTest(unittest.TestCase):
         self.assertTrue(draft.exists())
         self.assertTrue(foreign_directory.exists())
 
-    def test__inspect__valid_idea_frontmatter__returns_parsed_state(self) -> None:
+    def test__inspect__document_without_analysis_by__remains_valid(self) -> None:
         body = "# Idea\n"
         idea = self.idea_path()
         idea.write_text(
@@ -1518,6 +1562,17 @@ class ProductStateCliTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 3)
                 self.assertIn(field, result.stderr)
                 self.assertIn(expected_message, result.stderr)
+
+    def test__inspect__empty_analysis_by__returns_invalid(self) -> None:
+        for kind in ("idea", "epic", "roadmap", "feature"):
+            with self.subTest(kind=kind):
+                path = self.product_path(kind)
+                path.write_text(product_document(kind, analysis_by="  "))
+
+                result = self.run_cli("inspect", str(path))
+
+                self.assertEqual(result.returncode, 3)
+                self.assertIn("analysis_by must be a non-empty string", result.stderr)
 
     def test__allocate__idea_with_existing_numbers__creates_next_file_and_reports_duplicates(self) -> None:
         (self.ideas / "IDEA-0002-first.md").write_text("")
@@ -1828,6 +1883,352 @@ class ProductStateCliTest(unittest.TestCase):
                 self.assertTrue(prepared.exists() or prepared.is_symlink())
                 self.assertFalse(target.exists())
 
+    def test__validate_evidence_records__records_of_every_type__returns_them(
+        self,
+    ) -> None:
+        records = [
+            evidence_record("a1", "наблюдение"),
+            evidence_record("a2", "внешний источник"),
+            evidence_record("a3", "допущение"),
+            evidence_record("a4", "POV-гипотеза"),
+            evidence_record("a5", "неизвестное"),
+            evidence_record("a6", "не перенесено"),
+        ]
+
+        validated = product_state.validate_evidence_records(
+            records, self.ideas / "evidence-registry.yaml"
+        )
+
+        self.assertEqual(validated, records)
+
+    def test__validate_evidence_records__record_not_an_object__names_record_number(
+        self,
+    ) -> None:
+        records = [evidence_record("a1"), 42]
+
+        with self.assertRaisesRegex(
+            product_state.ProductStateError, r"record 2 must be an object"
+        ):
+            product_state.validate_evidence_records(
+                records, self.ideas / "evidence-registry.yaml"
+            )
+
+    def test__validate_evidence_records__missing_required_field__names_record_and_field(
+        self,
+    ) -> None:
+        for field in ("id", "type", "claim", "carrier"):
+            with self.subTest(field=field):
+                second = evidence_record("a2")
+                del second[field]
+
+                with self.assertRaisesRegex(
+                    product_state.ProductStateError,
+                    rf"record 2 field {field} is missing",
+                ):
+                    product_state.validate_evidence_records(
+                        [evidence_record("a1"), second],
+                        self.ideas / "evidence-registry.yaml",
+                    )
+
+    def test__validate_evidence_records__unknown_type__names_record_field_and_allowed_values(
+        self,
+    ) -> None:
+        records = [
+            evidence_record("a1"),
+            evidence_record("a2", record_type="мнение"),
+        ]
+
+        with self.assertRaisesRegex(
+            product_state.ProductStateError, r"record 2 field type"
+        ) as caught:
+            product_state.validate_evidence_records(
+                records, self.ideas / "evidence-registry.yaml"
+            )
+
+        message = str(caught.exception)
+        for allowed in product_state._EVIDENCE_TYPES:
+            self.assertIn(allowed, message)
+
+    def test__validate_evidence_records__empty_carrier__names_record_and_field(
+        self,
+    ) -> None:
+        for carrier in ("", "   "):
+            with self.subTest(carrier=carrier):
+                records = [
+                    evidence_record("a1"),
+                    evidence_record("a2"),
+                    evidence_record("a3", carrier=carrier),
+                ]
+
+                with self.assertRaisesRegex(
+                    product_state.ProductStateError, r"record 3 field carrier"
+                ):
+                    product_state.validate_evidence_records(
+                        records, self.ideas / "evidence-registry.yaml"
+                    )
+
+    def test__validate_evidence_records__repeated_id__names_repeated_record(
+        self,
+    ) -> None:
+        records = [
+            evidence_record("a1"),
+            evidence_record("a2"),
+            evidence_record("a1"),
+            evidence_record("a2"),
+        ]
+
+        with self.assertRaisesRegex(
+            product_state.ProductStateError, r"record 3 field id"
+        ):
+            product_state.validate_evidence_records(
+                records, self.ideas / "evidence-registry.yaml"
+            )
+
+    def test__parse_evidence_registry__valid_block__returns_literal_scalar_content(
+        self,
+    ) -> None:
+        body = "\n".join(
+            (
+                "# Документ",
+                "```yaml evidence-registry",
+                "- id: E1",
+                "  type: наблюдение",
+                "  claim: |",
+                "    Труба |, двоеточие: кавычки \"\" и решётка # остаются.",
+                "",
+                "    Закрывающий забор ``` остаётся содержимым.",
+                "  carrier: |",
+                "    Носитель с обратными кавычками ```.",
+                "```",
+            )
+        )
+
+        records = product_state.parse_evidence_registry(
+            body, self.ideas / "registry.md"
+        )
+
+        self.assertEqual(
+            records,
+            [
+                {
+                    "id": "E1",
+                    "type": "наблюдение",
+                    "claim": (
+                        "Труба |, двоеточие: кавычки \"\" и решётка # остаются."
+                        "\n\nЗакрывающий забор ``` остаётся содержимым."
+                    ),
+                    "carrier": "Носитель с обратными кавычками ```.",
+                }
+            ],
+        )
+
+    def test__parse_evidence_registry__invalid_block_boundary__names_physical_line(
+        self,
+    ) -> None:
+        cases = (
+            ("missing", "# Документ\n", r"line 1.*evidence-registry"),
+            (
+                "duplicate",
+                "```yaml evidence-registry\n```\n```yaml evidence-registry\n```\n",
+                r"line 3.*second",
+            ),
+            (
+                "unclosed",
+                "```yaml evidence-registry\n- id: E1\n",
+                r"line 1.*closing",
+            ),
+        )
+
+        for name, body, expected in cases:
+            with self.subTest(case=name):
+                with self.assertRaisesRegex(product_state.ProductStateError, expected):
+                    product_state.parse_evidence_registry(
+                        body, self.ideas / "registry.md"
+                    )
+
+    def test__parse_evidence_registry__invalid_yaml_subset__names_physical_line(
+        self,
+    ) -> None:
+        cases = (
+            ("tab", "- id: E1\n\ttype: наблюдение", r"line 4.*tab"),
+            ("indent", "- id: E1\n   type: наблюдение", r"line 4.*indent"),
+            ("record-indent", " - id: E1", r"line 3.*indent"),
+            ("outside", "  type: наблюдение", r"line 3.*outside record"),
+            ("empty", "- id: E1\n  type:", r"line 4.*without a value"),
+            ("duplicate", "- id: E1\n  id: E2", r"line 4.*record 1.*id"),
+            ("junk", "- id: E1\nplain: text", r"line 4.*expected"),
+            ("flow-map", "- id: { E1 }", r"line 3.*unsupported"),
+            ("flow-list", "- id: [E1]", r"line 3.*unsupported"),
+            ("anchor", "- id: &first E1", r"line 3.*unsupported"),
+            ("alias", "- id: *first", r"line 3.*unsupported"),
+            ("tag", "- id: !identifier E1", r"line 3.*unsupported"),
+            ("nested-list", "- id: E1\n  - type: наблюдение", r"line 4.*field"),
+            ("comment", "- id: E1\n# пояснение", r"line 4.*expected"),
+            ("unknown", "- id: E1\n  extra: text", r"line 4.*unsupported field"),
+        )
+
+        for name, registry, expected in cases:
+            with self.subTest(case=name):
+                body = f"# Документ\n```yaml evidence-registry\n{registry}\n```\n"
+                with self.assertRaisesRegex(product_state.ProductStateError, expected):
+                    product_state.parse_evidence_registry(
+                        body, self.ideas / "registry.md"
+                    )
+
+    def test__parse_evidence_registry__unsupported_block_scalar_indicator__names_indicator_and_allowed_value(
+        self,
+    ) -> None:
+        indicators = (">", "|-", "|+", ">-")
+        for indicator in indicators:
+            for continued in (False, True):
+                with self.subTest(indicator=indicator, continued=continued):
+                    continuation = (
+                        "\n    Текст утверждения автора." if continued else ""
+                    )
+                    body = (
+                        "# Документ\n"
+                        "```yaml evidence-registry\n"
+                        "- id: E1\n"
+                        "  type: наблюдение\n"
+                        f"  claim: {indicator}{continuation}\n"
+                        "  carrier: носитель\n"
+                        "```\n"
+                    )
+
+                    with self.assertRaises(product_state.ProductStateError) as caught:
+                        product_state.parse_evidence_registry(
+                            body, self.ideas / "registry.md"
+                        )
+
+                    message = str(caught.exception)
+                    self.assertIn("line 5", message)
+                    self.assertIn(indicator, message)
+                    self.assertIn("allowed indicator '|'", message)
+
+    def test__parse_evidence_registry__ordinary_value_starting_with_indicator_symbols__preserves_value(
+        self,
+    ) -> None:
+        cases = ("> 5 попыток подряд", "|зачёркнутое| название")
+        for claim in cases:
+            with self.subTest(claim=claim):
+                body = (
+                    "# Документ\n"
+                    "```yaml evidence-registry\n"
+                    "- id: E1\n"
+                    "  type: наблюдение\n"
+                    f"  claim: {claim}\n"
+                    "  carrier: носитель\n"
+                    "```\n"
+                )
+
+                records = product_state.parse_evidence_registry(
+                    body, self.ideas / "registry.md"
+                )
+
+                self.assertEqual(records[0]["claim"], claim)
+
+    def test__parse_evidence_registry__invalid_record_composition__names_record_field_and_line(
+        self,
+    ) -> None:
+        cases = (
+            (
+                "missing-id",
+                "- type: наблюдение\n  claim: утверждение\n  carrier: носитель",
+                r"line 3.*record 1 field id is missing",
+            ),
+            (
+                "missing-type",
+                "- id: E1\n  claim: утверждение\n  carrier: носитель",
+                r"line 3.*record 1 field type is missing",
+            ),
+            (
+                "missing-claim",
+                "- id: E1\n  type: наблюдение\n  carrier: носитель",
+                r"line 3.*record 1 field claim is missing",
+            ),
+            (
+                "missing-carrier",
+                "- id: E1\n  type: наблюдение\n  claim: утверждение",
+                r"line 3.*record 1 field carrier is missing",
+            ),
+            (
+                "unknown-type",
+                "- id: E1\n  type: мнение\n  claim: утверждение\n  carrier: носитель",
+                r"line 4.*record 1 field type",
+            ),
+            (
+                "empty-id",
+                "- id:   \n  type: наблюдение\n  claim: утверждение\n  carrier: носитель",
+                r"line 3.*without a value",
+            ),
+            (
+                "invalid-id",
+                "- id: 1E\n  type: наблюдение\n  claim: утверждение\n  carrier: носитель",
+                r"line 3.*record 1 field id.*form",
+            ),
+            (
+                "empty-claim",
+                "- id: E1\n  type: наблюдение\n  claim: |\n  carrier: носитель",
+                r"line 5.*record 1 field claim.*non-empty",
+            ),
+            (
+                "empty-carrier",
+                "- id: E1\n  type: наблюдение\n  claim: утверждение\n  carrier: |",
+                r"line 6.*record 1 field carrier.*non-empty",
+            ),
+        )
+
+        for name, registry, expected in cases:
+            with self.subTest(case=name):
+                body = f"# Документ\n```yaml evidence-registry\n{registry}\n```\n"
+                with self.assertRaisesRegex(product_state.ProductStateError, expected):
+                    product_state.parse_evidence_registry(
+                        body, self.ideas / "registry.md"
+                    )
+
+    def test__parse_evidence_registry__repeated_id__names_both_id_lines_and_first_record(
+        self,
+    ) -> None:
+        body = "\n".join(
+            (
+                "# Документ",
+                "```yaml evidence-registry",
+                "- id: E1",
+                "  type: наблюдение",
+                "  claim: первое",
+                "  carrier: первый носитель",
+                "- id: E1",
+                "  type: допущение",
+                "  claim: второе",
+                "  carrier: второй носитель",
+                "```",
+            )
+        )
+
+        with self.assertRaisesRegex(
+            product_state.ProductStateError, r"line 7.*record 1.*line 3"
+        ):
+            product_state.parse_evidence_registry(body, self.ideas / "registry.md")
+
+    def test__validate_evidence_records__id_claim_and_carrier_require_strings_and_content(
+        self,
+    ) -> None:
+        cases = (
+            ("id-type", evidence_record(identifier=cast(str, 1)), "field id"),
+            ("type-type", evidence_record(record_type=cast(str, 1)), "field type"),
+            ("id-form", evidence_record(identifier="1E"), "field id"),
+            ("claim-type", evidence_record(claim=cast(str, 1)), "field claim"),
+            ("claim-empty", evidence_record(claim="  "), "field claim"),
+            ("carrier-type", evidence_record(carrier=cast(str, 1)), "field carrier"),
+        )
+
+        for name, record, expected in cases:
+            with self.subTest(case=name):
+                with self.assertRaisesRegex(product_state.ProductStateError, expected):
+                    product_state.validate_evidence_records(
+                        [record], self.ideas / "registry.md"
+                    )
+
     def test__sync__field_from_another_kind__returns_invalid_before_consuming_body(
         self,
     ) -> None:
@@ -1877,6 +2278,8 @@ class ProductStateCliTest(unittest.TestCase):
                     str(prepared),
                     "--semantic-change",
                     "yes",
+                    "--analysis-by",
+                    "planner:product-baseline",
                     *fields,
                 )
 
@@ -1889,8 +2292,600 @@ class ProductStateCliTest(unittest.TestCase):
                 else:
                     self.assertEqual(target.read_bytes(), previous)
 
-    def test__sync__new_idea__writes_version_one(self) -> None:
+    def test__sync__without_analysis_by__argparse_rejects_and_keeps_body(self) -> None:
+        idea = self.idea_path()
+        prepared = self.prepared_body(idea, "# Idea\n")
+
+        result = self.run_cli(
+            "sync",
+            "idea",
+            str(idea),
+            "--body-file",
+            str(prepared),
+            "--semantic-change",
+            "yes",
+            "--stage",
+            "exploring",
+            "--outcome",
+            "open",
+        )
+
+        self.assertEqual(result.returncode, product_state.EXIT_USAGE)
+        self.assertIn("--analysis-by", result.stderr)
+        self.assertTrue(prepared.exists())
+        self.assertFalse(idea.exists())
+
+    def test__sync__empty_analysis_by__rejects_before_consuming_body(self) -> None:
+        for analysis_by in ("", "   "):
+            with self.subTest(analysis_by=repr(analysis_by)):
+                idea = self.idea_path(f"empty-analysis-{len(analysis_by)}")
+                prepared = self.prepared_body(idea, "# Idea\n")
+
+                result = self.run_cli(
+                    "sync",
+                    "idea",
+                    str(idea),
+                    "--body-file",
+                    str(prepared),
+                    "--semantic-change",
+                    "yes",
+                    "--analysis-by",
+                    analysis_by,
+                    "--stage",
+                    "exploring",
+                    "--outcome",
+                    "open",
+                )
+
+                self.assertEqual(result.returncode, 3)
+                self.assertIn("analysis_by must be a non-empty string", result.stderr)
+                self.assertTrue(prepared.exists())
+                self.assertFalse(idea.exists())
+                prepared.unlink()
+
+    def test__sync__invalid_kind_field_value__rejects_before_consuming_body(
+        self,
+    ) -> None:
+        epic_directory = self.epics / "EPIC-0001-provider-routing"
+        epic_directory.mkdir()
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        feature_directory = self.features / "FEAT-0001-provider-routing"
+        feature_directory.mkdir()
+        cases = (
+            (
+                "idea stage",
+                "idea",
+                self.idea_path(),
+                {"stage": "guessed", "outcome": "open"},
+                "stage must be one of",
+            ),
+            (
+                "idea outcome",
+                "idea",
+                self.idea_path(),
+                {"stage": "exploring", "outcome": "guessed"},
+                "outcome must be one of",
+            ),
+            (
+                "epic stage",
+                "epic",
+                epic,
+                {"stage": "guessed"},
+                "stage must be one of",
+            ),
+            (
+                "roadmap state",
+                "roadmap",
+                epic_directory / "ROADMAP.md",
+                {"parent": epic, "state": "guessed"},
+                "state must be one of",
+            ),
+            (
+                "feature readiness",
+                "feature",
+                feature_directory / "README.md",
+                {"readiness": "guessed"},
+                "readiness must be one of",
+            ),
+        )
+
+        for name, kind, target, fields, expected in cases:
+            with self.subTest(case=name):
+                body = complete_body(kind, f"# {kind.title()}\n")
+                previous = target.read_bytes() if target.exists() else None
+
+                result, prepared = self.sync_prepared(kind, target, body, **fields)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertEqual(result.stdout, "")
+                self.assertIn(expected, result.stderr)
+                self.assertTrue(prepared.exists())
+                self.assertEqual(prepared.read_text(), body)
+                if previous is None:
+                    self.assertFalse(target.exists())
+                else:
+                    self.assertEqual(target.read_bytes(), previous)
+                prepared.unlink()
+
+    def test__validate_kind_fields__multiline_values__return_invalid(self) -> None:
+        cases = (
+            ("idea", "stage"),
+            ("idea", "outcome"),
+            ("epic", "stage"),
+            ("roadmap", "state"),
+            ("feature", "readiness"),
+        )
+        injected = "current\nstatus: stale"
+
+        for kind, field in cases:
+            with self.subTest(kind=kind, field=field):
+                path = self.product_path(kind)
+                path.write_text(product_document(kind))
+                metadata = product_state.read_document(path).metadata
+                metadata[field] = injected
+
+                with self.assertRaisesRegex(
+                    product_state.ProductStateError, f"{field} must be one of"
+                ):
+                    product_state._VALIDATORS[kind](metadata, path)
+
+    def test__sync__multiline_analysis_by__injects_no_field_and_reads_back(self) -> None:
+        hostile = 'planner:product-baseline\nstatus: stale'
+        body = complete_body("idea", "# Idea\n")
+        prepared = self.prepared_body(self.idea_path(), body)
+
+        result = self.run_cli(
+            "sync",
+            "idea",
+            str(self.idea_path()),
+            "--body-file",
+            str(prepared),
+            "--semantic-change",
+            "yes",
+            "--analysis-by",
+            hostile,
+            "--stage",
+            "exploring",
+            "--outcome",
+            "open",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(prepared.exists())
+        document = product_state.read_document(self.idea_path())
+        self.assertEqual(document.metadata["analysis_by"], hostile)
+        self.assertNotIn("duplicate frontmatter field", result.stderr)
+        self.assertNotIn("\nstatus: stale\n", document.source)
+
+    def test__sync__simple_analysis_by__round_trips_unquoted(self) -> None:
         body = "# Idea\n"
+
+        self.sync_idea(body, analysis_by="planner:product-baseline")
+
+        document = product_state.read_document(self.idea_path())
+        self.assertIn("analysis_by: planner:product-baseline\n", document.source)
+        self.assertEqual(document.metadata["analysis_by"], "planner:product-baseline")
+
+    def test__sync__quoted_analysis_by__reads_back_identically(self) -> None:
+        idea = self.idea_path("quoted")
+        body = complete_body("idea", "# Idea\n")
+        prepared = self.prepared_body(idea, body)
+
+        result = self.run_cli(
+            "sync",
+            "idea",
+            str(idea),
+            "--body-file",
+            str(prepared),
+            "--semantic-change",
+            "yes",
+            "--analysis-by",
+            '  spaced provider  ',
+            "--stage",
+            "exploring",
+            "--outcome",
+            "open",
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        document = product_state.read_document(idea)
+        self.assertIn(
+            'analysis_by: "  spaced provider  "\n', document.source
+        )
+        self.assertEqual(document.metadata["analysis_by"], "  spaced provider  ")
+
+    def registry_body(self, duty: str = "") -> str:
+        return (
+            "```yaml evidence-registry\n"
+            "- id: E1\n"
+            "  type: наблюдение\n"
+            "  claim: владелец теряет элементы при массовом удалении\n"
+            "  carrier: реплика владельца в обсуждении\n"
+            "```\n\n"
+            f"{duty}"
+        )
+
+    def sync_prepared(
+        self,
+        kind: str,
+        target: Path,
+        body: str,
+        **fields: str | Path,
+    ) -> tuple[subprocess.CompletedProcess[str], Path]:
+        prepared = self.prepared_body(target, body)
+        arguments = [
+            "sync",
+            kind,
+            str(target),
+            "--body-file",
+            str(prepared),
+            "--semantic-change",
+            "yes",
+            "--analysis-by",
+            "planner:product-baseline",
+        ]
+        if "parent" in fields:
+            arguments.extend(("--parent", str(fields.pop("parent"))))
+        for field, value in fields.items():
+            arguments.extend((f"--{field.replace('_', '-')}", str(value)))
+        return self.run_cli(*arguments), prepared
+
+    def test__sync__prepared_body_replaced_after_validation__writes_verified_body(
+        self,
+    ) -> None:
+        cases = (
+            ("idea", self.idea_path(), {"stage": "exploring", "outcome": "open"}),
+            (
+                "epic",
+                self.epics / "EPIC-0001-provider-routing" / "EPIC.md",
+                {"stage": "active"},
+            ),
+        )
+        swapped_body = "# Body swapped after validation\n"
+
+        for kind, target, fields in cases:
+            with self.subTest(kind=kind):
+                target.parent.mkdir(parents=True, exist_ok=True)
+                verified_body = complete_body(kind, f"# {kind.title()}\n")
+                prepared = self.prepared_body(target, verified_body)
+                original_prevalidation = product_state.prevalidate_prepared_body
+
+                def validate_and_replace(*args: object) -> str:
+                    body = original_prevalidation(*args)
+                    prepared.write_text(swapped_body)
+                    return body
+
+                with mock.patch.object(
+                    product_state,
+                    "prevalidate_prepared_body",
+                    side_effect=validate_and_replace,
+                ) as prevalidation:
+                    if kind == "idea":
+                        result = product_state.sync_idea_document(
+                            target,
+                            prepared,
+                            True,
+                            "planner:product-baseline",
+                            fields["stage"],
+                            fields["outcome"],
+                            None,
+                        )
+                    else:
+                        result = product_state.sync_linked_document(
+                            kind,
+                            target,
+                            prepared,
+                            True,
+                            "planner:product-baseline",
+                            None,
+                            fields["stage"],
+                        )
+
+                self.assertEqual(result, 0)
+                prevalidation.assert_called_once()
+                self.assertFalse(prepared.exists())
+                self.assertEqual(product_state.read_document(target).body, verified_body)
+
+    def duty_cases(
+        self,
+    ) -> tuple[tuple[str, Path, dict[str, str | Path], str], ...]:
+        epic_directory = self.epics / "EPIC-0001-provider-routing"
+        epic_directory.mkdir()
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        feature_directory = self.features / "FEAT-0001-provider-routing"
+        feature_directory.mkdir()
+        return (
+            (
+                "idea",
+                self.idea_path(),
+                {"stage": "resolved", "outcome": "decision"},
+                "## Решение\nИсход: decision\nОснование: [E1].\n",
+            ),
+            (
+                "epic",
+                epic,
+                {"stage": "active"},
+                "## Принятые решения\n"
+                "| Вопрос | Выбрано | Отклонено | Основание | Обратимость |\n"
+                "|---|---|---|---|---|\n"
+                "| Срез | один | два | [E1] | обратимо |\n",
+            ),
+            (
+                "roadmap",
+                epic_directory / "ROADMAP.md",
+                {"parent": epic, "state": "active"},
+                "## Основание порядка\nПорядок опирается на [E1].\n",
+            ),
+            (
+                "feature",
+                feature_directory / "README.md",
+                {"readiness": "ready"},
+                "## Договор взаимодействия\n"
+                "Актор вызывает действие и видит результат [E1].\n",
+            ),
+        )
+
+    def test__sync__template_layout__registry_before_sections__accepted_for_every_kind(
+        self,
+    ) -> None:
+        for kind, target, fields, duty in self.duty_cases():
+            with self.subTest(kind=kind):
+                body = f"# {kind.title()}\n\n{self.registry_body(duty)}"
+
+                self.sync_product(kind, target, body, **fields)
+
+                document = product_state.read_document(target)
+                self.assertEqual(document.body, body)
+
+    def test__sync__reversed_layout__sections_before_registry__accepted_for_every_kind(
+        self,
+    ) -> None:
+        for kind, target, fields, duty in self.duty_cases():
+            with self.subTest(kind=kind):
+                body = f"# {kind.title()}\n\n{duty}\n{self.registry_body()}"
+
+                self.sync_product(kind, target, body, **fields)
+
+                document = product_state.read_document(target)
+                self.assertEqual(document.body, body)
+
+    def test__sync__epic_filled_decision_table_after_registry__without_reference__rejected(
+        self,
+    ) -> None:
+        epic = self.duty_cases()[1][1]
+        body = (
+            "# Epic\n\n"
+            f"{self.registry_body(
+                '## Принятые решения\n'
+                '| Вопрос | Выбрано | Отклонено | Основание | Обратимость |\n'
+                '|---|---|---|---|---|\n'
+                '| Срез | один | два | интуиция | обратимо |\n'
+            )}"
+        )
+
+        result, prepared = self.sync_prepared("epic", epic, body, stage="active")
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn(
+            "section ## Принятые решения requires an evidence reference",
+            result.stderr,
+        )
+        self.assertTrue(prepared.exists())
+
+    def test__sync__unresolved_reference__names_text_and_keeps_body(self) -> None:
+        body = "\n".join(
+            (
+                "# Замысел",
+                "",
+                "Вывод опирается на [E9], которого нет в реестре.",
+                "",
+                "```yaml evidence-registry",
+                "- id: E1",
+                "  type: наблюдение",
+                "  claim: утверждение",
+                "  carrier: носитель",
+                "```",
+            )
+        )
+        idea = self.idea_path()
+
+        result, prepared = self.sync_prepared(
+            "idea", idea, body, stage="exploring", outcome="open"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn("line 3: unresolved evidence reference [E9]", result.stderr)
+        self.assertTrue(prepared.exists())
+        self.assertFalse(idea.exists())
+
+    def test__sync__duty_section_without_reference__rejected_for_every_kind(
+        self,
+    ) -> None:
+        epic_directory = self.epics / "EPIC-0001-provider-routing"
+        epic_directory.mkdir()
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        feature_directory = self.features / "FEAT-0001-provider-routing"
+        feature_directory.mkdir()
+        cases = (
+            (
+                "idea resolved without reference",
+                "idea",
+                self.idea_path(),
+                {"stage": "resolved", "outcome": "decision"},
+                "## Решение\nИсход: decision\nОснование: наблюдение автора.\n",
+                "section ## Решение requires an evidence reference [id]",
+            ),
+            (
+                "epic decision row without reference",
+                "epic",
+                epic,
+                {"stage": "active"},
+                "## Принятые решения\n"
+                "| Вопрос | Выбрано | Отклонено | Основание | Обратимость |\n"
+                "|---|---|---|---|---|\n"
+                "| Срез | один | два | интуиция | обратимо |\n",
+                "section ## Принятые решения requires an evidence reference [id]",
+            ),
+            (
+                "roadmap section without reference",
+                "roadmap",
+                epic_directory / "ROADMAP.md",
+                {"parent": epic, "state": "active"},
+                "## Основание порядка\nПорядок продиктован сроком.\n",
+                "section ## Основание порядка requires an evidence reference [id]",
+            ),
+            (
+                "feature section without reference",
+                "feature",
+                feature_directory / "README.md",
+                {"readiness": "ready"},
+                "## Договор взаимодействия\nАктор вызывает действие.\n",
+                "section ## Договор взаимодействия requires an evidence reference [id]",
+            ),
+            (
+                "roadmap section missing",
+                "roadmap",
+                epic_directory / "ROADMAP.md",
+                {"parent": epic, "state": "active"},
+                "",
+                "missing required section ## Основание порядка "
+                "with an evidence reference",
+            ),
+            (
+                "feature section missing",
+                "feature",
+                feature_directory / "README.md",
+                {"readiness": "ready"},
+                "",
+                "missing required section ## Договор взаимодействия "
+                "with an evidence reference",
+            ),
+        )
+
+        for name, kind, target, fields, duty, expected in cases:
+            with self.subTest(case=name):
+                body = f"# {kind.title()}\n\n{self.registry_body(duty)}"
+                previous = target.read_bytes() if target.exists() else None
+
+                result, prepared = self.sync_prepared(kind, target, body, **fields)
+
+                self.assertEqual(result.returncode, 3)
+                self.assertIn(expected, result.stderr)
+                self.assertTrue(prepared.exists())
+                if previous is None:
+                    self.assertFalse(target.exists())
+                else:
+                    self.assertEqual(target.read_bytes(), previous)
+                prepared.unlink()
+
+    def test__sync__markdown_link__is_not_a_registry_reference(self) -> None:
+        epic_directory = self.epics / "EPIC-0001-provider-routing"
+        epic_directory.mkdir()
+        epic = epic_directory / "EPIC.md"
+        self.sync_product("epic", epic, "# Epic\n", stage="shaping")
+        roadmap = epic_directory / "ROADMAP.md"
+        body = (
+            "# Roadmap\n\n"
+            f"{self.registry_body(
+                '## Основание порядка\n'
+                'Описание в [Wiki](https://example.com) и [E1](./doc.md).\n'
+            )}"
+        )
+
+        result, prepared = self.sync_prepared(
+            "roadmap", roadmap, body, parent=epic, state="active"
+        )
+
+        self.assertEqual(result.returncode, 3)
+        self.assertIn(
+            "section ## Основание порядка requires an evidence reference", result.stderr
+        )
+        self.assertNotIn("unresolved evidence reference", result.stderr)
+        self.assertTrue(prepared.exists())
+        self.assertFalse(roadmap.exists())
+
+    def test__sync__early_stage_and_empty_decision_table__create_no_duty(
+        self,
+    ) -> None:
+        epic_directory = self.epics / "EPIC-0001-provider-routing"
+        epic_directory.mkdir()
+        epic = epic_directory / "EPIC.md"
+        cases = (
+            (
+                "idea exploring has no decision section",
+                "idea",
+                self.idea_path(),
+                {"stage": "exploring", "outcome": "open"},
+                "",
+            ),
+            (
+                "epic decision table is empty",
+                "epic",
+                epic,
+                {"stage": "shaping"},
+                "## Принятые решения\n"
+                "| Вопрос | Выбрано | Отклонено | Основание | Обратимость |\n"
+                "|---|---|---|---|---|\n",
+            ),
+        )
+
+        for name, kind, target, fields, duty in cases:
+            with self.subTest(case=name):
+                body = f"# {kind.title()}\n\n{self.registry_body(duty)}"
+
+                self.sync_product(kind, target, body, **fields)
+
+                document = product_state.read_document(target)
+                self.assertEqual(document.body, body)
+
+    def test__sync__registry_rejection__keeps_prepared_body_and_target(
+        self,
+    ) -> None:
+        idea = self.idea_path()
+        self.sync_idea()
+        before = idea.read_bytes()
+        cases = (
+            (
+                "block boundary",
+                "# Замысел\n\n```yaml evidence-registry\n- id: E1\n",
+                "closing fence is required",
+            ),
+            (
+                "yaml syntax",
+                "# Замысел\n\n```yaml evidence-registry\n"
+                "- id: E1\n\ttype: наблюдение\n```\n",
+                "tab indentation is unsupported",
+            ),
+            (
+                "record composition",
+                "# Замысел\n\n```yaml evidence-registry\n"
+                "- id: E1\n  claim: утверждение\n  carrier: носитель\n```\n",
+                "field type is missing",
+            ),
+            (
+                "reference",
+                f"# Замысел\n\n{self.registry_body('Вывод опирается на [E9].\n')}",
+                "line 10: unresolved evidence reference [E9]",
+            ),
+        )
+
+        for name, body, expected in cases:
+            with self.subTest(case=name):
+                result, prepared = self.sync_prepared(
+                    "idea", idea, body, stage="exploring", outcome="open"
+                )
+
+                self.assertEqual(result.returncode, 3)
+                self.assertIn(expected, result.stderr)
+                self.assertTrue(prepared.exists())
+                self.assertEqual(idea.read_bytes(), before)
+                prepared.unlink()
+
+    def test__sync__new_idea__writes_version_one(self) -> None:
+        body = complete_body("idea", "# Idea\n")
 
         result = self.sync_idea(body)
 
@@ -1902,6 +2897,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "version": 1,
                 "status": "current",
                 "content_sha256": body_hash(body),
+                "analysis_by": "planner:product-baseline",
                 "stage": "exploring",
                 "outcome": "open",
             },
@@ -1920,7 +2916,7 @@ class ProductStateCliTest(unittest.TestCase):
 
     def test__sync__nonsemantic_body_change__preserves_version_and_updates_hash(self) -> None:
         self.sync_idea("# Idea\n")
-        changed_body = "# Idea\n\n"
+        changed_body = complete_body("idea", "# Idea\n\n")
 
         self.sync_idea(changed_body, semantic_change="no")
 
@@ -1931,6 +2927,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "version": 1,
                 "status": "current",
                 "content_sha256": body_hash(changed_body),
+                "analysis_by": "planner:product-baseline",
                 "stage": "exploring",
                 "outcome": "open",
             },
@@ -1938,12 +2935,12 @@ class ProductStateCliTest(unittest.TestCase):
         )
 
     def test__sync__epic_with_origin__records_parent_snapshot(self) -> None:
-        idea_body = "# Idea\n"
+        idea_body = complete_body("idea", "# Idea\n")
         self.sync_idea(idea_body)
         epic_directory = self.epics / "EPIC-0001-provider-routing"
         epic_directory.mkdir()
         epic = epic_directory / "EPIC.md"
-        epic_body = "# Epic\n"
+        epic_body = complete_body("epic", "# Epic\n")
 
         self.sync_product(
             "epic",
@@ -1960,6 +2957,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "version": 1,
                 "status": "current",
                 "content_sha256": body_hash(epic_body),
+                "analysis_by": "planner:product-baseline",
                 "stage": "shaping",
                 "origin": {
                     "path": "../../ideas/IDEA-0001-provider-routing.md",
@@ -1974,10 +2972,10 @@ class ProductStateCliTest(unittest.TestCase):
         epic_directory = self.epics / "EPIC-0001-provider-routing"
         epic_directory.mkdir()
         epic = epic_directory / "EPIC.md"
-        epic_body = "# Epic\n"
+        epic_body = complete_body("epic", "# Epic\n")
         self.sync_product("epic", epic, epic_body, stage="shaping")
         roadmap = epic_directory / "ROADMAP.md"
-        roadmap_body = "# Roadmap\n"
+        roadmap_body = complete_body("roadmap", "# Roadmap\n")
 
         self.sync_product(
             "roadmap",
@@ -1994,6 +2992,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "version": 1,
                 "status": "current",
                 "content_sha256": body_hash(roadmap_body),
+                "analysis_by": "planner:product-baseline",
                 "state": "active",
                 "epic": {
                     "path": "./EPIC.md",
@@ -2018,6 +3017,8 @@ class ProductStateCliTest(unittest.TestCase):
             str(prepared),
             "--semantic-change",
             "yes",
+            "--analysis-by",
+            "planner:product-baseline",
             "--state",
             "active",
         )
@@ -2031,12 +3032,12 @@ class ProductStateCliTest(unittest.TestCase):
         epic_directory = self.epics / "EPIC-0001-provider-routing"
         epic_directory.mkdir()
         epic = epic_directory / "EPIC.md"
-        epic_body = "# Epic\n"
+        epic_body = complete_body("epic", "# Epic\n")
         self.sync_product("epic", epic, epic_body, stage="shaping")
         feature_directory = self.features / "FEAT-0001-provider-routing"
         feature_directory.mkdir()
         feature = feature_directory / "README.md"
-        feature_body = "# Feature\n"
+        feature_body = complete_body("feature", "# Feature\n")
 
         self.sync_product(
             "feature",
@@ -2053,6 +3054,7 @@ class ProductStateCliTest(unittest.TestCase):
                 "version": 1,
                 "status": "current",
                 "content_sha256": body_hash(feature_body),
+                "analysis_by": "planner:product-baseline",
                 "readiness": "ready",
                 "parent": {
                     "path": "../../epics/EPIC-0001-provider-routing/EPIC.md",
@@ -2094,7 +3096,7 @@ class ProductStateCliTest(unittest.TestCase):
                 reference_before = dict(
                     product_state.read_document(path).metadata[reference_field]
                 )
-                changed_body = f"# Changed {kind.title()}\n"
+                changed_body = complete_body(kind, f"# Changed {kind.title()}\n")
                 prepared = self.prepared_body(path, changed_body)
 
                 result = self.run_cli(
@@ -2105,6 +3107,8 @@ class ProductStateCliTest(unittest.TestCase):
                     str(prepared),
                     "--semantic-change",
                     "no",
+                    "--analysis-by",
+                    "planner:product-baseline",
                     f"--{value_field}",
                     value,
                 )
@@ -2126,7 +3130,7 @@ class ProductStateCliTest(unittest.TestCase):
             stage="exploring",
             outcome="open",
         )
-        resolved_body = "# Resolved idea\n"
+        resolved_body = complete_body("idea", "# Resolved idea\n", "resolved")
         self.sync_product(
             "idea",
             idea,
@@ -2140,14 +3144,14 @@ class ProductStateCliTest(unittest.TestCase):
 
         epic_directory = self.allocate_product("epic", self.epics, "lifecycle")
         epic = epic_directory / "EPIC.md"
-        epic_body = "# Epic\n"
+        epic_body = complete_body("epic", "# Epic\n")
         self.sync_product(
             "epic", epic, epic_body, parent=idea, stage="shaping"
         )
         epic_before_roadmap = self.inspect_product(epic)
         epic_bytes = epic.read_bytes()
         roadmap = epic_directory / "ROADMAP.md"
-        roadmap_body = "# Roadmap\n"
+        roadmap_body = complete_body("roadmap", "# Roadmap\n")
         self.sync_product(
             "roadmap", roadmap, roadmap_body, parent=epic, state="active"
         )
@@ -2268,6 +3272,7 @@ class ProductStateCliTest(unittest.TestCase):
             "sync", "roadmap", str(roadmap),
             "--body-file", str(prepared),
             "--semantic-change", "yes",
+            "--analysis-by", "planner:product-baseline",
             "--parent", str(epic),
             "--state", "active",
         )
@@ -2303,6 +3308,7 @@ class ProductStateCliTest(unittest.TestCase):
                     "sync", "roadmap", str(roadmap),
                     "--body-file", str(prepared),
                     "--semantic-change", "yes",
+                    "--analysis-by", "planner:product-baseline",
                     "--parent", str(parent),
                     "--state", "active",
                 )
@@ -2321,14 +3327,14 @@ class ProductStateCliTest(unittest.TestCase):
         epic = epic_directory / "EPIC.md"
         self.sync_product("epic", epic, "# Epic\n", stage="shaping")
         roadmap = epic_directory / "ROADMAP.md"
-        roadmap_body = "# Roadmap\nKeep this body.\n"
+        roadmap_body = complete_body("roadmap", "# Roadmap\nKeep this body.\n")
         self.sync_product(
             "roadmap", roadmap, roadmap_body, parent=epic, state="active"
         )
         roadmap_before = roadmap.read_bytes()
         roadmap_state_before = self.inspect_product(roadmap)
 
-        changed_epic_body = "# Changed epic\n"
+        changed_epic_body = complete_body("epic", "# Changed epic\n")
         self.sync_product(
             "epic", epic, changed_epic_body, stage="active"
         )
@@ -2383,7 +3389,9 @@ class ProductStateCliTest(unittest.TestCase):
         )
         previous_bytes = idea.read_bytes()
         previous_state = self.inspect_product(idea)
-        prepared = self.prepared_body(idea, "# Invalid replacement\n")
+        prepared = self.prepared_body(
+            idea, complete_body("idea", "# Invalid replacement\n")
+        )
 
         result = self.run_cli(
             "sync",
@@ -2393,6 +3401,8 @@ class ProductStateCliTest(unittest.TestCase):
             str(prepared),
             "--semantic-change",
             "yes",
+            "--analysis-by",
+            "planner:product-baseline",
             "--stage",
             "exploring",
             "--outcome",
