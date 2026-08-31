@@ -1,9 +1,17 @@
 {
   "name": "planner",
-  "version": "1.1.1",
-  "description": "File-backed planning pipeline: product discovery (idea, epic, roadmap, slice requirements), ready architecture, version-linked execution plans, guarded implementation orchestration, and post-task reflection.",
+  "version": "2.0.0",
+  "description": "Помогает довести замысел до подробного плана — от продуктовой проработки до архитектуры и плана реализации.",
   "author": {
     "name": "spumer"
   },
-  "keywords": ["planner", "orchestration", "file-backed-planning", "product-discovery", "feature-planning", "agent-catalog", "reflection"]
+  "keywords": [
+    "planner",
+    "orchestration",
+    "file-backed-planning",
+    "product-discovery",
+    "feature-planning",
+    "agent-catalog",
+    "reflection"
+  ]
 }

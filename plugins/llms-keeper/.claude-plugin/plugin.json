@@ -1,9 +1,15 @@
 {
   "name": "llms-keeper",
-  "version": "0.1.2",
-  "description": "Maintain llms.txt + llms-full.txt for any project following llmstxt.org standard. Helps AI agents quickly understand a project by keeping documentation in sync with the codebase.",
+  "version": "0.1.3",
+  "description": "Помогает держать контекст проекта для ИИ-агентов в актуальном виде — файлом, который читается за один раз, по стандарту llmstxt.org.",
   "author": {
     "name": "spumer"
   },
-  "keywords": ["llms-txt", "documentation", "context", "ai-first", "llmstxt-org"]
+  "keywords": [
+    "llms-txt",
+    "documentation",
+    "context",
+    "ai-first",
+    "llmstxt-org"
+  ]
 }

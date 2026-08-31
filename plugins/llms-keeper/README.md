@@ -7,14 +7,20 @@ to use it, when not to — lives on
 
 ## What it ships
 
-- **`/update-docs`** — `commands/update-docs.md`; generate or refresh both
-  context files.
-- **`llms-keeper` skill** — `skills/llms-keeper/`; the format rules and what
-  belongs in each file.
-- **`documentation-keeper` agent** — `agents/documentation-keeper.md`; reads
-  source, config, tests, CI and docs, then writes the two files.
-- **SessionStart hook** — `hooks/`; reports whether context files exist and
-  suggests the command when they do not.
+Three prompts and one shell script. The files are written by a model following
+the agent prompt; the hook is the only executable part.
+
+- **`/update-docs`** — `commands/update-docs.md`; asks the model to call the
+  `documentation-keeper` agent and passes the focus-area argument through.
+- **`llms-keeper` skill** — `skills/llms-keeper/`; format rules, what belongs in
+  each file, and `references/llmstxt-spec.md` for the spec details. Hands the
+  work to the same agent.
+- **`documentation-keeper` agent** — `agents/documentation-keeper.md`; the
+  instruction to detect the stack from manifest files, read entry points, core
+  modules, config, test structure, docs and CI, then write both files.
+- **SessionStart hook** — `hooks/hooks.json` plus `hooks/session-start.sh`;
+  prints one of three messages depending on which context file it finds in the
+  working directory, recommends `/update-docs` in each of them, exits `0`.
 
 ## Installation
 
@@ -23,4 +29,5 @@ to use it, when not to — lives on
 /plugin install llms-keeper@i-m-senior-developer
 ```
 
-No dependencies on other plugins in this marketplace.
+`.claude-plugin/plugin.json` declares no `dependencies`, so the plugin loads on
+its own.

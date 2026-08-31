@@ -1,9 +1,18 @@
 {
   "name": "clarity-language",
-  "version": "0.4.1",
-  "description": "Ясность языка: три скилла против AI-синтетики в текстах. clarity-validator (12 смысловых паттернов в тех-доках с FPF-обоснованием), ai-prose-detector (стилистика художественной прозы по 6 методам), russian-style (естественный русский без кальки и придуманных русских переводов устоявшихся заимствований, без пустых антитез и канцелярита, с проверкой согласования после замены термина).",
+  "version": "0.4.2",
+  "description": "Помогает сделать текст ясным и естественным — от технической документации до художественной прозы.",
   "author": {
     "name": "spumer"
   },
-  "keywords": ["clarity", "text-quality", "ai-slop", "russian", "prose", "fpf", "documentation", "writing"]
+  "keywords": [
+    "clarity",
+    "text-quality",
+    "ai-slop",
+    "russian",
+    "prose",
+    "fpf",
+    "documentation",
+    "writing"
+  ]
 }

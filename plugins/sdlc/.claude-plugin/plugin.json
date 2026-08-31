@@ -1,7 +1,7 @@
 {
   "name": "sdlc",
-  "version": "0.4.1",
-  "description": "Software Development Life Cycle plugin: 3 agents (architect, code-implementer, code-reviewer) covering design, implementation, and review across backend (Python) and frontend (React) stacks. References tdd-master and functional-clarity plugins instead of duplicating their content.",
+  "version": "0.4.2",
+  "description": "Помогает провести изменение через полный цикл разработки — от архитектуры до реализации и ревью.",
   "dependencies": [
     "tdd-master",
     "functional-clarity"

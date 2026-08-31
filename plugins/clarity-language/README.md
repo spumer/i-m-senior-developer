@@ -1,6 +1,7 @@
 # Clarity Language Plugin
 
-Три скилла против AI-синтетики в текстах. Этот файл отвечает на устройство
+Помогает сделать текст ясным и естественным — от технической документации до
+художественной прозы. Этот файл отвечает на устройство
 плагина в репозитории: какие компоненты поставляются и где лежат. Договор — что
 ловит каждый скилл, как вызывать разбор калек, границы — на странице
 [`docs/plugins/clarity-language.md`](../../docs/plugins/clarity-language.md).
@@ -37,6 +38,13 @@ Workflow({name: "clarity-language:calque-sweep", args: {
 }})
 ```
 
+`mode` обязателен: без него, как и с пустым `files` в режиме `deep`, workflow
+падает с ошибкой до первого вызова модели. Ещё принимаются `repo_root`,
+`skill_path` (путь к `russian-style`; по умолчанию считается от рабочего каталога,
+поэтому сходится только внутри этого репозитория), `lexicon_path` — вердикты
+проекта по конкретным словам, они в оценке главнее общего списка в скилле, — и
+`max_files` со значением 60.
+
 ## Установка
 
 ```bash
@@ -47,7 +55,11 @@ claude --plugin-dir plugins/clarity-language
 
 ## Происхождение
 
-Скиллы основаны на **First Principles Framework** (FPF, `https://github.com/ailev/FPF`):
-аксиомы A.7 (Strict Distinction), A.10 (Evidence Graph), A.1.1 (BoundedContext),
-A.11 (Ontological Parsimony). Правила `russian-style` выведены из реальных правок
-рабочих текстов.
+На **First Principles Framework** (FPF, `https://github.com/ailev/FPF`) опирается
+один скилл из трёх: `clarity-validator` называет свою аксиому у каждого паттерна —
+A.7 (Strict Distinction), A.10 (Evidence Graph), A.1.1 (BoundedContext),
+A.11 (Ontological Parsimony), а также B.5 и F.0.1.
+
+В `russian-style` и `ai-prose-detector` ссылок на FPF нет. Про `russian-style` сам
+скилл говорит, что правила выведены из реальных правок рабочих текстов; про
+происхождение методов `ai-prose-detector` в плагине не сказано ничего.

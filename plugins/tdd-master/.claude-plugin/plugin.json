@@ -1,9 +1,15 @@
 {
   "name": "tdd-master",
-  "version": "0.1.2",
-  "description": "TDD (Test-Driven Development) methodology plugin. Provides Red-Green-Refactor workflow, testing patterns, and TDD-focused agent for Python/Django projects.",
+  "version": "0.1.3",
+  "description": "Помогает писать код через проверяемое поведение: сначала падающий тест, затем минимальная реализация и рефакторинг.",
   "author": {
     "name": "spumer"
   },
-  "keywords": ["tdd", "testing", "pytest", "django", "red-green-refactor"]
+  "keywords": [
+    "tdd",
+    "testing",
+    "pytest",
+    "django",
+    "red-green-refactor"
+  ]
 }

@@ -31,7 +31,11 @@ plugins/planner/
 │   │   ├── SKILL.md
 │   │   ├── assets/
 │   │   │   ├── plan_state.py
-│   │   │   └── test_plan_state.py
+│   │   │   ├── work_hint.py
+│   │   │   ├── execution_outputs.py
+│   │   │   ├── test_plan_state.py
+│   │   │   ├── test_work_hint.py
+│   │   │   └── test_execution_outputs.py
 │   │   └── references/
 │   │       ├── bootstrap.md
 │   │       ├── architecture-mode.md
@@ -56,15 +60,23 @@ plugins/planner/
 │       └── SKILL.md
 ├── hooks/
 │   ├── hooks.json
-│   └── product_intake_hint.py
+│   ├── product_intake_hint.py
+│   ├── test_product_intake_hint.py
+│   └── README.md
 ├── evals/
 │   ├── README.md
 │   ├── run.py
+│   ├── test_run.py
 │   ├── idea-routing/
 │   ├── multi-step-input/
 │   └── baseline-provider-limits/
 └── README.md
 ```
+
+`plan_state.py` imports `work_hint.py`, which imports `execution_outputs.py`, so
+the three live in one directory and must be invoked by absolute path from there.
+A run also writes `evals/results/<run-id>/` with the aggregate result and an HTML
+report; that directory is gitignored and is not part of the repository tree.
 
 ## Installation
 

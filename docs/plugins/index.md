@@ -5,14 +5,14 @@
 | Плагин | Что делает |
 |---|---|
 | [planner](planner.md) | планирование: замысел, требования фичи, архитектура, план, исполнение |
-| [sdlc](sdlc.md) | агенты `architect`, `code-implementer`, `code-reviewer` |
+| [sdlc](sdlc.md) | разработка по ролям: проектирование, реализация, ревью |
 | [tdd-master](tdd-master.md) | цикл красный–зелёный–рефакторинг |
 | [functional-clarity](functional-clarity.md) | принципы кода и дисциплина изменения существующего кода |
 | [clarity-language](clarity-language.md) | проверка текстов: смысл, русский стиль, проза |
-| [plugin-testing](plugin-testing.md) | eval-кейсы и обёртка прогона для плагинов |
-| [llms-keeper](llms-keeper.md) | `llms.txt` и `llms-full.txt` по команде `/update-docs` |
+| [plugin-testing](plugin-testing.md) | проверка поведения плагинов и разбор красного прогона |
+| [llms-keeper](llms-keeper.md) | контекст проекта для ИИ-агентов: `llms.txt` и `llms-full.txt` |
 | [fpf-integration](fpf-integration.md) | аудит решений, авторинг и применение сводов компетенций |
-| [fpf-competency-bank](fpf-competency-bank.md) | данные: два свода и карта для резолвера |
+| [fpf-competency-bank](fpf-competency-bank.md) | правила приёма компетенций и готовые своды для резолвера |
 
 Версию установленного плагина показывает `claude plugin list` — строкой
 `Version:` рядом с его именем. Состав каждого плагина — команды, скиллы, агенты,
@@ -36,8 +36,10 @@
 | разработка своих плагинов | `plugin-testing` |
 | работа со сводами компетенций | `fpf-competency-bank` (подтянет `fpf-integration`) |
 
-`fpf-competency-bank` дополнительно требует записи пути в
-`~/.claude/frameworks.paths`.
+`fpf-competency-bank` объявляет обработчик `SessionStart` с публикатором пути
+до своего каталога `frameworks`. Публикатор заменяет содержимое
+`~/.claude/frameworks.published`; резолвер читает этот файл после человеческого
+`~/.claude/frameworks.paths`, который публикатор не меняет.
 
 ## Локальный запуск без установки
 
