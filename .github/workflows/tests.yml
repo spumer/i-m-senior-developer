@@ -150,3 +150,6 @@ jobs:
 
       - name: workflow input guard
         run: node plugins/planner/workflows/test_plan_do_workflow_inputs.mjs
+
+      - name: calque sweep report contract
+        run: node plugins/clarity-language/workflows/test_calque_sweep_contract.mjs
