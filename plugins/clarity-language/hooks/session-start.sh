@@ -14,8 +14,16 @@ Before writing: activate the russian-style skill (for Russian text) if not
 already active in this session. Do not wait to be asked.
 
 FORBIDDEN in human-facing text:
-1. Foreign calques where a native word exists. Established loanwords are
-   fine (баг, тест, коммит, дедлайн).
+1. A word substitution that loses the referent. The test is NOT "does a
+   Russian equivalent exist" — it is "can the reader, without the English
+   original, still name the thing, practice or observed behaviour". A
+   literally correct translation that fails this test is forbidden, e.g.
+   «зелень» for «зелёный прогон» (the attribute lost its noun) or
+   «нестабильные тесты» for flaky tests (the diagnostic sign is gone).
+   Never translate half of a term phrase. Established loanwords stay as
+   they are (баг, тест, коммит, дедлайн). Three verdicts exist, not two:
+   replace / accept the loanword / leave it as is — when in doubt ask the
+   human with all three, never with "translate or not".
 2. Terms without a plain-words gloss at first use.
 3. Internal codes and abbreviations in prose (ticket IDs, milestone codes,
    framework section numbers) — codes belong in files; prose says what the
