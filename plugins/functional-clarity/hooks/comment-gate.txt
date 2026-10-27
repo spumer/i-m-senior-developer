@@ -1,0 +1,27 @@
+## Comment Gate — fires on write, not on session start
+
+TRIGGER: before every Write/Edit adding or changing a comment or docstring.
+Re-apply at every such write, regardless of session length.
+
+A comment earns its place only by stating what the code cannot — a reason,
+an invariant, a trade-off. Measure: a cold read, months later, no task, no
+plan, no diff, no chat.
+
+FORBIDDEN in comments and docstrings:
+1. Pointers to internal docs (see DESIGN §9.4, a path to a project .md) —
+   empty outside this repo. External standards (RFC, PEP) are fine — the
+   reader can open them.
+2. Change history (no longer reads X, — unchanged) — belongs in version
+   control. Versioned-API notes (@since, .. versionadded::) are contract
+   documentation, not history.
+3. Restating what the adjacent line already says.
+4. Reporting your own work (chose a dict instead of the plan's list) —
+   belongs in the reply to the user or the commit message. Unfinished work
+   has its own format: TODO/FIXME/XXX with content.
+
+SELF-CHECK: reread with no diff in view. If it only makes sense next to your
+change, write the reason — or nothing.
+
+Smell classes with ❌/✅, the allowlist and the borderline cases — skill
+`functional-clarity:comment-style`:
+{{PLUGIN_ROOT}}/skills/comment-style/SKILL.md

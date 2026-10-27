@@ -141,12 +141,13 @@ Categories the reviewer prioritizes, ordered by signal-to-noise ratio. Style is 
 - **Comment hygiene** — comments that cite internal project docs (`see
   DESIGN §…`), carry change history (`since v2`, `no longer reads`), restate
   the adjacent line, or report the author's own work rather than address the
-  next reader of the code. `Grep` the comment lines; the allowlist in
-  `references/review-conventions.md` — external standards, `TODO`, `FIXME`,
-  `SAFETY:`, versioned-API markers — is not a finding, and wording that still
-  explains current behaviour earns a present-tense rewrite, not deletion. Severity: minor; in a large diff
-  report one finding with all locations. Distinct from the tracking-id bullet
-  above — do not merge them.
+  next reader of the code. Normative text (smell classes, allowlist, borderline
+  cases): skill `functional-clarity:comment-style`. `Grep` the comment lines;
+  the allowlist in `references/review-conventions.md` — external standards,
+  `TODO`, `FIXME`, `SAFETY:`, versioned-API markers — is not a finding, and
+  wording that still explains current behaviour earns a present-tense rewrite,
+  not deletion. Severity: minor; in a large diff report one finding with all
+  locations. Distinct from the tracking-id bullet above — do not merge them.
 - **Test runtime config diverges from prod** (stack-neutral) — tests run under a different runtime or concurrency config than production, so a prod-only failure stays green. Flag concurrency, parallel and shutdown code tested only under the harness default; require a run under the prod config.
 
 **Severity triage:** Major findings block the current review and require a fix commit before re-review. Minor findings are advisory — the implementer decides whether to address them now or file a ticket. Design concerns never block the current review: record `blocks_current_review: false` and `blocks_plan_continuation: true`, so the orchestrator stops before the next plan phase and presents the concern to the human. The reviewer does not invoke an architect. Security findings at high or critical severity always block the current review; medium and low are advisory.

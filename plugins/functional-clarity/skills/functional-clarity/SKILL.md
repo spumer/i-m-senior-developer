@@ -130,9 +130,10 @@ except Exception:
 - **`references/03-developer-levels.md`** — Developer level definitions (Junior → Senior+)
 - **`references/04-bash-instructions.md`** — Bash script guidelines
 - **`references/frameworks/python.md`** — Python-specific: modern syntax, pathlib, type annotations, pytest patterns
-- **`references/05-comment-style.md`** — Comment discipline: four comment
-  smell classes (doc-refs, changelog-in-code, restating the obvious,
-  reporting your own work to the human) with
+- Skill **`functional-clarity:comment-style`** (activate, don't read as a
+  file) — Comment discipline: four comment smell classes (doc-refs,
+  changelog-in-code, restating the obvious, reporting your own work to the
+  human) with
   ❌/✅, the allowlist, and borderline cases (external standards,
   versioned-API docs). Normative source — every other mention points here.
   Tracking-id (`FEAT-XXXX`) enforced separately by `sdlc`.
@@ -156,7 +157,7 @@ except Exception:
 5. IF discussing developer levels, requirements, expectations, or code review standards → read `references/03-developer-levels.md`
 6. IF writing bash scripts → read `references/04-bash-instructions.md`
 7. IF writing Python code → read `references/frameworks/python.md`
-8. IF writing or reviewing code comments → read `references/05-comment-style.md`
+8. IF writing or reviewing code comments → activate `functional-clarity:comment-style`
 9. IF designing, implementing, or reviewing elements declared on a context boundary at any scale — layer, module, service, published schema; especially under dependency inversion → read `references/06-boundary-vocabulary.md`
 
 ## Integration

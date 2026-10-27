@@ -338,7 +338,7 @@ category is distinct from tracking identifiers leaked into code — that one
 covers the project's feature-id pattern — and the two are not merged.
 
 Normative text — smell classes, the allowlist, borderline cases:
-`functional-clarity` `references/05-comment-style.md`.
+skill `functional-clarity:comment-style`.
 
 ## Worked finding examples
 

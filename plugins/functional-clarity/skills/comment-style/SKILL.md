@@ -1,3 +1,18 @@
+---
+name: comment-style
+description: >
+  This skill should be used when writing, reviewing, or cleaning up comments
+  and docstrings in source code: requests like "поправь комментарии", "проверь комментарии по comment
+  style", "comment style", "дисциплина комментариев", "почему, а не что", "why
+  not what", a "холодное чтение"/"cold read" of a comment, or any decision on
+  whether a comment is justified at all. Defines the four comment smell classes
+  (pointers to internal docs, change history in the source, restating the
+  adjacent line, reporting your own work to the human), the allowlist
+  (TODO/FIXME/SAFETY/security rationale), and the borderline cases (external
+  standards, versioned-API notes, changelog-looking wording that explains
+  current behavior).
+---
+
 # Дисциплина комментариев — объясняй «почему», а не «что»
 
 Комментарий оправдан только тогда, когда фиксирует то, что код выразить не
@@ -47,7 +62,7 @@
 читать код потом: объяснение и оправдание собственных действий. Его место —
 ответ пользователю или сообщение коммита, а не файл, который правишь. Частые
 поводы — отступление от плана, решение чего-то не трогать, оговорка о спешке.
-Незакрытая работа — исключение: у неё есть свой формат, `TODO`/`FIXME` с
+Незакрытая работа — исключение: у неё есть свой формат, `TODO`/`FIXME`/`XXX` с
 содержанием (см. allowlist).
 
     ❌ // взял словарь вместо списка из плана — поиск по ключу быстрее
@@ -83,11 +98,14 @@
 Сомнение трактуй в пользу автора — класс 2 и так ориентир, а не жёсткое
 правило.
 
-## Как это обеспечивается (два слоя)
-1. **Этот референс** — единственный нормативный источник: классы смеллов,
-   ❌/✅, allowlist, пограничные случаи. Врезки в `01-style-guide.md`,
+## Как это обеспечивается (три слоя)
+1. **Этот скилл** — единственный нормативный источник: классы смеллов, ❌/✅,
+   allowlist, пограничные случаи. Врезки в `01-style-guide.md`,
    `00-principles.md` (Принцип 13) и скиллах `sdlc` — напоминания со ссылкой
    сюда; правило меняется только здесь.
-2. **`sdlc:code-reviewer`** — чек-пункт «comment hygiene» ловит то, что
+2. **Условие на запись** — приходит в контекст на старте сессии и на старте
+   подагента, срабатывает перед каждой правкой, добавляющей или меняющей
+   комментарий.
+3. **`sdlc:code-reviewer`** — чек-пункт «comment hygiene» ловит то, что
    просочилось (severity minor), читая реальный дифф с окружающим кодом.
    В большом диффе — одна находка со списком мест, а не находка на строку.

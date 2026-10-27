@@ -164,9 +164,8 @@ green`); that belongs in the chat reply or the commit message. Write the
 self-contained reason, or write nothing. This is the sibling rule to "No
 tracking IDs in code" above — do not conflate them. The normative text — smell classes with ❌/✅,
 the allowlist (`TODO`, `SAFETY:`, security-why), and borderline cases — lives
-in one place: `functional-clarity:functional-clarity` →
-`references/05-comment-style.md`. This section is a reminder, not a copy;
-when in doubt, read the reference.
+in one place: skill `functional-clarity:comment-style`. This section is a
+reminder, not a copy; when in doubt, activate the skill.
 
 ## Boundary vocabulary — the owner's words
 
@@ -388,7 +387,7 @@ selection and numbering.
 9. **Doc-ref / changelog comments** — `// see PLAN §2.4`, `// no longer reads
    DATABASE_URL`, `// — unchanged` explain nothing the reader can act on and add
    cognitive load. Write the reason or delete the comment. See *Comment style*
-   above and `functional-clarity` `references/05-comment-style.md`.
+   above and activate skill `functional-clarity:comment-style`.
 
 ## Integration with other plugins
 
